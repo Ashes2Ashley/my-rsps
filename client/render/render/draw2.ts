@@ -276,13 +276,13 @@ export function _accumulate(host: WebGLOsrsRendererHost, drawRanges: DrawRange[]
 }
 
 export function configureDrawCall(host: WebGLOsrsRendererHost, drawCall: DrawCall): DrawCall {
-
+        host.osrsClient.clientPlugins.configureSceneDrawCall(host, drawCall);
         return host.drawBackend ? host.drawBackend.configureDrawCall(drawCall) : drawCall;
     
 }
 
 export function draw(host: WebGLOsrsRendererHost, drawCall: DrawCall, drawRanges: DrawRange[], drawIndices?: number[]) {
-
+        host.osrsClient.clientPlugins.configureSceneDrawCall(host, drawCall);
         // Accumulate stats regardless of draw path
         if (drawIndices && drawIndices.length > 0) {
             // Reuse buffer to avoid per-frame allocation

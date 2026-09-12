@@ -307,6 +307,7 @@ export async function cleanUp(host: WebGLOsrsRendererHost, ): Promise<void> {
         host.quadPositions = undefined;
 
         // Uniforms
+        host.osrsClient.clientPlugins.disposeRenderer(host);
         host.sceneUniformBuffer?.delete();
         host.sceneUniformBuffer = undefined;
 
