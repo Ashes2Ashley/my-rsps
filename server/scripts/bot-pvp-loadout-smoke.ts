@@ -29,11 +29,19 @@ let checked = 0;
 for (const loadout of loadouts) {
   for (const profile of profiles) {
     checked++;
-    const state = { pvp: { loadoutId: loadout.id, profileId: profile.id } };
+    const state = { pvp: {
+      loadoutId: loadout.id, profileId: profile.id,
+      // Reproduce a persisted members preset overriding an F2P assignment.
+      presetPoolEnabled: loadout.id.startsWith("f2p_"),
+      presetPoolGroup: "main_126",
+    } };
     const generated = __testing.buildGeneratedPreset(null, state);
     if (!generated?.preset) {
       failures.push(`${loadout.id} x ${profile.id}`);
       continue;
+    }
+    if (loadout.id.startsWith("f2p_")) {
+      assert.ok(generated.archetypeId.startsWith("f2p_"), "F2P loadouts cannot use the members preset pool");
     }
     const stats = generated.preset.getStats() ?? [];
     assert.ok(

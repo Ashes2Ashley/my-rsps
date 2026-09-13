@@ -1,6 +1,6 @@
 import * as assert from "node:assert/strict";
-import "../src/main/typescript/elvarg/game/content/combat/FightType";
-import "../src/main/typescript/elvarg/game/content/combat/WeaponProfile";
+// Initialize circular combat imports in the same order as the server.
+import "../src/main/typescript/elvarg/Server";
 
 const { BOT_PRESET_GROUPS, selectBotPreset } = require("../plugins/bots/behaviours/policies/PvpLoadoutPolicy");
 const { PredefinedPresets } = require("../src/main/typescript/elvarg/game/content/presets/PredefinedPresets");
