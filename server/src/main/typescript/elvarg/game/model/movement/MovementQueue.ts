@@ -681,7 +681,6 @@ export class MovementQueue {
         this.followX = -1;
         this.followY = -1;
         this.isMoving = false;
-        this.movedThisCycle = false;
         this.foundRoute = false;
         this.routeEvaluated = false;
         this.alternativeRoute = false;
@@ -1115,6 +1114,12 @@ export class MovementQueue {
         }
 
         PathFinder.calculateEntityRoute(this.player, entity);
+        if (this.canInteractWithUnreachableNpc(entity)) {
+            this.reset();
+            this.player.setMobileInteraction(entity);
+            runnable?.();
+            return;
+        }
 
         let routedX = entity.getLocation().getX();
         let routedY = entity.getLocation().getY();
@@ -1145,6 +1150,12 @@ export class MovementQueue {
                 PathFinder.calculateEntityRoute(this.player, entity);
             }
 
+            if (this.canInteractWithUnreachableNpc(entity)) {
+                queue.reset();
+                task.stop();
+                runnable?.();
+                return;
+            }
             if (queue.points.length || queue.isMovings()) {
                 return;
             }
@@ -1234,7 +1245,12 @@ export class MovementQueue {
                 task.stop();
                 return;
             }
-            if (PathFinder.reachedObject(
+            // Finish the route selected from the object's size, rotation and access
+            // mask before operating it, even if another side passes generic reach.
+            if (this.points.length === 0 &&
+                this.player.getLocation().getX() === this.pathX &&
+                this.player.getLocation().getY() === this.pathY &&
+                PathFinder.reachedObject(
                 this.player,
                 objectX,
                 objectY,
@@ -1290,6 +1306,13 @@ export class MovementQueue {
     public isWithinEntityInteractionDistance(entityLocation: Location): boolean {
         return this.points.length <= MovementQueue.NPC_INTERACT_RADIUS &&
             this.player.getLocation().getDistance(entityLocation) <= MovementQueue.NPC_INTERACT_RADIUS;
+    }
+
+    private canInteractWithUnreachableNpc(entity: Mobile): boolean {
+        // Prefer adjacent reach. Counters may leave an NPC visible but no adjacent tile reachable.
+        return entity.isNpc() && (this.alternativeRoute || this.points.length === 0) && !this.isMovings() &&
+            this.isWithinEntityInteractionDistance(entity.getLocation()) &&
+            RegionManager.canProjectileAttack(this.player, this.player.getLocation(), entity.getLocation());
     }
 
     canMove(): boolean {

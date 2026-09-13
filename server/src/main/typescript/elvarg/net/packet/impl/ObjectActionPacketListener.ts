@@ -52,6 +52,7 @@ export class ObjectActionPacketListener {
     };
     PluginManager.emitObjectRoute(routeEvent);
     const executeInteraction = () => {
+      const interactionLocation = player.getLocation().clone();
       player.getMovementQueue().reset();
       player.getMovementQueue().walkToReset();
       player.setPositionToFace(object.getLocation());
@@ -68,9 +69,9 @@ export class ObjectActionPacketListener {
           z: object.getLocation().getZ(),
         },
         sourceLocation: {
-          x: sourceLocation.getX(),
-          y: sourceLocation.getY(),
-          z: sourceLocation.getZ(),
+          x: interactionLocation.getX(),
+          y: interactionLocation.getY(),
+          z: interactionLocation.getZ(),
         },
         handled: false,
       });
