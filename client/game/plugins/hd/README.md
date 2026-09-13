@@ -16,7 +16,9 @@ array, leaving the original textures available immediately on disable.
 Compatibility limits: packed client meshes have no normal stream, so lighting
 uses geometric normals rather than the source's smooth model/terrain normals.
 Source terrain recoloring/ground-material recipes are not applied to this client's
-terrain pipeline. Point lights are limited to the nearest 32 on the active plane.
+terrain pipeline. Point lights are limited to the nearest 8 on the active plane.
+Shadow maps update at 30 Hz, with immediate refreshes on teleports, plane changes,
+environment changes and roof/draw-distance changes.
 
 Run `yarn test:hd` in `client`. To generate the optional WebGL browser check:
 `yarn test:hd /tmp/elvarg-hd-shader-check.html`.

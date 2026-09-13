@@ -18,6 +18,7 @@ export enum ContourGroundType {
     CENTER_TILE = 0,
     VERTEX = 1,
     NONE = 2,
+    TERRAIN = 3, // Already positioned, with baked smooth vertex lighting.
 }
 
 export type ModelInfo = {
@@ -234,7 +235,7 @@ export class SceneBuffer {
                             sceneZ: 0,
                             heightOffset: 0,
                             level,
-                            contourGround: ContourGroundType.NONE,
+                            contourGround: ContourGroundType.TERRAIN,
                             priority: 0,
                             interactType: InteractType.NONE,
                             interactId: 0xffff,

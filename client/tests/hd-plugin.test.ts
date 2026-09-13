@@ -21,6 +21,11 @@ for (const kind of ["main", "npc", "projectile", "player"]) {
         const defines = [...(alpha ? ["DISCARD_ALPHA"] : []), ...(multiDraw ? ["MULTI_DRAW"] : [])];
         const result = createHdProgram([prependDefines(vertex, defines), prependDefines(fragment, defines)], lighting);
         assert.match(result[0], /uniform bool u_hdEnabled/);
+        assert.ok(result[0].includes(`v_hdTerrain = ${kind === "main" ? "modelInfo.contourGround == 3.0 ? 1.0 : 0.0" : "0.0"};`),
+            "Only terrain draws may replace geometric lighting normals");
+        assert.match(result[0], /flat out float v_hdTerrain;/);
+        assert.match(result[1], /flat in float v_hdTerrain;/);
+        if (kind === "main") assert.match(result[0], /if \(modelInfo.contourGround < CONTOUR_GROUND_NONE\) \{\s*localPos.y -= getHeightInterp/);
         assert.match(result[1], /if \(u_hdEnabled &&/);
         if (kind !== "player") {
             assert.match(result[1], /if \(u_hdEnabled && !isFloorWater\)/);
@@ -50,19 +55,24 @@ const storage = new Map<string, string>();
 (globalThis as any).localStorage = { getItem: (key: string) => storage.get(key), setItem: (key: string, value: string) => storage.set(key, value) };
 (globalThis as any).Image = class { onload = null; onerror = null; src = ""; };
 const plugin = new HdPlugin();
+let frameTime = 0;
+const originalNow = performance.now;
+performance.now = () => frameTime;
 assert.equal(plugin.getEnabled(), false, "Fresh installs must keep HD disabled");
 let notifications = 0;
 const unsubscribe = plugin.subscribe(() => notifications++);
 let deleted = 0;
 let shadows = 0;
 let actorShadows = 0;
+let viewport: number[] = [];
 const resource = () => ({ delete: () => deleted++, data() {}, resize() {}, depthTarget() { return this; } });
 const values = new Map<string, unknown>();
-const program = { bind() {}, uniform: (name: string, value: unknown) => values.set(name, value) };
+let programBinds = 0;
+const program = { bind() { programBinds++; }, uniform: (name: string, value: unknown) => values.set(name, value) };
 const app = {
     createTexture2D: resource, createTextureArray: resource, createFramebuffer: resource,
     drawFramebuffer(value: unknown) { this.target = value; return this; }, target: undefined as unknown,
-    viewport() { return this; }, disable() { return this; }, enable() { return this; }, depthMask() { return this; },
+    viewport(...rect: number[]) { viewport = rect; return this; }, disable() { return this; }, enable() { return this; }, depthMask() { return this; },
 };
 const renderer = {
     app, gl: { getParameter: () => [0, 0, 640, 480], isEnabled: () => false, clear() {}, drawBuffers() {} },
@@ -71,17 +81,45 @@ const renderer = {
     mapManager: { visibleMapCount: 0 }, textureIdIndexMap: new Map(),
     sampleHeightAtExactPlane: () => 0, shouldUseDirectTextureScenePass: () => true,
     framebuffer: {}, textureFramebuffer: {},
-    renderOpaquePass: () => shadows++, renderTransparentPass() {},
+    renderOpaquePass: () => {
+        assert.deepEqual(viewport, [0, 0, 1024, 1024]);
+        assert.equal(values.get("u_hdShadowPass"), true);
+        assert.equal(values.get("u_hdEnabled"), true);
+        assert.equal(values.get("u_hdShadowStrength"), 0.5);
+        assert.deepEqual(values.get("u_hdGrading"), [1.12, 1, 0.6, 0]);
+        shadows++;
+    }, renderTransparentPass() {},
 };
 plugin.sceneProgramsReady(renderer, [program]);
 plugin.beforeSceneRender(renderer, () => actorShadows++);
 assert.equal(shadows, 0);
+assert.equal(programBinds, 1, "Batch disabled-state uniforms into one program bind");
 plugin.setEnabled(true);
+programBinds = 0;
 plugin.beforeSceneRender(renderer, () => actorShadows++);
+assert.equal(programBinds, 2, "Bind once for shadow uniforms and once to restore the scene pass");
 assert.equal(shadows, 1);
+assert.deepEqual(viewport, [0, 0, 640, 480], "Restore scene viewport after the smaller shadow pass");
 assert.equal(actorShadows, 1);
 assert.equal(app.target, renderer.textureFramebuffer, "Restore the active direct-texture target");
 assert.equal(values.get("u_hdShadowPass"), false);
+const shadowMatrix = Array.from(values.get("u_hdShadowMatrix") as Float32Array);
+frameTime = 8;
+renderer.playerPosUni[0] = 0.1;
+programBinds = 0;
+plugin.beforeSceneRender(renderer, () => actorShadows++);
+assert.equal(shadows, 1, "Reuse the shadow map between 30 Hz updates");
+assert.equal(actorShadows, 1);
+assert.equal(programBinds, 1);
+assert.deepEqual(Array.from(values.get("u_hdShadowMatrix") as Float32Array), shadowMatrix);
+assert.equal((values.get("u_hdLightPositions[0]") as Float32Array).length, 8 * 4);
+frameTime = 34;
+plugin.beforeSceneRender(renderer, () => actorShadows++);
+assert.equal(shadows, 2, "Refresh moving shadows at the next deadline");
+renderer.playerPosUni[0] = 10;
+plugin.beforeSceneRender(renderer, () => actorShadows++);
+assert.equal(shadows, 3, "Teleporting must refresh shadows immediately");
+frameTime = 68;
 renderer.renderOpaquePass = () => { throw new Error("draw failed"); };
 assert.throws(() => plugin.beforeSceneRender(renderer, () => {}), /draw failed/);
 assert.equal(values.get("u_hdShadowPass"), false, "Restore shadow state even after a failed draw");
@@ -96,6 +134,7 @@ assert.equal(deleted, 5, "Dispose shadow framebuffer, depth texture and material
 assert.equal(new HdPlugin().getEnabled(), false, "Persist the disabled state");
 plugin.setEnabled(true);
 assert.equal(new HdPlugin().getEnabled(), true, "Explicit opt-in persists");
+performance.now = originalNow;
 
 if (process.argv[2]) {
     const bundle = require("esbuild").buildSync({

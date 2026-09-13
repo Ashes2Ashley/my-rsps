@@ -7,12 +7,15 @@ export function createHdProgram([vertex, fragment]: ProgramSource, lighting: str
         !fragment.includes("    float banding =") || !fragment.includes("    vec3 finalRgb = mix(surface, u_skyColor.rgb, fog);")) {
         throw new Error("117 HD: unsupported scene shader");
     }
+    const terrain = vertex.includes("CONTOUR_GROUND_NONE");
     vertex = vertex.slice(0, vertexEnd) + `
+    v_hdTerrain = ${terrain ? "modelInfo.contourGround == 3.0 ? 1.0 : 0.0" : "0.0"};
     v_hdPosition = u_hdEnabled ? (u_hdInverseView * viewPos).xyz : vec3(0.0);
     if (u_hdShadowPass) gl_Position = u_hdShadowMatrix * vec4(v_hdPosition, 1.0);
 ` + vertex.slice(vertexEnd);
     vertex = vertex.replace("void main()", `
 out vec3 v_hdPosition;
+flat out float v_hdTerrain;
 uniform bool u_hdEnabled;
 uniform mat4 u_hdInverseView;
 uniform bool u_hdShadowPass;

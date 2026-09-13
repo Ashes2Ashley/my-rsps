@@ -12,6 +12,8 @@ import { HdMaterials } from "./HdMaterials";
 // PicoGL exposes these methods at runtime but omits them from its declarations.
 type SceneProgram = Program & { bind(): void; uniform(name: string, value: unknown): void };
 const STORAGE_KEY = "xrsps.plugin.hd.enabled";
+const SHADOW_MAP_SIZE = 1024;
+const LIGHT_LIMIT = 8;
 
 export class HdPlugin implements ClientPlugin {
     private enabled = false;
@@ -23,11 +25,12 @@ export class HdPlugin implements ClientPlugin {
         shadow?: Texture;
         framebuffer?: Framebuffer;
         shadowPass: boolean;
+        lastShadow?: { time: number; x: number; z: number; plane: number; environment: unknown; distance: number; roof: number | undefined };
     }>();
     private readonly shadowMatrix = mat4.create();
     private readonly inverseView = mat4.create();
-    private readonly lightPositions = new Float32Array(32 * 4);
-    private readonly lightColors = new Float32Array(32 * 4);
+    private readonly lightPositions = new Float32Array(LIGHT_LIMIT * 4);
+    private readonly lightColors = new Float32Array(LIGHT_LIMIT * 4);
 
     constructor() {
         try { this.enabled = localStorage.getItem(STORAGE_KEY) === "true"; } catch { /* Storage can be unavailable. */ }
@@ -70,15 +73,22 @@ export class HdPlugin implements ClientPlugin {
     beforeSceneRender(renderer: WebGLOsrsRenderer, drawActors: () => void): void {
         const state = this.renderers.get(renderer);
         if (!state) return;
-        const set = (name: string, value: unknown) => {
+        const uniforms = new Map<string, unknown>();
+        const set = (name: string, value: unknown) => uniforms.set(name, value);
+        const flush = () => {
             for (const program of state.programs) {
                 program.bind();
-                program.uniform(name, value);
+                for (const [name, value] of uniforms) program.uniform(name, value);
             }
+            uniforms.clear();
         };
         set("u_hdEnabled", this.enabled);
         set("u_hdShadowPass", false);
-        if (!this.enabled) return;
+        if (!this.enabled) {
+            state.lastShadow = undefined;
+            flush();
+            return;
+        }
         state.materials.update(renderer.textureIdIndexMap);
         mat4.invert(this.inverseView, renderer.osrsClient.camera.viewMatrix);
         set("u_hdInverseView", this.inverseView);
@@ -95,15 +105,28 @@ export class HdPlugin implements ClientPlugin {
         const fogEnd = Math.max(1, renderer.getFrameRenderDistanceTiles());
         set("u_hdFog", [environment.fogDepth, environment.fogScale, fogEnd]);
         set("u_hdGroundFog", [environment.groundFogStart / 128, environment.groundFogEnd / 128, environment.groundFogOpacity]);
-        set("u_hdGrading", [1.12, 1, 0.9, 0]);
+        set("u_hdGrading", [1.12, 1, 0.6, 0]);
         set("u_hdSpecular", 1);
         const count = collectHdLights(renderer, this.lightPositions, this.lightColors, Date.now());
         set("u_hdLightCount", count);
         set("u_hdLightPositions[0]", this.lightPositions);
         set("u_hdLightColors[0]", this.lightColors);
 
+        const now = performance.now();
+        const plane = renderer.getPlayerRawPlane();
+        const previous = state.lastShadow;
+        // ponytail: moving shadows update at 30 Hz; raise only if stepping is visible.
+        // Keep the previous projection with its depth map between updates.
+        if (previous && now - previous.time < 1000 / 30 &&
+            Math.abs(x - previous.x) < 2 && Math.abs(z - previous.z) < 2 &&
+            plane === previous.plane && environment === previous.environment &&
+            fogEnd === previous.distance && renderer.roofPlaneLimit === previous.roof) {
+            flush();
+            return;
+        }
+
         if (!state.shadow) {
-            state.shadow = renderer.app.createTexture2D(2048, 2048, {
+            state.shadow = renderer.app.createTexture2D(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE, {
                 internalFormat: PicoGL.DEPTH_COMPONENT24, type: PicoGL.UNSIGNED_INT,
                 minFilter: PicoGL.NEAREST, magFilter: PicoGL.NEAREST,
                 wrapS: PicoGL.CLAMP_TO_EDGE, wrapT: PicoGL.CLAMP_TO_EDGE,
@@ -116,7 +139,7 @@ export class HdPlugin implements ClientPlugin {
         const extent = Math.min(48, fogEnd);
         mat4.multiply(this.shadowMatrix, mat4.ortho(mat4.create(), -extent, extent, -extent, extent, 1, 220), view);
         set("u_hdShadowMatrix", this.shadowMatrix);
-        set("u_hdShadowStrength", 0.9);
+        set("u_hdShadowStrength", 0.5);
 
         const viewport = renderer.gl.getParameter(PicoGL.VIEWPORT) as Int32Array;
         const scissor = renderer.gl.isEnabled(PicoGL.SCISSOR_TEST);
@@ -125,16 +148,19 @@ export class HdPlugin implements ClientPlugin {
         state.shadowPass = true;
         set("u_hdShadowPass", true);
         try {
+            flush();
             renderer.app.drawFramebuffer(state.framebuffer!);
             renderer.gl.drawBuffers([PicoGL.NONE]);
-            renderer.app.viewport(0, 0, 2048, 2048).disable(PicoGL.SCISSOR_TEST).disable(PicoGL.BLEND).depthMask(true);
+            renderer.app.viewport(0, 0, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE).disable(PicoGL.SCISSOR_TEST).disable(PicoGL.BLEND).depthMask(true);
             renderer.gl.clear(PicoGL.DEPTH_BUFFER_BIT);
             renderer.renderOpaquePass();
             renderer.renderTransparentPass();
             drawActors();
+            state.lastShadow = { time: now, x, z, plane, environment, distance: fogEnd, roof: renderer.roofPlaneLimit };
         } finally {
             state.shadowPass = false;
             set("u_hdShadowPass", false);
+            flush();
             renderer.app.drawFramebuffer(framebuffer);
             renderer.app.viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
             if (scissor) renderer.app.enable(PicoGL.SCISSOR_TEST);
