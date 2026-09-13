@@ -402,6 +402,30 @@ export class PlayerRenderer {
         return this.lastRenderableAppearance.get(serverId);
     }
 
+    private getFirstPersonAppearance(pid: number, appearance: PlayerAppearance): PlayerAppearance {
+        if (!this.isFirstPersonArmsPlayer(pid, appearance)) {
+            return appearance;
+        }
+        return new PlayerAppearance(
+            appearance.gender,
+            appearance.colors,
+            appearance.kits,
+            appearance.equip,
+            appearance.headIcons,
+            appearance.npcTransformationId,
+            true,
+        );
+    }
+
+    private isFirstPersonArmsPlayer(pid: number, appearance?: PlayerAppearance): boolean {
+        const app = appearance ?? this.renderer.osrsClient.playerEcs.getAppearance(pid);
+        return (
+            this.renderer.osrsClient.firstPersonArmsVisible === true &&
+            this.isControlledPid(pid) &&
+            (app?.npcTransformationId ?? -1) < 0
+        );
+    }
+
     private getPlayerGpuGeometry(ownerKey: string, geometryKey: string): PlayerGpuGeometry | undefined {
         let geometry = this.playerGpuGeometryCache.get(ownerKey);
         if (geometry?.geometryKey === geometryKey) {
@@ -2065,6 +2089,7 @@ export class PlayerRenderer {
             }
             const serverId = peInst.getServerIdForIndex(pid);
             if (serverId === undefined) continue;
+            effectiveApp = this.getFirstPersonAppearance(pid, effectiveApp);
             const renderableAppearance = this.resolveRenderableAppearance(serverId, effectiveApp);
             if (!renderableAppearance) continue;
             effectiveApp = renderableAppearance;
@@ -2119,6 +2144,12 @@ export class PlayerRenderer {
 
         // Process each batch group
         for (const [batchKey, group] of this.batchGroups) {
+            // The first-person camera can look at the reverse side of an arm,
+            // weapon, or shield face. Those pieces must be double-sided; normal
+            // player models retain back-face culling to avoid visible internals.
+            if (group.appearance.firstPersonArmsOnly) r.app.disable(PicoGL.CULL_FACE);
+            else if (r.cullBackFace) r.app.enable(PicoGL.CULL_FACE);
+            else r.app.disable(PicoGL.CULL_FACE);
             if (group.instances.length === 0) continue;
 
             const baseRec = this.ensureBaseForAppearance(group.appearance);
@@ -2403,6 +2434,7 @@ export class PlayerRenderer {
                 }
                 const serverId = peInst.getServerIdForIndex(pid);
                 if (serverId === undefined) continue;
+                effectiveApp = this.getFirstPersonAppearance(pid, effectiveApp);
                 const renderableAppearance = this.resolveRenderableAppearance(serverId, effectiveApp);
                 if (!renderableAppearance) continue;
                 effectiveApp = renderableAppearance;
@@ -2649,7 +2681,8 @@ export class PlayerRenderer {
 
         for (const activePid of pe.getAllActiveIndices()) {
             const pid = activePid | 0;
-            if (!renderSelf && this.isControlledPid(pid)) {
+            const isFirstPersonPlayer = this.isFirstPersonArmsPlayer(pid);
+            if (!renderSelf && !isFirstPersonPlayer && this.isControlledPid(pid)) {
                 continue;
             }
 
@@ -2677,7 +2710,7 @@ export class PlayerRenderer {
                     continue;
                 }
             }
-            if (!this.renderer.shouldRenderPlayerIndex(pid)) {
+            if (!isFirstPersonPlayer && !this.renderer.shouldRenderPlayerIndex(pid)) {
                 continue;
             }
 

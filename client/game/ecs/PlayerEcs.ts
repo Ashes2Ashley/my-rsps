@@ -22,6 +22,7 @@ export type PlayerAnimKey =
 
 type PlayerAnimSet = Partial<Record<PlayerAnimKey, number | undefined>>;
 type InteractionOrientationProvider = (ecsIndex: number) => number | undefined;
+const FIRST_PERSON_ARMS_BACK_OFFSET = 32;
 
 export class PlayerEcs {
     private capacity = 0;
@@ -1367,7 +1368,9 @@ export class PlayerEcs {
                     deps.modelLoader,
                     deps.textureLoader,
                 );
-                base = pml.buildStaticModelFromEquipment(app, app.equip);
+                base = app.firstPersonArmsOnly
+                    ? pml.buildFirstPersonModel(app)
+                    : pml.buildStaticModelFromEquipment(app, app.equip);
             }
             if (!base) return undefined;
 
@@ -1413,6 +1416,12 @@ export class PlayerEcs {
                     }
                 }
             } catch {}
+
+            // Keep the shoulder joints just behind the first-person camera at
+            // wide zoom levels while preserving the normal animated arm pose.
+            if (app.firstPersonArmsOnly) {
+                base.translate(0, 0, FIRST_PERSON_ARMS_BACK_OFFSET);
+            }
 
             let defaultHeightTiles = 1.0;
             try {

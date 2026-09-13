@@ -300,6 +300,44 @@ export class PlayerModelLoader {
         );
     }
 
+    /**
+     * Builds the local player's first-person model. Keep the arm and hand kits,
+     * plus their gloves, weapon, and shield; all other body and equipment parts
+     * would either obstruct the camera or show the player's head/body.
+     */
+    buildFirstPersonModel(appearance: PlayerAppearance): Model | undefined {
+        const kits = new Array<number>(7).fill(-1);
+        kits[3] = appearance.kits[3] ?? -1; // arms
+        kits[4] =
+            (appearance.equip[EquipmentSlot.GLOVES] ?? -1) >= 0
+                ? -1
+                : (appearance.kits[4] ?? -1); // hands
+        const armAppearance = new PlayerAppearance(
+            appearance.gender,
+            Array.isArray(appearance.colors) ? [...appearance.colors] : [],
+            kits,
+            Array.isArray(appearance.equip) ? [...appearance.equip] : new Array(14).fill(-1),
+            appearance.headIcons ? { ...appearance.headIcons } : { prayer: -1 },
+            appearance.npcTransformationId,
+            true,
+        );
+        const extras: Array<{ obj: ObjType; slot: EquipmentSlot }> = [];
+        for (const slot of [EquipmentSlot.WEAPON, EquipmentSlot.SHIELD, EquipmentSlot.GLOVES]) {
+            const itemId = armAppearance.equip[slot] ?? -1;
+            if (itemId < 0) continue;
+            try {
+                const obj = this.objTypeLoader.load(itemId);
+                if (obj) extras.push({ obj, slot });
+            } catch {}
+        }
+        extras.sort((a, b) => equipmentModelRenderOrder(a.slot) - equipmentModelRenderOrder(b.slot));
+        return this.buildStaticModel(
+            armAppearance,
+            extras.map(({ obj }) => obj),
+            extras.map(({ slot }) => equipmentRenderLayer(slot)),
+        );
+    }
+
     private partCoveredByEquipment(
         part: number,
         equippedSlots: Set<EquipmentSlot>,

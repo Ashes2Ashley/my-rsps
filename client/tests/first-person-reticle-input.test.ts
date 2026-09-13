@@ -50,13 +50,16 @@ try {
 
     let menuCloseCount = 0;
     let inGame = true;
+    const gameMessages: string[] = [];
     const client = {
         camera: new Camera(0, 0, 0, 256, 512),
         inputManager: input,
         renderSelf: true,
+        firstPersonArmsVisible: false,
         followPlayerCamera: false,
         menuOpen: false,
         isLoggedIn: () => inGame,
+        addGameMessage: (message: string) => gameMessages.push(message),
         closeMenu: () => {
             menuCloseCount++;
             client.menuOpen = false;
@@ -64,10 +67,13 @@ try {
     };
     const plugin = new FirstPersonPlugin(client);
     plugin.onKeyDown({ code: "Backquote", repeat: false } as KeyboardEvent);
+    assert.deepEqual(gameMessages, ["Press Alt for mouse look. Press Insert to hide arm visibility."]);
     assert.equal(plugin.shouldKeepWorldMenuOpen(), false, "Backquote should not keep a closed menu alive");
     plugin.onKeyDown({ code: "Backquote", repeat: false } as KeyboardEvent);
     plugin.onKeyDown({ code: "Backquote", repeat: false } as KeyboardEvent);
     assert.equal(menuCloseCount, 3, "changing Backquote mode should discard stale menus");
+    assert.equal(gameMessages.length, 1, "the controls hint should appear once per login session");
+    assert.equal(client.firstPersonArmsVisible, true, "first-person arms should start visible");
     client.camera.update(640, 480);
     plugin.updateInteractionPointer(client.camera);
     assert.equal(input.hasInteractionPointerOverride(), false, "arrow-key mode should keep the normal cursor");
@@ -78,6 +84,10 @@ try {
     plugin.updateInteractionPointer(client.camera);
     assert.equal(input.hasInteractionPointerOverride(), true, "Alt should enable mouse-look targeting");
     assert.equal(input.enablePointerLock, true, "Alt should enable pointer lock for mouse look");
+    plugin.onKeyDown({ code: "Insert", repeat: false } as KeyboardEvent);
+    assert.equal(client.firstPersonArmsVisible, false, "Insert should hide arms in FPS mode");
+    plugin.onKeyDown({ code: "Insert", repeat: false } as KeyboardEvent);
+    assert.equal(client.firstPersonArmsVisible, true, "Insert should show arms in FPS mode");
     input.wheelDeltaY = -120;
     assert.equal(
         plugin.handleCameraScroll({ camera: client.camera, input, deltaTime: 0 }),
@@ -93,6 +103,8 @@ try {
     client.menuOpen = true;
     assert.equal(plugin.shouldKeepWorldMenuOpen(), true, "an open Backquote menu should remain available");
     assert.equal(input.isPointerLock(), true, "the virtual menu cursor should keep pointer lock active");
+    plugin.onKeyDown({ code: "Insert", repeat: false } as KeyboardEvent);
+    assert.equal(client.firstPersonArmsVisible, true, "Insert should not toggle arms while a menu is open");
     plugin.onMouseMove({ movementX: 10, movementY: 5 } as MouseEvent);
     assert.equal(input.mouseX, 330, "the virtual cursor should move from the reticle");
     assert.equal(input.mouseY, 245, "the virtual cursor should move from the reticle");
@@ -125,11 +137,17 @@ try {
     plugin.updateInteractionPointer(client.camera);
     assert.equal(input.hasInteractionPointerOverride(), false, "Alt should return to arrow-key mode");
     assert.equal(input.enablePointerLock, false, "arrow-key mode should release pointer lock");
+    plugin.onKeyDown({ code: "Insert", repeat: false } as KeyboardEvent);
+    assert.equal(client.firstPersonArmsVisible, false, "Insert should hide arms in Alt FPS mode");
 
     inGame = false;
     input.setInteractionPointerOverride(320, 240);
     plugin.updateInteractionPointer(client.camera);
     assert.equal(input.hasInteractionPointerOverride(), false, "the reticle must be hidden outside the game");
+    inGame = true;
+    plugin.onKeyDown({ code: "Backquote", repeat: false } as KeyboardEvent);
+    plugin.onKeyDown({ code: "Backquote", repeat: false } as KeyboardEvent);
+    assert.equal(gameMessages.length, 2, "a new login session should show the controls hint again");
 } finally {
     Object.defineProperty(globalThis, "document", {
         configurable: true,

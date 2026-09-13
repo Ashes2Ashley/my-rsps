@@ -8,14 +8,17 @@ type FirstPersonClient = {
     camera: Camera;
     inputManager: InputManager;
     renderSelf: boolean;
+    firstPersonArmsVisible?: boolean;
     followPlayerCamera: boolean;
     menuOpen: boolean;
     isLoggedIn(): boolean;
+    addGameMessage(message: string): void;
     closeMenu(): void;
 };
 
 type CursorMode = "none" | "alt" | "menu";
 const MENU_ANCHOR_Y_OFFSET = 12;
+const CONTROLS_HINT = "Press Alt for mouse look. Press Insert to hide arm visibility.";
 
 export class FirstPersonPlugin implements ClientPlugin, InputKeyHandler, InputMouseHandler {
     private enabled = false;
@@ -26,6 +29,7 @@ export class FirstPersonPlugin implements ClientPlugin, InputKeyHandler, InputMo
     private menuPointerY = 0;
     private restoreRenderSelf?: boolean;
     private restoreFollowPlayerCamera?: boolean;
+    private controlsHintShown = false;
 
     constructor(private readonly client: FirstPersonClient) {
         client.inputManager.addKeyHandler(this);
@@ -35,6 +39,15 @@ export class FirstPersonPlugin implements ClientPlugin, InputKeyHandler, InputMo
     onKeyDown(event: KeyboardEvent): boolean {
         if (event.code === "Backquote" && !event.repeat) {
             this.setEnabled(!this.enabled);
+            return true;
+        }
+        if (
+            event.code === "Insert" &&
+            this.enabled &&
+            this.cursorMode !== "menu" &&
+            !event.repeat
+        ) {
+            this.client.firstPersonArmsVisible = !this.client.firstPersonArmsVisible;
             return true;
         }
         if (
@@ -132,6 +145,7 @@ export class FirstPersonPlugin implements ClientPlugin, InputKeyHandler, InputMo
 
     updateInteractionPointer(camera: Camera): void {
         const input = this.client.inputManager;
+        this.updateLoginSession();
         this.updateReticleVisibility();
         if (!this.client.isLoggedIn()) {
             input.clearInteractionPointerOverride();
@@ -188,9 +202,14 @@ export class FirstPersonPlugin implements ClientPlugin, InputKeyHandler, InputMo
         this.closeWorldMenu();
         this.updateReticleVisibility();
         if (enabled) {
+            if (this.updateLoginSession() && !this.controlsHintShown) {
+                this.client.addGameMessage(CONTROLS_HINT);
+                this.controlsHintShown = true;
+            }
             this.restoreRenderSelf = this.client.renderSelf;
             this.restoreFollowPlayerCamera = this.client.followPlayerCamera;
             this.client.renderSelf = false;
+            this.client.firstPersonArmsVisible = true;
             this.client.followPlayerCamera = true;
             camera.setViewPitchOverride(0);
             return;
@@ -198,10 +217,17 @@ export class FirstPersonPlugin implements ClientPlugin, InputKeyHandler, InputMo
         camera.setViewPitchOverride(undefined);
         camera.setViewZoomScale(1);
         if (this.restoreRenderSelf !== undefined) this.client.renderSelf = this.restoreRenderSelf;
+        this.client.firstPersonArmsVisible = false;
         if (this.restoreFollowPlayerCamera !== undefined) this.client.followPlayerCamera = this.restoreFollowPlayerCamera;
         this.restoreRenderSelf = undefined;
         this.restoreFollowPlayerCamera = undefined;
         input.releasePointerLock();
+    }
+
+    private updateLoginSession(): boolean {
+        const loggedIn = this.client.isLoggedIn();
+        if (!loggedIn) this.controlsHintShown = false;
+        return loggedIn;
     }
 
     private unlockCursor(): void {

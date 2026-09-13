@@ -19,6 +19,8 @@ export class PlayerAppearance {
     kits: number[];
     headIcons: { prayer?: number; skull?: number };
     npcTransformationId: number;
+    /** Render only the components that should remain visible in first-person view. */
+    firstPersonArmsOnly: boolean;
 
     constructor(
         gender: Gender,
@@ -27,6 +29,7 @@ export class PlayerAppearance {
         equip?: number[],
         headIcons?: { prayer?: number; skull?: number },
         npcTransformationId?: number,
+        firstPersonArmsOnly: boolean = false,
     ) {
         this.gender = gender;
         this.colors = colors;
@@ -34,6 +37,7 @@ export class PlayerAppearance {
         this.equip = equip ?? new Array(14).fill(-1);
         this.headIcons = headIcons ?? { prayer: -1 };
         this.npcTransformationId = npcTransformationId ?? -1;
+        this.firstPersonArmsOnly = firstPersonArmsOnly;
     }
 
     // Polynomial rolling hash for caching composites
@@ -66,7 +70,7 @@ export class PlayerAppearance {
 
     getCacheKey(): string {
         const hash = this.getHash?.().toString() ?? "0";
-        return `${hash}|${this.getEquipKey()}`;
+        return `${hash}|${this.getEquipKey()}|${this.firstPersonArmsOnly ? "first-person" : "full"}`;
     }
 
     static defaultMale(idkLoader: IdkTypeLoader): PlayerAppearance {

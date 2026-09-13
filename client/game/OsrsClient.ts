@@ -588,6 +588,9 @@ export class OsrsClient {
      */
     renderSelf: boolean = true;
 
+    /** True while the first-person plugin renders the local player's arms and equipment. */
+    firstPersonArmsVisible: boolean = false;
+
     /**
      * Mobile feedback ripple effect enabled (set by SETFEEDBACKSPRITE).
      * When true, shows ripple/circle effect on click instead of cross.
@@ -5354,6 +5357,11 @@ export class OsrsClient {
             this.gameState === GameState.RECONNECTING ||
             this.gameState === GameState.PLEASE_WAIT
         );
+    }
+
+    /** Adds a client-side system message to the in-game chatbox. */
+    addGameMessage(message: string): void {
+        chatHistory.addMessage("game", message);
     }
 
     /**
