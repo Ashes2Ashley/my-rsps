@@ -664,6 +664,35 @@ function PluginHubPanel({ osrsClient }: { osrsClient: OsrsClient }): JSX.Element
         vengeanceTimerGetSnapshot,
     );
 
+    const poisonTimerPlugin = osrsClient.poisonTimerPlugin;
+    const poisonTimerSubscribe = useCallback(
+        (listener: () => void) => poisonTimerPlugin.subscribe(listener),
+        [poisonTimerPlugin],
+    );
+    const poisonTimerGetSnapshot = useCallback(
+        () => poisonTimerPlugin.getState(),
+        [poisonTimerPlugin],
+    );
+    const poisonTimerState = useSyncExternalStore(
+        poisonTimerSubscribe,
+        poisonTimerGetSnapshot,
+        poisonTimerGetSnapshot,
+    );
+    const freezeTimerPlugin = osrsClient.freezeTimerPlugin;
+    const freezeTimerSubscribe = useCallback(
+        (listener: () => void) => freezeTimerPlugin.subscribe(listener),
+        [freezeTimerPlugin],
+    );
+    const freezeTimerGetSnapshot = useCallback(
+        () => freezeTimerPlugin.getState(),
+        [freezeTimerPlugin],
+    );
+    const freezeTimerState = useSyncExternalStore(
+        freezeTimerSubscribe,
+        freezeTimerGetSnapshot,
+        freezeTimerGetSnapshot,
+    );
+
     const hdPlugin = osrsClient.hdPlugin;
     const hdEnabled = useSyncExternalStore(hdPlugin.subscribe, hdPlugin.getEnabled, hdPlugin.getEnabled);
 
@@ -730,6 +759,24 @@ function PluginHubPanel({ osrsClient }: { osrsClient: OsrsClient }): JSX.Element
                     vengeanceTimerPlugin.setConfig({ enabled });
                 },
             },
+            {
+                id: "poison_timer",
+                name: "Poison Timer",
+                description: "Shows poison or venom duration and type.",
+                enabled: poisonTimerState.config.enabled,
+                setEnabled: (enabled: boolean) => {
+                    poisonTimerPlugin.setConfig({ enabled });
+                },
+            },
+            {
+                id: "freeze_timer",
+                name: "Freeze Timer",
+                description: "Shows the spell that froze you and its duration.",
+                enabled: freezeTimerState.config.enabled,
+                setEnabled: (enabled: boolean) => {
+                    freezeTimerPlugin.setConfig({ enabled });
+                },
+            },
         ],
         [
             hdPlugin,
@@ -746,6 +793,10 @@ function PluginHubPanel({ osrsClient }: { osrsClient: OsrsClient }): JSX.Element
             tileMarkersState.config.enabled,
             vengeanceTimerPlugin,
             vengeanceTimerState.config.enabled,
+            poisonTimerPlugin,
+            poisonTimerState.config.enabled,
+            freezeTimerPlugin,
+            freezeTimerState.config.enabled,
         ],
     );
 

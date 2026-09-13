@@ -273,6 +273,8 @@ import { createBrowserTileMarkersPluginPersistence } from "./plugins/tilemarkers
 import { TileMarkersPlugin } from "./plugins/tilemarkers/TileMarkersPlugin";
 import { createBrowserVengeanceTimerPluginPersistence } from "./plugins/vengeancetimer/BrowserVengeanceTimerPluginPersistence";
 import { VengeanceTimerPlugin } from "./plugins/vengeancetimer/VengeanceTimerPlugin";
+import { createBrowserStatusTimerPluginPersistence } from "./plugins/statustimer/BrowserStatusTimerPluginPersistence";
+import { StatusTimerPlugin } from "./plugins/statustimer/StatusTimerPlugin";
 import {
     SPLIT_PRIVATE_CHAT_VARP,
     SplitPrivateChatPlugin,
@@ -520,6 +522,8 @@ export class OsrsClient {
     readonly rememberLoginPlugin: RememberLoginPlugin;
     readonly tileMarkersPlugin: TileMarkersPlugin;
     readonly vengeanceTimerPlugin: VengeanceTimerPlugin;
+    readonly poisonTimerPlugin: StatusTimerPlugin;
+    readonly freezeTimerPlugin: StatusTimerPlugin;
     readonly splitPrivateChatPlugin: SplitPrivateChatPlugin;
     readonly clientPlugins: ClientPluginManager = new ClientPluginManager();
     readonly firstPersonPlugin: FirstPersonPlugin;
@@ -1075,6 +1079,12 @@ export class OsrsClient {
         );
         this.vengeanceTimerPlugin = new VengeanceTimerPlugin(
             createBrowserVengeanceTimerPluginPersistence("osrs.plugin.vengeance_timer.v1"),
+        );
+        this.poisonTimerPlugin = new StatusTimerPlugin(
+            createBrowserStatusTimerPluginPersistence("osrs.plugin.poison_timer.v1"),
+        );
+        this.freezeTimerPlugin = new StatusTimerPlugin(
+            createBrowserStatusTimerPluginPersistence("osrs.plugin.freeze_timer.v1"),
         );
         this.splitPrivateChatPlugin = new SplitPrivateChatPlugin();
         this.firstPersonPlugin = new FirstPersonPlugin(this);
