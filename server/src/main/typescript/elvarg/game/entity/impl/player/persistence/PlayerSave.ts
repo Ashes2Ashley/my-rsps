@@ -1,7 +1,6 @@
 import { PrayerHandler, PrayerData } from "../../../../content/PrayerHandler";
 import { FightType } from "../../../../content/combat/FightType";
 import { CombatSpells } from "../../../../content/combat/magic/CombatSpells";
-import { Presetable } from "../../../../content/presets/Presetable";
 import { SkillManager, Skills } from "../../../../content/skill/SkillManager";
 import { Player } from "../Player";
 import { Item } from "../../../../model/Item";
@@ -123,7 +122,6 @@ export class PlayerSave {
     private friendsChatTalkRank: number;
     private friendsChatKickRank: number;
     private banks: Map<number, Item[]>;
-    private presets: Presetable[];
     private flags: string[];
 
     public getPasswordHashWithSalt(): string {
@@ -499,14 +497,6 @@ export class PlayerSave {
         this.banks = banks;
     }
 
-    getPresets(): Presetable[] {
-        return this.presets;
-    }
-
-    setPresets(presets: Presetable[]) {
-        this.presets = presets;
-    }
-
     isDiscordLoginReturn(): boolean {
         return this.isDiscordLogin;
     }
@@ -720,10 +710,6 @@ export class PlayerSave {
             }
         }
 
-        if (this.presets != null) {
-            player.setPresets(this.presets);
-        }
-
         const friendList = player.getRelations().getFriendList();
         friendList.length = 0;
         friendList.push(
@@ -853,8 +839,6 @@ export class PlayerSave {
         playerSave.friendsChatEntryRank = relations.getFriendsChatEntryRank();
         playerSave.friendsChatTalkRank = relations.getFriendsChatTalkRank();
         playerSave.friendsChatKickRank = relations.getFriendsChatKickRank();
-
-        playerSave.presets = [...(player.getPresets() ?? [])];
 
         let banks = new Map<number, Item[]>();
 

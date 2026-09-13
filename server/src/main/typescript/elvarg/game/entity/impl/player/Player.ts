@@ -70,7 +70,6 @@ const DEFAULT_AUDIO_SETTINGS: Readonly<Record<number, number>> = {
 };
 
 export class Player extends Mobile {
-    private static readonly MAX_PLAYER_PRESETS = 10;
     getSize(): number {
         return 1;
     }
@@ -108,7 +107,6 @@ export class Player extends Mobile {
     public dialogueManager = new DialogueManager(this);
     // Presets
     private currentPreset: Presetable;
-    public presets: Presetable[] = new Array(Player.MAX_PLAYER_PRESETS);
 
     public username: string;
     private passwordHashWithSalt: string;
@@ -1427,14 +1425,6 @@ export class Player extends Mobile {
 
     public setPlaceholders(placeholders: boolean): void {
         this.placeholders = placeholders;
-    }
-
-    public getPresets(): Presetable[] {
-        return this.presets;
-    }
-
-    public setPresets(sets: Presetable[]): void {
-        this.presets = sets;
     }
 
     public getCurrentPreset(): Presetable {

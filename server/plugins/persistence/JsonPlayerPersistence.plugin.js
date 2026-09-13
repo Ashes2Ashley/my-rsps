@@ -249,7 +249,6 @@ class JsonPlayerPersistence extends PlayerPersistence {
         appearance: [],
         friends: [],
         ignores: [],
-        presets: [],
         flags: [],
       },
       parsed

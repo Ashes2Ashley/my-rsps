@@ -244,7 +244,6 @@ class SqlitePlayerPersistence extends PlayerPersistence {
         appearance: [],
         friends: [],
         ignores: [],
-        presets: [],
         flags: [],
       },
       parsed
