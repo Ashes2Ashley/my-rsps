@@ -106,7 +106,7 @@ class ProcessPendingMovementActionNode {
       return "running";
     }
 
-    const dispatchResult = dispatchMovementRequest(player, request);
+    const dispatchResult = dispatchMovementRequest(player, request, state);
     const latestRequest = peekMovementRequest(player);
     // Path dispatch can emit path-blocked hooks which enqueue a replacement
     // movement request in the same tick. Only clear if nothing replaced it.

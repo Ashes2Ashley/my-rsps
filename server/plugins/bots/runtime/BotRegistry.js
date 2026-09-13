@@ -4,6 +4,7 @@ const {
   getEnabledWildernessHotspots,
   getWildernessHotspot,
   createHotspotAnchorLocation,
+  isOutsideWildernessHotspots,
 } = require("../behaviours/pvp/WildernessHotspotRegistry");
 const {
   ATTR_BOT_PVP_PROFILE_ID,
@@ -297,25 +298,6 @@ function createBotRegistry(options) {
     );
   }
 
-  function areasOverlap(area, bounds) {
-    if (!area || !bounds) {
-      return false;
-    }
-    return (
-      Number(area.z ?? 0) === Number(bounds.z ?? 0) &&
-      area.minX <= bounds.maxX &&
-      area.maxX >= bounds.minX &&
-      area.minY <= bounds.maxY &&
-      area.maxY >= bounds.minY
-    );
-  }
-
-  function getHotspotsForRegion(regionBounds) {
-    return getEnabledWildernessHotspots()
-      .filter((hotspot) => areasOverlap(hotspot?.area, regionBounds))
-      .sort((a, b) => a.id.localeCompare(b.id));
-  }
-
   function getRegionKeyForLocation(location) {
     if (!location) {
       return null;
@@ -406,19 +388,15 @@ function createBotRegistry(options) {
       if (!regionBounds) {
         continue;
       }
-      const hotspots = getHotspotsForRegion(regionBounds);
       const desiredCount = desiredCountsByRegion.get(region.key) ?? 0;
       for (let slot = 0; slot < desiredCount; slot += 1) {
         if (plans.length >= desiredTotal) {
           break;
         }
-        const hotspot = hotspots.length > 0
-          ? hotspots[(slot + region.regionX + region.regionY) % hotspots.length]
-          : null;
         plans.push({
           regionKey: region.key,
           regionBounds,
-          hotspotId: hotspot?.id ?? null,
+          hotspotId: null,
         });
       }
     }
@@ -514,10 +492,9 @@ function createBotRegistry(options) {
       assignedHotspotId != null ? reserveHotspotSpawnIndex(assignedHotspotId) : -1;
     const hotspotSpawn =
       assignedHotspotId != null ? createHotspotSpawn(assignedHotspotId, hotspotSpawnIndex) : null;
-    const botSpawn =
-      hotspotSpawn ??
-      createWildernessRoamerSpawn(spawn, assignedBounds, randomInRange(0, 1_000_000_000)) ??
-      anchorFallbackForBounds(assignedBounds, spawn);
+    const botSpawn = assignedHotspotId != null
+      ? hotspotSpawn
+      : createWildernessRoamerSpawn(spawn, assignedBounds, randomInRange(0, 1_000_000_000));
     if (!botSpawn) {
       return false;
     }
@@ -536,9 +513,7 @@ function createBotRegistry(options) {
       if (assignedHotspotId != null) {
         const respawnIndex = reserveHotspotSpawnIndex(assignedHotspotId);
         const respawnTile = createHotspotSpawn(assignedHotspotId, respawnIndex);
-        if (respawnTile) {
-          return respawnTile;
-        }
+        return respawnTile ?? botSpawn.clone();
       }
       return (
         createWildernessRoamerSpawn(spawn, assignedBounds, randomInRange(0, 1_000_000)) ??
@@ -1004,22 +979,11 @@ function createBotRegistry(options) {
       const offsetX = tileIndex % width;
       const offsetY = Math.floor(tileIndex / width);
       const candidate = new Location(minX + offsetX, minY + offsetY, z);
-      if (!RegionManager.blocked(candidate, null)) {
+      if (Wilderness.isInLocation(candidate) && isOutsideWildernessHotspots(candidate) && !RegionManager.blocked(candidate, null)) {
         return candidate;
       }
     }
-    return baseSpawn.clone().setX(minX).setY(minY).setZ(z);
-  }
-
-  function anchorFallbackForBounds(bounds, fallbackLocation) {
-    if (!bounds || !fallbackLocation) {
-      return fallbackLocation?.clone?.() ?? null;
-    }
-    return fallbackLocation
-      .clone()
-      .setX(Math.floor(bounds.minX ?? fallbackLocation.getX()))
-      .setY(Math.floor(bounds.minY ?? fallbackLocation.getY()))
-      .setZ(Math.floor(bounds.z ?? fallbackLocation.getZ()));
+    return null;
   }
 
   function reserveHotspotSpawnIndex(hotspotId) {
