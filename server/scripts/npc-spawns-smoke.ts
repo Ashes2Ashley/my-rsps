@@ -30,8 +30,17 @@ async function main() {
     assert.equal(banker.getRadius(), 0);
     assert(World.isNpcOccupyingTile(banker.getPosition()));
 
-    const first = NpcSpawnDefinition.all()[0];
-    assert.equal(first.getRadius(), 5);
+    const fishingSpots = NpcSpawnDefinition.all().filter((spawn) =>
+        /fishing spot/i.test(spawn.getDescription())
+    );
+    assert(fishingSpots.length > 0);
+    assert(fishingSpots.every((spawn) => spawn.getRadius() === 0));
+
+    const bird = NpcSpawnDefinition.all().find(
+        (spawn) => spawn.getId() === 5241 && spawn.getPosition().getX() === 2696,
+    );
+    assert(bird);
+    assert.equal(bird.getRadius(), 5);
     console.info("npc spawn config loaded into spatial buckets");
 }
 
