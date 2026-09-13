@@ -200,9 +200,9 @@ function hotspotContainsLocation(hotspot, location) {
   if (!hotspot?.area || !location) {
     return false;
   }
-  const x = location.getX?.();
-  const y = location.getY?.();
-  const z = location.getZ?.();
+  const x = location.getX?.() ?? location.x;
+  const y = location.getY?.() ?? location.y;
+  const z = location.getZ?.() ?? location.z;
   if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) {
     return false;
   }
@@ -222,6 +222,10 @@ function createHotspotAnchorLocation(hotspot) {
   return new Location(hotspot.anchor.x, hotspot.anchor.y, hotspot.anchor.z ?? 0);
 }
 
+function isOutsideWildernessHotspots(location) {
+  return !getEnabledWildernessHotspots().some((hotspot) => hotspotContainsLocation(hotspot, location));
+}
+
 module.exports = {
   WILDERNESS_HOTSPOT_IDS,
   WILDERNESS_HOTSPOTS,
@@ -229,5 +233,6 @@ module.exports = {
   getEnabledWildernessHotspots,
   getWildernessHotspot,
   hotspotContainsLocation,
+  isOutsideWildernessHotspots,
   listWildernessHotspots,
 };

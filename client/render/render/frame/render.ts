@@ -733,6 +733,11 @@ export function render(host: WebGLOsrsRendererHost, time: number, deltaTime: num
 
         profiler.startPhase("roof");
         host.roofPlaneLimit = host.computeFrameRoofPlaneLimit();
+        host.osrsClient.clientPlugins.beforeSceneRender(host, () => {
+            host.renderOpaqueActorPass(playerDataTextureIndex, playerDataTexture);
+            host.renderTransparentNpcPass(npcDataTextureIndex, npcDataTexture);
+            host.renderTransparentPlayerPass(playerDataTextureIndex, playerDataTexture);
+        });
         profiler.endPhase();
 
         let opaqueIndices = 0;

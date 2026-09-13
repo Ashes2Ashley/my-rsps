@@ -179,7 +179,8 @@ const BOT_PRESET_GROUPS = Object.freeze([
 
 function selectBotPreset(state, rng = Math.random) {
   const pvp = state?.pvp;
-  if (pvp?.presetPoolEnabled !== true) {
+  // F2P assignments must use their generated F2P gear, including after respawn.
+  if (pvp?.presetPoolEnabled !== true || pvp.loadoutId?.startsWith("f2p_")) {
     return null;
   }
   const group =

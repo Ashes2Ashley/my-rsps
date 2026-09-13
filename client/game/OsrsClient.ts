@@ -260,6 +260,7 @@ import { PlayerMovementSync } from "./movement/PlayerMovementSync";
 import { NpcInstanceFlushController } from "./npc/NpcInstanceFlushController";
 import { ClientPluginManager } from "./plugins/ClientPluginManager";
 import { FirstPersonPlugin } from "./plugins/firstperson/FirstPersonPlugin";
+import { HdPlugin } from "./plugins/hd/HdPlugin";
 import { createBrowserGroundItemsPluginPersistence } from "./plugins/grounditems/BrowserGroundItemsPluginPersistence";
 import { GroundItemsPlugin } from "./plugins/grounditems/GroundItemsPlugin";
 import { createBrowserInteractHighlightPluginPersistence } from "./plugins/interacthighlight/BrowserInteractHighlightPluginPersistence";
@@ -522,6 +523,7 @@ export class OsrsClient {
     readonly splitPrivateChatPlugin: SplitPrivateChatPlugin;
     readonly clientPlugins: ClientPluginManager = new ClientPluginManager();
     readonly firstPersonPlugin: FirstPersonPlugin;
+    readonly hdPlugin = new HdPlugin();
     readonly tileHighlightManager: TileHighlightManager = new TileHighlightManager();
     private sidebarPluginVisibility: Required<SidebarPluginVisibilityOptions> = {
         groundItemsEnabled: true,
@@ -1077,6 +1079,7 @@ export class OsrsClient {
         this.splitPrivateChatPlugin = new SplitPrivateChatPlugin();
         this.firstPersonPlugin = new FirstPersonPlugin(this);
         this.clientPlugins.add(this.firstPersonPlugin);
+        this.clientPlugins.add(this.hdPlugin);
         this.syncSidebarPlugins(true);
         if (new URLSearchParams(window.location.search).has("edit")) {
             this.loadEditModePlugin();

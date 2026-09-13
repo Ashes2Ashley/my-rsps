@@ -102,7 +102,7 @@ function resolveLoadoutId(config, hotspotId) {
     }
     return true;
   });
-  return weightedPick(filtered.length > 0 ? filtered : configured) ?? fallbackIds[0];
+  return weightedPick(filtered) ?? hotspot?.allowedLoadouts?.[0] ?? weightedPick(configured) ?? fallbackIds[0];
 }
 
 function resolveRoamingLoadoutId(config, options = {}) {
@@ -134,7 +134,7 @@ function resolveAlternativeLoadoutId(config, hotspotId, currentLoadoutId) {
   if (alternatives.length > 0) {
     return weightedPick(alternatives) ?? currentLoadoutId ?? alternatives[0]?.value ?? null;
   }
-  return weightedPick(filtered.length > 0 ? filtered : configured) ?? currentLoadoutId ?? fallbackIds[0];
+  return weightedPick(filtered) ?? hotspot?.allowedLoadouts?.[0] ?? weightedPick(configured) ?? currentLoadoutId ?? fallbackIds[0];
 }
 
 function buildRoamingPvpMetadata({

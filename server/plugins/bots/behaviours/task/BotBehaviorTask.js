@@ -1135,6 +1135,7 @@ class BotBehaviorTask extends Task {
     if (state.mode !== this.behaviorMode?.PVP) {
       return false;
     }
+    if (pvp.retreat) return false;
     if (this.isInCombat(player)) {
       return false;
     }
@@ -1521,6 +1522,10 @@ class BotBehaviorTask extends Task {
     // are cleared after death so the bot resumes normal autonomous behavior.
     if (deadOrDying) {
       if (!state.deathResetApplied) {
+        if (state.pvp?.retreat) {
+          player.setAutoRetaliate(state.pvp.retreat.autoRetaliate);
+          state.pvp.retreat = null;
+        }
         if (state?.pvp) {
           state.pvp.appliedBoostProfileId = null;
         }
@@ -1548,6 +1553,8 @@ class BotBehaviorTask extends Task {
       state.deathResetApplied = false;
       this.scheduleNextDecision(state, nowMs);
     }
+
+    if (state.pvp?.retreat) return;
 
     const recruitOwnerUsername = player.getAttribute?.(ATTR_RECRUIT_OWNER_USERNAME);
     if (recruitOwnerUsername) {

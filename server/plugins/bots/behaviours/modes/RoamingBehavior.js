@@ -7,6 +7,7 @@ const {
 } = require("../navigation/BotNavigation");
 const {
   getWildernessHotspot,
+  isOutsideWildernessHotspots,
 } = require("../pvp/WildernessHotspotRegistry");
 const {
   handlePlayerAttackReaction,
@@ -59,7 +60,7 @@ class RoamingBehavior {
   }
 
   getAssignedHotspot(state) {
-    const hotspotId = null;
+    const hotspotId = state?.pvp?.hotspotId;
     return hotspotId ? getWildernessHotspot(hotspotId) : null;
   }
 
@@ -110,6 +111,7 @@ class RoamingBehavior {
         return false;
       }
       return (
+        (hotspot || isOutsideWildernessHotspots(target)) &&
         target.z === area.z &&
         target.x >= area.minX &&
         target.x <= area.maxX &&
@@ -418,6 +420,10 @@ class RoamingBehavior {
     let target = state.roaming.target;
     let chooseOptions = null;
     if (target) {
+      const acceptHotspotTarget = this.buildHotspotTargetConstraint(state);
+      if (acceptHotspotTarget && !acceptHotspotTarget(target)) {
+        target = null;
+      }
       const constraint = this.buildRoamingTargetConstraint(player, state, null, nowMs);
       if (typeof constraint?.acceptTarget === "function") {
         chooseOptions = { acceptTarget: constraint.acceptTarget };
@@ -447,7 +453,7 @@ class RoamingBehavior {
     }
 
     if (!isAtTarget(player, target)) {
-      queueRouteAndFlagAppearance(player, target.x, target.y);
+      queueRouteAndFlagAppearance(player, target.x, target.y, { state });
       return "success";
     }
 

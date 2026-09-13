@@ -1,6 +1,4 @@
 const { GameConstants } = require("../../../src/main/typescript/elvarg/game/GameConstants");
-const { Wilderness } = require("../../../src/main/typescript/elvarg/game/content/wilderness/Wilderness");
-const { Location } = require("../../../src/main/typescript/elvarg/game/model/Location");
 const { Misc } = require("../../../src/main/typescript/elvarg/util/Misc");
 const { BotController } = require("../../../src/main/typescript/elvarg/game/bot/BehaviorTree");
 const { createTraversalAssist } = require("../lib/TraversalAssist");
@@ -54,41 +52,6 @@ const {
   applyGeneratedPvpLoadout,
 } = require("../behaviours/policies/PvpLoadoutPolicy");
 
-const WILDERNESS_RESPAWN_TILE_PROBE_LIMIT = 64;
-
-function chooseWalkableTileInBounds(regionManager, roamBounds, fallbackLocation) {
-  if (
-    !roamBounds ||
-    !Number.isFinite(roamBounds.minX) ||
-    !Number.isFinite(roamBounds.maxX) ||
-    !Number.isFinite(roamBounds.minY) ||
-    !Number.isFinite(roamBounds.maxY)
-  ) {
-    return fallbackLocation ?? null;
-  }
-
-  const minX = Math.floor(roamBounds.minX);
-  const maxX = Math.floor(roamBounds.maxX);
-  const minY = Math.floor(roamBounds.minY);
-  const maxY = Math.floor(roamBounds.maxY);
-  const z = Math.floor(roamBounds.z ?? fallbackLocation?.getZ?.() ?? 0);
-  for (let attempt = 0; attempt < WILDERNESS_RESPAWN_TILE_PROBE_LIMIT; attempt += 1) {
-    const candidate = new Location(
-      randomInRange(minX, maxX),
-      randomInRange(minY, maxY),
-      z
-    );
-    if (
-      Wilderness.isInLocation(candidate) &&
-      !regionManager.blocked(candidate, null)
-    ) {
-      return candidate;
-    }
-  }
-
-  return fallbackLocation ?? null;
-}
-
 function collectTrackedObjectIdsFromModes({ modeHandlers, api }) {
   const objectIds = new Set();
   for (const mode of Object.keys(modeHandlers ?? {})) {
@@ -116,7 +79,6 @@ function collectTrackedObjectIdsFromModes({ modeHandlers, api }) {
 function bootPlayerBotsRuntime(options = {}) {
   const api = options.api;
   const botApi = options.botApi ?? api;
-  const RegionManager = botApi.getRegionManager();
   const TaskManager = botApi.getTaskManager();
   const World = botApi.getWorld();
   const config = options.config ?? {};
@@ -286,19 +248,11 @@ function bootPlayerBotsRuntime(options = {}) {
             return false;
           }
           if (isPvpOnlyBotState(state)) {
-            const roamBounds = state?.roaming?.roamBounds ?? null;
-            const respawnTile = chooseWalkableTileInBounds(
-              RegionManager,
-              roamBounds,
-              player.getLocation?.()?.clone?.() ?? null
-            );
-            if (respawnTile) {
-              player.moveTo(respawnTile);
-            }
-            const nextMetadata = buildRoamingPvpMetadata({
-              config,
-              excludeF2p: true,
-            });
+            // PlayerDeath already uses the registry's assigned respawn resolver.
+            const hotspotId = state.pvp.hotspotId;
+            const nextMetadata = hotspotId
+              ? buildHotspotPvpMetadata({ config, hotspotId })
+              : buildRoamingPvpMetadata({ config, excludeF2p: true });
             assignPvpMetadata(state, {
               config,
               metadata: nextMetadata,

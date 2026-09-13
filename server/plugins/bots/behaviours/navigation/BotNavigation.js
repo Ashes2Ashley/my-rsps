@@ -1,5 +1,6 @@
 const { Flag } = require("../../../../src/main/typescript/elvarg/game/model/Flag");
 const { PathFinder } = require("../../../../src/main/typescript/elvarg/game/model/movement/path/PathFinder");
+const { isOutsideWildernessHotspots } = require("../pvp/WildernessHotspotRegistry");
 
 const MAX_ROUTE_SEGMENT_TILES = 24;
 const PATH_BLOCKED_LOG_THROTTLE_MS = 2500;
@@ -137,9 +138,10 @@ function chooseNextTarget(player, state, botWalkRadius, options = {}) {
   const currentX = player.getLocation().getX();
   const currentY = player.getLocation().getY();
   const previousTarget = state.roaming?.target;
-  const acceptTarget =
-    typeof options.acceptTarget === "function" ? options.acceptTarget : null;
   const pvpOnly = isPvpOnlyState(state);
+  const acceptTarget = (target) =>
+    (typeof options.acceptTarget !== "function" || options.acceptTarget(target) === true) &&
+    (!pvpOnly || !!state?.pvp?.hotspotId || isOutsideWildernessHotspots(target));
   const radiusSq = botWalkRadius * botWalkRadius;
   const maxAttempts = 24;
 
@@ -343,6 +345,7 @@ function requestMovement(player, targetX, targetY, options = {}) {
     maxRouteSegmentTiles,
     basicPather,
     pvpOnly,
+    state: options.state,
     nextDispatchAtMs,
     noPathAttempts: 0,
     sameSegmentNoPathAttempts: 0,
@@ -369,7 +372,7 @@ function clearMovementRequest(player) {
   pendingMovementByPlayer.delete(player);
 }
 
-function dispatchMovementRequest(player, request) {
+function dispatchMovementRequest(player, request, state = request?.state) {
   if (!player || !request) {
     return null;
   }
@@ -410,10 +413,30 @@ function dispatchMovementRequest(player, request) {
       };
     }
   }
-  const steps =
+  let steps =
     request.basicPather === true
       ? calculateWalkRoute(player, segmentTarget.x, segmentTarget.y)
       : calculateStrictWalkRoute(player, segmentTarget.x, segmentTarget.y);
+  if (isPvpOnlyState(state) && !state?.pvp?.hotspotId) {
+    // Check intermediate tiles too: the queue can contain distant checkpoints.
+    const queue = player.getMovementQueue();
+    let x = player.getLocation().getX();
+    let y = player.getLocation().getY();
+    route: for (const point of queue.pointsReturn()) {
+      const destination = point.position;
+      while (x !== destination.getX() || y !== destination.getY()) {
+        x += Math.sign(destination.getX() - x);
+        y += Math.sign(destination.getY() - y);
+        if (!isOutsideWildernessHotspots({ x, y, z: destination.getZ() })) {
+          queue.reset();
+          steps = 0;
+          if (state.roaming) state.roaming.target = null;
+          clearMovementRequest(player);
+          break route;
+        }
+      }
+    }
+  }
   const hasRoute = Number.isFinite(steps) ? steps > 0 : false;
   request.lastSegmentX = segmentTarget.x;
   request.lastSegmentY = segmentTarget.y;

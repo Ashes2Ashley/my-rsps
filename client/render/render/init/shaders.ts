@@ -195,14 +195,16 @@ export async function initShaders(host: WebGLOsrsRendererHost, ): Promise<Progra
         // Create FXAA separately so a Metal/ANGLE link failure on iOS Safari
         // cannot reject the entire program batch (player/NPC/etc.).
         const programs = await host.app.createPrograms(
-            createMainProgram(false, supportsMultiDraw),
-            createMainProgram(true, supportsMultiDraw),
-            createNpcProgram(true, supportsMultiDraw),
-            createNpcProgram(false, supportsMultiDraw),
-            createProjectileProgram(true, supportsMultiDraw),
-            createProjectileProgram(false, supportsMultiDraw),
-            createPlayerProgram(true, supportsMultiDraw),
-            createPlayerProgram(false, supportsMultiDraw),
+            ...[
+                createMainProgram(false, supportsMultiDraw),
+                createMainProgram(true, supportsMultiDraw),
+                createNpcProgram(true, supportsMultiDraw),
+                createNpcProgram(false, supportsMultiDraw),
+                createProjectileProgram(true, supportsMultiDraw),
+                createProjectileProgram(false, supportsMultiDraw),
+                createPlayerProgram(true, supportsMultiDraw),
+                createPlayerProgram(false, supportsMultiDraw),
+            ].map((source) => host.osrsClient.clientPlugins.transformSceneProgram(source)),
             FRAME_PROGRAM,
             // hover line program (added at end)
             [
@@ -236,6 +238,7 @@ export async function initShaders(host: WebGLOsrsRendererHost, ): Promise<Progra
             uiTabsProgram,
         ] = programs;
         host.mainProgram = mainProgram;
+        host.osrsClient.clientPlugins.sceneProgramsReady(host, programs.slice(0, 8));
         host.mainAlphaProgram = mainAlphaProgram;
         host.npcProgram = npcProgram;
         host.npcProgramOpaque = npcProgramOpaque;

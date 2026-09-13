@@ -664,8 +664,18 @@ function PluginHubPanel({ osrsClient }: { osrsClient: OsrsClient }): JSX.Element
         vengeanceTimerGetSnapshot,
     );
 
+    const hdPlugin = osrsClient.hdPlugin;
+    const hdEnabled = useSyncExternalStore(hdPlugin.subscribe, hdPlugin.getEnabled, hdPlugin.getEnabled);
+
     const pluginToggles = useMemo<PluginHubToggle[]>(
         () => [
+            {
+                id: "hd",
+                name: "117 HD",
+                description: "HD lighting, environments and shadows. Keeps the existing water rendering.",
+                enabled: hdEnabled,
+                setEnabled: hdPlugin.setEnabled,
+            },
             {
                 id: "ground_items",
                 name: "Ground Items",
@@ -722,6 +732,8 @@ function PluginHubPanel({ osrsClient }: { osrsClient: OsrsClient }): JSX.Element
             },
         ],
         [
+            hdPlugin,
+            hdEnabled,
             groundItemsPlugin,
             groundItemsState.config.enabled,
             interactHighlightPlugin,

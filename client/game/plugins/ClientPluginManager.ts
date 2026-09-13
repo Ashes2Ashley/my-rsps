@@ -1,5 +1,8 @@
 import type { Camera } from "../Camera";
 import type { InputManager } from "../InputManager";
+import type { DrawCall, Program } from "picogl";
+import type { ProgramSource } from "../../render/shaders/ShaderUtil";
+import type { WebGLOsrsRenderer } from "../../render/WebGLOsrsRenderer";
 
 export type CameraInputContext = {
     camera: Camera;
@@ -15,6 +18,11 @@ export type CameraFollowContext = {
 };
 
 export interface ClientPlugin {
+    transformSceneProgram?(source: ProgramSource): ProgramSource;
+    sceneProgramsReady?(renderer: WebGLOsrsRenderer, programs: Program[]): void;
+    beforeSceneRender?(renderer: WebGLOsrsRenderer, drawActors: () => void): void;
+    configureSceneDrawCall?(renderer: WebGLOsrsRenderer, drawCall: DrawCall): void;
+    disposeRenderer?(renderer: WebGLOsrsRenderer): void;
     handleCameraKeys?(context: CameraInputContext): boolean;
     handleCameraMouse?(context: CameraInputContext): boolean;
     handleCameraScroll?(context: CameraInputContext): boolean;
@@ -28,6 +36,27 @@ export class ClientPluginManager {
 
     add(plugin: ClientPlugin): void {
         this.plugins.push(plugin);
+    }
+
+    transformSceneProgram(source: ProgramSource): ProgramSource {
+        for (const plugin of this.plugins) source = plugin.transformSceneProgram?.(source) ?? source;
+        return source;
+    }
+
+    sceneProgramsReady(renderer: WebGLOsrsRenderer, programs: Program[]): void {
+        for (const plugin of this.plugins) plugin.sceneProgramsReady?.(renderer, programs);
+    }
+
+    beforeSceneRender(renderer: WebGLOsrsRenderer, drawActors: () => void): void {
+        for (const plugin of this.plugins) plugin.beforeSceneRender?.(renderer, drawActors);
+    }
+
+    configureSceneDrawCall(renderer: WebGLOsrsRenderer, drawCall: DrawCall): void {
+        for (const plugin of this.plugins) plugin.configureSceneDrawCall?.(renderer, drawCall);
+    }
+
+    disposeRenderer(renderer: WebGLOsrsRenderer): void {
+        for (const plugin of this.plugins) plugin.disposeRenderer?.(renderer);
     }
 
     handleCameraKeys(context: CameraInputContext): boolean {

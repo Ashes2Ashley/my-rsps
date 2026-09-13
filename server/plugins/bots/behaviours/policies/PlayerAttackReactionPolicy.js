@@ -128,6 +128,8 @@ function handlePlayerAttackReaction({
     return false;
   }
 
+  if (state.pvp?.retreat) return true;
+
   if (isPvpOnlyBotState(state)) {
     if (state.mode !== behaviorMode.PVP) {
       setModePvp(

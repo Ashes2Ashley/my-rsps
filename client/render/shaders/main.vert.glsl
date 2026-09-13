@@ -118,7 +118,9 @@ void main() {
     vec2 interpPos = modelInfo.tilePos * vec2(when_eq(modelInfo.contourGround, CONTOUR_GROUND_CENTER_TILE))
             + localPos.xz * vec2(when_eq(modelInfo.contourGround, CONTOUR_GROUND_VERTEX));
     localPos.y -= float(modelInfo.height);
-    localPos.y -= getHeightInterp(interpPos, modelInfo.plane) * when_neq(modelInfo.contourGround, CONTOUR_GROUND_NONE);
+    if (modelInfo.contourGround < CONTOUR_GROUND_NONE) {
+        localPos.y -= getHeightInterp(interpPos, modelInfo.plane);
+    }
 
     localPos /= 128.0;
 
