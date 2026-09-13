@@ -193,6 +193,9 @@ class DitchTraversalService {
     }
     const objectLoc = traversalObject.getLocation();
     const objectY = objectLoc.getY();
+    if (state.pvp?.retreat && player.getLocation().getY() > objectY) {
+      return false;
+    }
     if (!this.isRoamingCrossProximitySatisfied(player, state, objectY)) {
       return false;
     }
@@ -221,6 +224,8 @@ class DitchTraversalService {
 
     player.getMovementQueue().walkToObject(traversalObject, {
       execute: () => {
+        // A previously queued crossing may reach the ditch after retreat begins.
+        if (state.pvp?.retreat && player.getLocation().getY() > objectY) return;
         const executedAt = Date.now();
         const currentTraversalTarget =
           this.getTraversalTarget(state) ?? traversalTargetSnapshot;

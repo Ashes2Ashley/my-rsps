@@ -48,8 +48,6 @@ function scheduleReviewTimers(state, nowMs) {
     nowMs + randomInRange(profile.prayerReviewMs.min, profile.prayerReviewMs.max);
   scheduleSpecReview(state, nowMs);
   scheduleFreezeReview(state, nowMs);
-  state.pvp.nextEscapeReviewAt =
-    nowMs + randomInRange(profile.targetReviewMs.min, profile.targetReviewMs.max);
   return true;
 }
 

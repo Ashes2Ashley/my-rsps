@@ -124,7 +124,7 @@ function createPvpBehaviorState() {
     nextPrayerReviewAt: 0,
     nextSpecReviewAt: 0,
     nextFreezeReviewAt: 0,
-    nextEscapeReviewAt: 0,
+    retreat: null,
     lastFreezeAt: 0,
     lastTeleblockAt: 0,
     lastDamageTakenAt: 0,
@@ -192,7 +192,7 @@ function clearPvpBehaviorState(state) {
   state.pvp.nextPrayerReviewAt = 0;
   state.pvp.nextSpecReviewAt = 0;
   state.pvp.nextFreezeReviewAt = 0;
-  state.pvp.nextEscapeReviewAt = 0;
+  state.pvp.retreat = null;
   state.pvp.lastFreezeAt = 0;
   state.pvp.lastTeleblockAt = 0;
   state.pvp.lastDamageTakenAt = 0;
@@ -369,6 +369,11 @@ function clearAllBehaviorStates(state) {
 }
 
 function restoreSuppressedAutoRetaliate(player, state, nextMode) {
+  if (player && state?.pvp?.retreat) {
+    player.setAutoRetaliate(state.pvp.retreat.autoRetaliate);
+    state.pvp.retreat = null;
+  }
+
   if (
     !player ||
     !state ||
