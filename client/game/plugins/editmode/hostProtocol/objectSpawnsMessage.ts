@@ -25,5 +25,15 @@ export function parseObjectSpawns(contents: string): ObjectSpawn[] {
 }
 
 export function formatObjectSpawns(spawns: readonly ObjectSpawn[]): string {
-    return spawns.length ? "[\n" + spawns.map((spawn) => "  " + JSON.stringify(spawn)).join(",\n") + "\n]\n" : "[]\n";
+    return spawns.length ? "[\n" + spawns.map((spawn) => "  " + formatJsonLine(spawn)).join(",\n") + "\n]\n" : "[]\n";
+}
+
+/** Space JSON punctuation without changing punctuation inside strings. */
+export function formatJsonLine(value: unknown): string {
+    return JSON.stringify(value).replace(/"(?:\\.|[^"\\])*"|\{\}|[{},:]/g, (token) => {
+        if (token === "{") return "{ ";
+        if (token === "}") return " }";
+        if (token === "," || token === ":") return token + " ";
+        return token;
+    });
 }
