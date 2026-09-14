@@ -14,7 +14,7 @@ export class PasswordUtil {
 
     public static async passwordsMatch(plainTextPassword: string, passwordHashWithSalt: string): Promise<boolean> {
         const [salt, hashHex] = passwordHashWithSalt.split(":");
-        if (!salt || !hashHex) return false;
+        if (!/^[0-9a-f]{32}$/i.test(salt) || !/^[0-9a-f]{128}$/i.test(hashHex)) return false;
 
         const hash = Buffer.from(hashHex, "hex");
         const candidate = (await scryptAsync(plainTextPassword, salt, hash.length)) as Buffer;

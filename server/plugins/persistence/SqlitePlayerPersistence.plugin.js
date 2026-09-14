@@ -16,7 +16,7 @@ const { PlayerRights } = require("../../src/main/typescript/elvarg/game/model/ri
 const { Misc } = require("../../src/main/typescript/elvarg/util/Misc");
 
 function legacyJsonImportEnabled() {
-  const value = String(process.env.PLAYER_SAVE_IMPORT_LEGACY_JSON ?? "1")
+  const value = String(process.env.PLAYER_SAVE_IMPORT_LEGACY_JSON ?? "0")
     .trim()
     .toLowerCase();
   return value !== "0" && value !== "false" && value !== "off" && value !== "no";
