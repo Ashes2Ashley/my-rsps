@@ -78,6 +78,13 @@ class ClanRecruitActionNode {
       player.setFollowing?.(assistTarget);
       player.setMobileInteraction?.(assistTarget);
       player.setPositionToFace?.(assistTarget.getLocation?.());
+      if (assistTarget.isNpc?.() === true) {
+        if (player.getCombat?.().getTarget?.() !== assistTarget) {
+          player.getMovementQueue?.().reset?.();
+          player.getCombat?.().attack?.(assistTarget);
+        }
+        return "running";
+      }
       if (
         state.mode !== this.behaviorMode.PVP ||
         state?.pvp?.targetUsername !== assistTarget.getUsername?.()
@@ -229,6 +236,10 @@ class ClanRecruitActionNode {
       null;
     if (!candidate || candidate === bot || candidate === owner) {
       return null;
+    }
+    if (candidate.isNpc?.() === true) {
+      return candidate.isRegistered?.() === true && (candidate.getHitpoints?.() ?? 0) > 0
+        && (candidate.getPrivateArea?.() ?? null) === (bot.getPrivateArea?.() ?? null) ? candidate : null;
     }
     if (candidate.isPlayer?.() !== true) {
       return null;

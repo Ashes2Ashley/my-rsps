@@ -118,7 +118,10 @@ function resolveClanRecruitCombatTarget(owner) {
   if (!candidate || candidate === owner) {
     return null;
   }
-  if (candidate.isPlayer?.() !== true || candidate.isRegistered?.() !== true) {
+  if (
+    (candidate.isPlayer?.() !== true && candidate.isNpc?.() !== true) ||
+    candidate.isRegistered?.() !== true
+  ) {
     return null;
   }
   if ((candidate.getHitpoints?.() ?? 0) <= 0) {
@@ -186,17 +189,19 @@ function handleClanRecruitAssist({ runtime, behaviorMode, player, target, nowMs,
       (targetUsername && state?.pvp?.targetUsername === targetUsername);
 
     if (!alreadyHelping) {
-      setModePvp(
-        bot,
-        state,
-        target,
-        nowMs,
-        CLAN_ASSIST_DURATION_MS,
-        behaviorMode,
-        { allowInCombatTransition: true }
-      );
+      if (target.isPlayer?.() === true) {
+        setModePvp(
+          bot,
+          state,
+          target,
+          nowMs,
+          CLAN_ASSIST_DURATION_MS,
+          behaviorMode,
+          { allowInCombatTransition: true }
+        );
+      }
       bot.getMovementQueue?.().reset?.();
-    } else if (state?.pvp) {
+    } else if (target.isPlayer?.() === true && state?.pvp) {
       state.pvp.endsAt = Math.max(
         Number(state.pvp.endsAt ?? 0),
         nowMs + CLAN_ASSIST_DURATION_MS
