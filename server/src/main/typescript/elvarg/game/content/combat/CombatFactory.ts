@@ -991,7 +991,15 @@ export class CombatFactory {
             currentTarget.getHitpoints() > 0 &&
             (typeof currentTarget.isRegistered !== "function" || currentTarget.isRegistered());
 
-        if (!hasActiveDifferentTarget) {
+        // In multi-combat, an NPC may change to a player who has just attacked it.
+        // A single NPC still has one active target and attack sequence at a time.
+        const npcCanRetargetInMulti =
+            target.isNpc() &&
+            attacker.isPlayer() &&
+            AreaManager.inMulti(attacker) &&
+            AreaManager.inMulti(target);
+
+        if (!hasActiveDifferentTarget || npcCanRetargetInMulti) {
             let auto_ret = false;
             if (target.isPlayer()) {
                 auto_ret =
