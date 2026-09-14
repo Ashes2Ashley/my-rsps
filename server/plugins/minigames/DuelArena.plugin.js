@@ -304,6 +304,7 @@ function inCombat(player) {
 }
 function resetState(player) {
   const state = player.getDueling();
+  if (state.getRules().some(Boolean)) player.getPacketSender().sendConfig(286, 0);
   state.setState(DuelState.NONE);
   state.setInteract(null);
   state.getRules().fill(false);
