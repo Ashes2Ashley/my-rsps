@@ -33,6 +33,7 @@ const COINS = ItemIdentifiers.COINS;
 const offers = new WeakMap();
 const completionTimers = new WeakMap();
 const viewing = new WeakMap();
+const searching = new WeakSet();
 
 function validItem(id) {
   if (!Number.isInteger(id) || id <= 0 || id >= CacheDefinitions.getCounts().items) return false;
@@ -138,6 +139,7 @@ function refresh(player, offer) {
 }
 
 function home(player) {
+  closeSearch(player);
   offers.delete(player);
   viewing.delete(player);
   player.setEnteredAmountAction(null);
@@ -148,6 +150,12 @@ function home(player) {
     .sendVarbit(QUANTITY, 1)
     .sendVarbit(PRICE, 1)
     .sendVarbit(SELECTED_SLOT, 0);
+}
+
+function closeSearch(player) {
+  if (!searching.delete(player)) return;
+  player.setEnteredSyntaxAction(null);
+  player.getPacketSender().sendClientScript(138);
 }
 
 function showCompleted(player, slot) {
@@ -171,10 +179,12 @@ function chooseItem(player, offer) {
     if (!active(player, offer)) return;
     const id = Number(input);
     if (!validItem(id)) return;
+    closeSearch(player);
     offer.itemId = id;
     offer.quantity = 1;
     refresh(player, offer);
   } });
+  searching.add(player);
   player.getPacketSender().sendInterfaceScript(750, ["Grand Exchange Item Search", 0, -1, 0]);
 }
 
@@ -403,7 +413,11 @@ module.exports = {
     api.onPlayerLogin(({ player }) => {
       for (const offer of Object.values(completedOffers(player))) scheduleCompletion(player, offer);
     });
+    api.onPlayerProcess(({ player }) => {
+      if (searching.has(player) && player.getInterfaceId() !== GE) closeSearch(player);
+    });
     api.onPlayerLogout(({ player }) => {
+      searching.delete(player);
       for (const timer of completionTimers.get(player) ?? []) clearTimeout(timer);
       completionTimers.delete(player);
     });
