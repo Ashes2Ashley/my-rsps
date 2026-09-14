@@ -879,6 +879,7 @@ export class OsrsClient {
 
     private unsubscribeWidgetEvents?: () => void;
     private pendingInterfaceUpdates = new PendingInterfaceUpdates();
+    private pendingInterfaceOpens = new Map<number, { groupId: number }>();
     private handleWidgetPayload?: (payload: any) => void;
     private unsubscribeNpcInfo?: () => void;
     private unsubscribeCombat?: () => void;
@@ -1245,6 +1246,15 @@ export class OsrsClient {
             }
         }
         this.customInterfaces.onInterfaceOpened(payload.groupId | 0);
+    }
+
+    private cancelPendingInterfaceOpen(targetUid: number): void {
+        const pending = this.pendingInterfaceOpens.get(targetUid | 0);
+        if (!pending) return;
+        this.pendingInterfaceOpens.delete(targetUid | 0);
+        if (![...this.pendingInterfaceOpens.values()].some((entry) => entry.groupId === pending.groupId)) {
+            this.pendingInterfaceUpdates.cancel(pending.groupId);
+        }
     }
 
     private initCustomInterfaces(): void {
@@ -2141,6 +2151,7 @@ export class OsrsClient {
 
         // Clean up click targets when interfaces close to prevent stale/ghost click regions
         this.widgetManager.onInterfaceClose = (groupId) => {
+            this.customInterfaces.onInterfaceClosed(groupId);
             // The click registry is on the WidgetsOverlay's GL canvas, not the main game canvas
             const glCanvas = (this.renderer as any)?.getWidgetsGLCanvas?.();
             if (glCanvas) {
@@ -2395,8 +2406,15 @@ export class OsrsClient {
                         // in the same batch as that open - they would land before the
                         // widgets exist.
                         const pendingGroupId = payload.groupId | 0;
+                        const pendingTargetUid = payload.targetUid | 0;
+                        const pendingOpen = { groupId: pendingGroupId };
+                        this.pendingInterfaceOpens.set(pendingTargetUid, pendingOpen);
                         this.pendingInterfaceUpdates.open(pendingGroupId);
                         void fetchInterfaceDefinition(pendingGroupId).then((definition) => {
+                            if (this.pendingInterfaceOpens.get(pendingTargetUid) !== pendingOpen) {
+                                return;
+                            }
+                            this.pendingInterfaceOpens.delete(pendingTargetUid);
                             if (!definition || !setCustomInterface(definition)) {
                                 console.error(
                                     `[OsrsClient] cannot open group ${pendingGroupId}: it is not in the cache and has no server definition`,
@@ -2415,6 +2433,7 @@ export class OsrsClient {
                 }
             } else if (payload?.action === "close_sub") {
                 const targetUid = Number(payload.targetUid) | 0;
+                this.cancelPendingInterfaceOpen(targetUid);
                 console.log(
                     `[OsrsClient] Server closing sub-interface at widget ${targetUid} (ESC or close button)`,
                 );
@@ -2434,8 +2453,6 @@ export class OsrsClient {
                         this.widgetManager.meslayerContinueWidget = null;
                     }
                 }
-
-                this.customInterfaces.onInterfaceClosed(closingGroupId | 0);
             } else if (payload?.action === "set_text") {
                 const uid = Number(payload.uid) | 0;
                 const text = typeof payload.text === "string" ? payload.text : String(payload.text);
