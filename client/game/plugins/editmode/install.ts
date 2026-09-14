@@ -306,7 +306,7 @@ export function parseEditModeWorldDefinition(value: unknown): EditModeWorldDefin
         const zone = value as Record<string, unknown>;
         if (
             !Array.isArray(zone.tags) ||
-            zone.tags.some((tag) => tag !== "pvp" && tag !== "multi-combat" && tag !== "safe" && tag !== "all-buildings-safe")
+            zone.tags.some((tag) => tag !== "duel" && tag !== "pvp" && tag !== "multi-combat" && tag !== "safe" && tag !== "all-buildings-safe")
         ) {
             throw new Error(`World API zone ${index} has invalid tags`);
         }
@@ -535,7 +535,7 @@ export function installEditMode(client: OsrsClient): EditModePlugin {
         () => {
             const state = plugin.getState();
             return state.world.definition
-                ? { zones: state.world.definition.zones, showPvp: state.config.showPvpZones, showMulti: state.config.showMultiCombatZones, showSafe: state.config.showSafeZones }
+                ? { zones: state.world.definition.zones, showPvp: state.config.showPvpZones, showMulti: state.config.showMultiCombatZones, showDuel: state.config.showDuelZones, showSafe: state.config.showSafeZones }
                 : undefined;
         },
         (index, bounds) => plugin.resizeWorldZone(index, bounds),
@@ -864,8 +864,9 @@ export function installEditMode(client: OsrsClient): EditModePlugin {
             const showPvp = state.config.showPvpZones && zone.tags.includes("pvp");
             const showMulti =
                 state.config.showMultiCombatZones && zone.tags.includes("multi-combat");
+            const showDuel = state.config.showDuelZones && zone.tags.includes("duel");
             const showSafe = state.config.showSafeZones && zone.tags.includes("safe");
-            if (!showPvp && !showMulti && !showSafe) continue;
+            if (!showPvp && !showMulti && !showSafe && !showDuel) continue;
             for (let i = 0; i < renderer.mapManager.visibleMapCount; i++) {
                 const map = renderer.mapManager.visibleMaps[i];
                 if (
@@ -898,6 +899,7 @@ export function installEditMode(client: OsrsClient): EditModePlugin {
                         alpha: ZONE_OVERLAY_ALPHA,
                     });
                 }
+                if (showDuel) rects.push({ minX, maxX, minY, maxY, plane: zone.z, colorRgb: 0xc4b5fd, alpha: ZONE_OVERLAY_ALPHA });
                 if (showMulti) {
                     rects.push({
                         minX,
@@ -916,7 +918,7 @@ export function installEditMode(client: OsrsClient): EditModePlugin {
     };
     const syncWorldZoneLoop = (): void => {
         const state = plugin.getState();
-        const visible = state.config.showPvpZones || state.config.showMultiCombatZones || state.config.showSafeZones;
+        const visible = state.config.showDuelZones || state.config.showPvpZones || state.config.showMultiCombatZones || state.config.showSafeZones;
         if (state.config.active && state.world.definition && visible) {
             if (zoneFrame === undefined) zoneFrame = requestAnimationFrame(drawWorldZones);
             return;

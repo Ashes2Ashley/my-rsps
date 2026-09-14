@@ -39,6 +39,7 @@ const DEFAULT_CONFIG: EditModePluginConfig = Object.freeze({
     showMapIcons: false,
     saveObjectSpawns: false,
     showPvpZones: false,
+    showDuelZones: false,
     showSafeZones: false,
     showMultiCombatZones: false,
     edits: [] as EditModeEdit[],
@@ -224,7 +225,7 @@ export class EditModePlugin {
         if (!definition) return;
         this.world = { ...this.world, definition: { ...definition, zones: [...definition.zones, { ...bounds, z: this.config.heightLevel, tags: [tag] }] } };
         this.worldDefinitionDirty = true;
-        this.setConfig({ [tag === "safe" ? "showSafeZones" : tag === "pvp" ? "showPvpZones" : "showMultiCombatZones"]: true });
+        this.setConfig({ [tag === "duel" ? "showDuelZones" : tag === "safe" ? "showSafeZones" : tag === "pvp" ? "showPvpZones" : "showMultiCombatZones"]: true });
     }
 
     setWorldZoneType(index: number, tag: EditModeWorldDefinition["zones"][number]["tags"][number]): void {
@@ -234,7 +235,7 @@ export class EditModePlugin {
         zones[index] = { ...zones[index], tags: [tag] };
         this.world = { ...this.world, definition: { ...definition, zones } };
         this.worldDefinitionDirty = true;
-        this.setConfig({ [tag === "safe" ? "showSafeZones" : tag === "pvp" ? "showPvpZones" : "showMultiCombatZones"]: true });
+        this.setConfig({ [tag === "duel" ? "showDuelZones" : tag === "safe" ? "showSafeZones" : tag === "pvp" ? "showPvpZones" : "showMultiCombatZones"]: true });
     }
 
     deleteWorldZone(index: number): void {
@@ -1335,6 +1336,7 @@ export class EditModePlugin {
             showMapIcons: input?.showMapIcons ?? DEFAULT_CONFIG.showMapIcons,
             saveObjectSpawns: input?.saveObjectSpawns === true,
             showPvpZones: input?.showPvpZones ?? DEFAULT_CONFIG.showPvpZones,
+            showDuelZones: input?.showDuelZones ?? DEFAULT_CONFIG.showDuelZones,
             showSafeZones: input?.showSafeZones ?? DEFAULT_CONFIG.showSafeZones,
             showMultiCombatZones:
                 input?.showMultiCombatZones ?? DEFAULT_CONFIG.showMultiCombatZones,

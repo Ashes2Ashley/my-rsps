@@ -169,6 +169,7 @@ class EditorChrome {
     private readonly settingsContent: HTMLDivElement;
     private settingsDrawer?: HTMLElement;
     private readonly pvpZonesInput: HTMLInputElement;
+    private readonly duelZonesInput: HTMLInputElement;
     private readonly safeZonesInput: HTMLInputElement;
     private readonly multiCombatZonesInput: HTMLInputElement;
     private readonly unsubscribe: () => void;
@@ -390,6 +391,8 @@ class EditorChrome {
             this.plugin.setConfig({ showMultiCombatZones: checked }),
         );
         this.multiCombatZonesInput = multiCombatZones.input;
+        const duelZones = zoneToggle("Duel", "#c4b5fd", (checked) => this.plugin.setConfig({ showDuelZones: checked }));
+        this.duelZonesInput = duelZones.input;
         const safeZones = zoneToggle("Safe", "#86efac", (checked) => this.plugin.setConfig({ showSafeZones: checked }));
         this.safeZonesInput = safeZones.input;
         this.bottomBar.append(
@@ -398,7 +401,7 @@ class EditorChrome {
             this.heightInput,
             increment,
         );
-        this.bottomBar.append(pvpZones.label, multiCombatZones.label, safeZones.label);
+        this.bottomBar.append(pvpZones.label, multiCombatZones.label, safeZones.label, duelZones.label);
         const refreshMap = document.createElement("button");
         refreshMap.type = "button";
         refreshMap.replaceChildren(createRefreshIcon(), document.createTextNode("Refresh map"));
@@ -566,6 +569,7 @@ class EditorChrome {
         this.toolbar.setDisabled("shops", !state.world.definition);
         this.pvpZonesInput.disabled = !state.world.definition;
         this.safeZonesInput.disabled = !state.world.definition;
+        this.duelZonesInput.checked = state.config.showDuelZones;
         this.safeZonesInput.checked = state.config.showSafeZones;
         this.multiCombatZonesInput.disabled = !state.world.definition;
         this.heightInput.value = String(state.config.heightLevel);

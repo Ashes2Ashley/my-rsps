@@ -57,7 +57,7 @@ export interface EditModeNpcMenuOption {
 /** The on-disk npc_interactions.json object, keyed by NPC type id. */
 export type EditModeNpcInteractions = Record<string, Record<string, unknown>>;
 
-export type EditModeWorldZoneTag = "pvp" | "multi-combat" | "safe" | "all-buildings-safe";
+export type EditModeWorldZoneTag = "duel" | "pvp" | "multi-combat" | "safe" | "all-buildings-safe";
 
 export interface EditModeBoundedWorldZone {
     minX: number;
@@ -147,6 +147,7 @@ export interface EditModePluginConfig {
     /** Draw selectable map-function sprites at their floor tiles. */
     showMapIcons: boolean;
     showPvpZones: boolean;
+    showDuelZones: boolean;
     showSafeZones: boolean;
     showMultiCombatZones: boolean;
     edits: EditModeEdit[];
