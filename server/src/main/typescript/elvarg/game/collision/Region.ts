@@ -5,6 +5,8 @@ export class Region {
     private terrainFile: number;
     private objectFile: number;
     public clips?: number[][][];
+    public roofTiles?: Uint8Array;
+    public static readonly TILE_FLAG_UNDER_ROOF = 0x4;
     private loaded: boolean;
 
     constructor(regionId: number, terrainFile: number, objectFile: number) {
@@ -77,6 +79,12 @@ export class Region {
             clips[height][x - regionAbsX] = new Array(64).fill(0);
         }
         clips[height][x - regionAbsX][y - regionAbsY] &= ~shift;
+    }
+
+    public isUnderRoof(x: number, y: number, plane: number): boolean {
+        if (!Number.isInteger(plane) || plane < 0 || plane > 3) return false;
+        const index = (plane << 12) | ((x & 63) << 6) | (y & 63);
+        return ((this.roofTiles?.[index >> 3] ?? 0) & (1 << (index & 7))) !== 0;
     }
 
     public getLocalPosition(position: Location): number[] {

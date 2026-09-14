@@ -304,7 +304,7 @@ export function parseEditModeWorldDefinition(value: unknown): EditModeWorldDefin
         const zone = value as Record<string, unknown>;
         if (
             !Array.isArray(zone.tags) ||
-            zone.tags.some((tag) => tag !== "pvp" && tag !== "multi-combat" && tag !== "safe")
+            zone.tags.some((tag) => tag !== "pvp" && tag !== "multi-combat" && tag !== "safe" && tag !== "all-buildings-safe")
         ) {
             throw new Error(`World API zone ${index} has invalid tags`);
         }

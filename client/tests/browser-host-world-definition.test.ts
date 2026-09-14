@@ -36,7 +36,7 @@ const parsedWorld = {
     disabledPlugins: ["PvpMode"],
     experienceMultiplier: 5,
 };
-for (const tags of [[], ["pvp"], ["pvp", "multi-combat"]]) {
+for (const tags of [[], ["pvp"], ["pvp", "multi-combat"], ["pvp", "all-buildings-safe"]]) {
     const world = { ...parsedWorld, zones: [{ tags }, ...parsedWorld.zones] };
     const parsed = parseBrowserHostWorldDefinition(JSON.stringify(world));
     assert.deepEqual(parsed, world, "Global rules must not reject the spawn or be lost on save");

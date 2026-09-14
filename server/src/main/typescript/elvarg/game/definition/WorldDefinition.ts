@@ -3,7 +3,7 @@ import * as path from "path";
 import { Boundary } from "../model/Boundary";
 import { Location } from "../model/Location";
 
-export type WorldZoneTag = "pvp" | "multi-combat" | "safe";
+export type WorldZoneTag = "pvp" | "multi-combat" | "safe" | "all-buildings-safe";
 
 export interface WorldPosition {
     x: number;
@@ -106,7 +106,7 @@ export function parseWorldZone(value: unknown, label = "world zone"): WorldZone 
         throw new WorldDefinitionValidationError(`${label}.tags must be a non-empty array`);
     }
     for (const tag of new Set(zone.tags)) {
-        if (tag !== "pvp" && tag !== "multi-combat" && tag !== "safe") {
+        if (tag !== "pvp" && tag !== "multi-combat" && tag !== "safe" && tag !== "all-buildings-safe") {
             throw new WorldDefinitionValidationError(
                 `${label} has unsupported tag: ${String(tag)}`
             );
@@ -153,6 +153,7 @@ export const WORLD_ZONE_BOUNDARIES: Record<WorldZoneTag, Boundary[]> = {
     pvp: [],
     safe: [],
     "multi-combat": [],
+    "all-buildings-safe": [],
 };
 
 function zoneBoundaries(zone: WorldZone): Boundary[] {
@@ -164,6 +165,7 @@ function zoneBoundaries(zone: WorldZone): Boundary[] {
 
 function syncRuntime(): void {
     WORLD_SPAWN.set(definition.spawn.x, definition.spawn.y, definition.spawn.z);
+    WORLD_ZONE_BOUNDARIES["all-buildings-safe"].length = 0;
     WORLD_ZONE_BOUNDARIES.pvp.length = 0;
     WORLD_ZONE_BOUNDARIES.safe.length = 0;
     WORLD_ZONE_BOUNDARIES["multi-combat"].length = 0;

@@ -758,6 +758,7 @@ export class RegionManager {
         RegionManager.loadingRegions.delete(regionId);
         RegionManager.clearRegionMapObjects(regionId);
         region.clips = undefined;
+        region.roofTiles = undefined;
         region.setLoaded(false);
 
         const absX = ((regionId >> 8) & 0xff) * 64;
@@ -803,6 +804,7 @@ export class RegionManager {
             const heightMap = Array.from({ length: 4 }, () =>
                 Array.from({ length: 64 }, () => new Array(64).fill(0))
             );
+            const roofTiles = new Uint8Array(2048);
             const newTerrainFormat = CachePipeline.getActive().revision >= 209;
             for (let z = 0; z < 4; z++) {
                 for (let tileX = 0; tileX < 64; tileX++) {
@@ -821,6 +823,10 @@ export class RegionManager {
                                 else groundStream.readUnsignedByte();
                             } else if (tileType <= 81) {
                                 heightMap[z][tileX][tileY] = tileType - 49;
+                                if (((tileType - 49) & Region.TILE_FLAG_UNDER_ROOF) !== 0) {
+                                    const index = (z << 12) | (tileX << 6) | tileY;
+                                    roofTiles[index >> 3] |= 1 << (index & 7);
+                                }
                             }
                         }
                     }
@@ -872,6 +878,7 @@ export class RegionManager {
                     }
                 }
             }
+            r.roofTiles = roofTiles;
             r.setLoaded(true);
             PluginManager.emitRegionLoaded({
                 regionId,

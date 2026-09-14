@@ -4,6 +4,10 @@ const { PlayerRights } = require("../../src/main/typescript/elvarg/game/model/ri
 const { Location } = require("../../src/main/typescript/elvarg/game/model/Location");
 const { isSafeLocation: isFeroxSafeLocation } = require("../items/LootKeys.plugin");
 
+function isSafeLocation(location) {
+  return Wilderness.isInSafeBuilding(location) || isFeroxSafeLocation(location);
+}
+
 // ---------------------------------------------------------------------------
 // pvp_icons overlay (OSRS interface 90)
 // ---------------------------------------------------------------------------
@@ -67,7 +71,7 @@ function combatLevelOf(player) {
 
 function wildernessLevelOf(player) {
   const location = player?.getLocation?.();
-  if (isFeroxSafeLocation(location)) {
+  if (isSafeLocation(location)) {
     return 0;
   }
   const stored = player?.getWildernessLevel?.() | 0;
@@ -94,7 +98,7 @@ function wildernessLevelOf(player) {
 }
 
 function isWildernessLocation(location) {
-  return Wilderness.isInLocation(location) && !isFeroxSafeLocation(location);
+  return Wilderness.isInLocation(location) && !isSafeLocation(location);
 }
 
 /**
@@ -173,6 +177,7 @@ function isInWilderness(state, player) {
   if (!player) {
     return false;
   }
+  if (isSafeLocation(player.getLocation?.())) return false;
   if (wildernessLevelOf(player) > 0) {
     return true;
   }
@@ -186,7 +191,7 @@ function isInWilderness(state, player) {
   }
   const inWilderness = tile
     ? isWildernessLocation(tile.location)
-    : Wilderness.isIn(player) && !isFeroxSafeLocation(player?.getLocation?.());
+    : Wilderness.isIn(player) && !isSafeLocation(player?.getLocation?.());
   state.tiles.set(player, { ...cached, ...(tile ?? {}), inWilderness });
   return inWilderness;
 }
@@ -214,8 +219,8 @@ function mountPvpIcons(player) {
   // A fresh mount resets the group's widgets to their cache defaults.
   lastIconsVisible.delete(player);
   lastSafeBadgeVisible.delete(player);
-  syncPvpIcons(player, isFeroxSafeLocation(player.getLocation?.()));
-  syncSafeBadge(player, isFeroxSafeLocation(player.getLocation?.()));
+  syncPvpIcons(player, isSafeLocation(player.getLocation?.()));
+  syncSafeBadge(player, isSafeLocation(player.getLocation?.()));
 
   const tile = readPlayerTile(player);
   if (tile && isWildernessLocation(tile.location)) {
@@ -227,7 +232,7 @@ function mountPvpIcons(player) {
 // so the server keeps the whole block hidden unless the player has a wilderness level.
 // Driven off the level itself rather than an entry/exit edge: every tick reconverges, so a
 // teleport, a login or a missed transition can't strand the block on screen.
-function syncPvpIcons(player, inSafeZone = isFeroxSafeLocation(player?.getLocation?.())) {
+function syncPvpIcons(player, inSafeZone = isSafeLocation(player?.getLocation?.())) {
   if (!player || player?.isPlayerBot?.() === true) {
     return;
   }
@@ -278,7 +283,7 @@ function refreshWildernessUi(player, tile, inWilderness) {
     return;
   }
 
-  const inSafeZone = isFeroxSafeLocation(tile.location);
+  const inSafeZone = isSafeLocation(tile.location);
   syncPvpIcons(player, inSafeZone);
   syncSafeBadge(player, inSafeZone);
 
@@ -326,7 +331,7 @@ function onPlayerProcess(state, player) {
   }
   const previous = state.tiles.get(player);
   if (Location.isSameTile(previous, tile) && typeof previous.inWilderness === "boolean") {
-    const inSafeZone = isFeroxSafeLocation(tile.location);
+    const inSafeZone = isSafeLocation(tile.location);
     syncPvpIcons(player, inSafeZone);
     syncSafeBadge(player, inSafeZone);
     if (previous.inWilderness) {
@@ -364,6 +369,9 @@ function enterWilderness(player, tile, wasInWilderness) {
 }
 
 function leaveWilderness(player, tile, wasInWilderness) {
+  const inSafeZone = isSafeLocation(tile.location);
+  syncPvpIcons(player, inSafeZone);
+  syncSafeBadge(player, inSafeZone);
   if (wasInWilderness) {
     refreshWildernessUi(player, tile, false);
     return;
@@ -420,13 +428,16 @@ function onPlayerDisconnect(state, player) {
 }
 
 function onCanAttack(state, event) {
-  if (event.allow !== null) {
-    return;
-  }
   const { attacker, target } = event;
   if (!attacker?.isPlayer?.() || !target?.isPlayer?.()) {
     return;
   }
+
+  if (Wilderness.isInSafeBuilding(attacker.getLocation?.()) || Wilderness.isInSafeBuilding(target.getLocation?.())) {
+    event.allow = false;
+    return;
+  }
+  if (event.allow !== null) return;
 
   if (shareClanChat(attacker, target)) {
     denyAttack(event, CLAN_CHAT_MESSAGES);

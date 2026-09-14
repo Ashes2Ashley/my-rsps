@@ -496,6 +496,10 @@ export class CombatFactory {
         if (attacker.getPrivateArea() !== target.getPrivateArea()) {
             return CanAttackResponse.CANT_ATTACK_IN_AREA;
         }
+        if (attacker.isPlayer() && target.isPlayer() &&
+            (Wilderness.isInSafeBuilding(attacker.getLocation()) || Wilderness.isInSafeBuilding(target.getLocation()))) {
+            return CanAttackResponse.CANT_ATTACK_IN_AREA;
+        }
         const pluginCanAttack = PluginManager.emitCanAttack(attacker, target);
         if (pluginCanAttack === true) {
             return CanAttackResponse.CAN_ATTACK;
@@ -593,6 +597,12 @@ export class CombatFactory {
 
         // If target is teleporting or needs placement, don't continue to add the hit.
         if (target.isUntargetable() || target.isNeedsPlacement()) {
+            return;
+        }
+
+        // Safe buildings take effect immediately, including projectiles already in flight.
+        if (attacker.isPlayer() && target.isPlayer() &&
+            (Wilderness.isInSafeBuilding(attacker.getLocation()) || Wilderness.isInSafeBuilding(target.getLocation()))) {
             return;
         }
 
