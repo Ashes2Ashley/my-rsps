@@ -8,7 +8,9 @@
   },
   "zones": [
     { "_description": "Global zone", "tags": [] },
-    { "minX": 3326, "maxX": 3383, "minY": 3197, "maxY": 3295, "z": 0, "tags": ["duel"] },
+    { "minX": 3324, "maxX": 3392, "minY": 3201, "maxY": 3266, "z": 0, "tags": ["duel"] },
+    { "minX": 3334, "maxX": 3392, "minY": 3267, "maxY": 3279, "z": 0, "tags": ["duel"] },
+    { "minX": 3312, "maxX": 3323, "minY": 3225, "maxY": 3247, "z": 0, "tags": ["duel"] },
     { "minX": 2940, "maxX": 3392, "minY": 3525, "maxY": 3968, "z": 0, "tags": ["pvp"] },
     { "minX": 2986, "maxX": 3012, "minY": 10338, "maxY": 10366, "z": 0, "tags": ["pvp"] },
     { "minX": 3150, "maxX": 3199, "minY": 3796, "maxY": 3869, "z": 0, "tags": ["pvp"] },
