@@ -14,7 +14,8 @@ ItemDefinition.forId = (id: number) => ({
   getNoteId: () => id === 4151 ? 4152 : -1,
   getName: () => id === 4152 ? "Abyssal whip" : "Abyssal whip",
   isNoted: () => id === 4152,
-  isStackable: () => false,
+  unNote: () => id === 4152 ? 4151 : id,
+  isStackable: () => id === 4152 || id === ItemIdentifiers.COINS,
 });
 
 let dropHandler: any;
@@ -22,7 +23,9 @@ let defeatedHandler: any;
 let itemAction: any;
 let skullyHandler: any;
 let canBankItem: any;
+let skullyChoice: () => void;
 LootKeys.register({
+  getTaskManager: () => ({}),
   persistAttribute: () => undefined,
   onPlayerDeathItemDrop: (handler: any) => (dropHandler = handler),
   onPlayerDefeated: (handler: any) => (defeatedHandler = handler),
@@ -35,7 +38,7 @@ LootKeys.register({
   onInterfaceActionClick: () => undefined,
   onObjectFirstClick: () => undefined,
   onCanAttack: () => undefined,
-  sendMultiChatboxPrompt: () => true,
+  sendMultiChatboxPrompt: (_player: any, _title: string, _label: string, choice: () => void) => { skullyChoice = choice; return true; },
 });
 assert.ok(dropHandler && defeatedHandler && itemAction && skullyHandler && canBankItem, "Loot Keys must register all interactions");
 
@@ -72,6 +75,7 @@ const banks = Array.from({ length: 11 }, () => ({
 }));
 const location = { clone: () => location, getX: () => 3200, getY: () => 3700, getZ: () => 0 };
 let interfaceId = -1;
+let enteredAmount: any;
 const killer: any = {
   isPlayer: () => true,
   isPlayerBot: () => false,
@@ -84,6 +88,7 @@ const killer: any = {
   getPacketSender: () => sender,
   getInterfaceId: () => interfaceId,
   setInterfaceId: (id: number) => (interfaceId = id),
+  setEnteredAmountAction: (action: any) => { enteredAmount = action; },
 };
 const victim: any = { isPlayer: () => true, isPlayerBot: () => true, getLocation: () => location };
 Service.setLootKeysEnabled(killer, true);
@@ -133,6 +138,7 @@ let chestObjectName: string | undefined;
 let keySelection: any[] | undefined;
 const persistedChestAttributes: string[] = [];
 LootKeys.register({
+  getTaskManager: () => ({}),
   persistAttribute: (key: string) => persistedChestAttributes.push(key),
   onPlayerDeathItemDrop: () => undefined,
   onPlayerDefeated: () => undefined,
@@ -186,6 +192,72 @@ Service.setChestItems(killer, [{ id: 4151, amount: 1 }]);
 LootKeys._test.handleInterfaceAction(killer, { buttonId: (742 << 16) | 21 });
 LootKeys._test.handleInterfaceAction(killer, { buttonId: (742 << 16) | 5, action: 7, slot: 0 });
 assert.equal(bankItems.at(-1).getId(), 4151, "banking Loot Chest items must never convert them to notes");
+
+// Use the real bank container to verify note conversion and merging into an existing stack.
+const { Bank } = require("../src/main/typescript/elvarg/game/model/container/impl/Bank");
+const realBanks = Array.from({ length: Bank.TOTAL_BANK_TABS }, () => new Bank(killer));
+const bankPlayer = { ...killer, getBank: (tab: number) => realBanks[tab] };
+realBanks[0].add(new Item(4151, 1), false);
+Service.setChestItems(bankPlayer, [{ id: 4152, amount: 2, meta: null }]);
+Service.takeChestItem(bankPlayer, 0, "bank", true);
+assert.equal(realBanks[0].getAmount(4151), 3, "Bank noted loot as its unnoted item even in note mode");
+assert.equal(realBanks[0].getAmount(4152), 0);
+
+Service.setChestItems(killer, [{ id: ItemIdentifiers.COINS, amount: 1000 }]);
+LootKeys._test.handleInterfaceAction(killer, { buttonId: (742 << 16) | 5, action: 8, slot: 0 });
+enteredAmount.execute(1);
+assert.equal(Service.chestItems(killer)[0].amount, 999, "Destroy-X must honor the entered quantity");
+assert.equal(Service.destroyChestItem(killer, 0, 0), false);
+assert.equal(Service.destroyChestItem(killer, 0, -1), false);
+assert.equal(Service.destroyChestItem(killer, 0, 1.5), false);
+Service.destroyChestItem(killer, 0, 2000);
+assert.equal(Service.chestItems(killer).length, 0, "Destroying more than remains removes only that stack");
+Service.setChestItems(killer, [{ id: 4151, amount: 1 }]);
+LootKeys._test.handleInterfaceAction(killer, { buttonId: (742 << 16) | 5, action: 8, slot: 0 });
+Service.setChestItems(killer, [{ id: ItemIdentifiers.COINS, amount: 1000 }]);
+enteredAmount.execute(1);
+assert.equal(Service.chestItems(killer)[0].amount, 1000, "A stale prompt must not destroy replacement loot");
+
+inventoryItems.length = 0;
+Service.setSettings(killer, { includeSupplies: true, floorValue: 0 });
+const deathEvent = (eligible: boolean) => ({ player: victim, killer, item: new Item(4151, 1), dropEligible: eligible, suppressDefaultDrop: false, handled: false });
+const protectedDrop = deathEvent(false);
+const laterProtectedDrop = deathEvent(true);
+const selectedBotDrop = deathEvent(false);
+for (const drop of [protectedDrop, laterProtectedDrop, selectedBotDrop]) dropHandler(drop);
+laterProtectedDrop.dropEligible = false;
+selectedBotDrop.dropEligible = true;
+defeatedHandler({ killer, victim });
+assert.equal(inventoryItems.length, 1);
+assert.deepEqual(Service.keyItems(inventoryItems[0]), [{ id: 4151, amount: 1, meta: null }],
+  "Only the final eligible bot drop belongs in the key; protected items must not be copied");
+
+const unlockAttributes = new Map<string, unknown>();
+let coins = 1_000_000;
+const unlockPlayer = {
+  ...killer,
+  getAttribute: (key: string) => unlockAttributes.get(key),
+  setAttribute: (key: string, value: unknown) => unlockAttributes.set(key, value),
+  getInventory: () => ({ getAmount: () => coins, delete: (_id: number, amount: number) => { coins -= amount; } }),
+};
+for (const expectedEnabled of [true, false, true]) {
+  skullyHandler({ player: unlockPlayer });
+  skullyChoice!();
+  assert.equal(Service.hasEnabledLootKeys(unlockPlayer), expectedEnabled);
+  assert.equal(Service.hasUnlockedLootKeys(unlockPlayer), true);
+  assert.equal(coins, 0, "Unlock once; subsequent toggles must be free");
+}
+for (const legacyEnabled of [false, true]) {
+  unlockAttributes.clear();
+  unlockAttributes.set("lootKeysEnabled", legacyEnabled);
+  skullyHandler({ player: unlockPlayer });
+  skullyChoice!();
+  assert.equal(Service.hasEnabledLootKeys(unlockPlayer), !legacyEnabled);
+  assert.equal(unlockAttributes.get(Service.UNLOCK_ATTRIBUTE), true, "Preserve legacy paid unlocks");
+  assert.equal(coins, 0);
+}
+assert.ok(persistedChestAttributes.includes(Service.UNLOCK_ATTRIBUTE) && persistedChestAttributes.includes(Service.ENABLED_ATTRIBUTE),
+  "Persist both ownership and the enabled preference");
 
 let genericTalkTo: any;
 NpcDialogues.register({ onAnyNpcInteraction: (actions: any) => (genericTalkTo = actions["Talk-to"]) });
