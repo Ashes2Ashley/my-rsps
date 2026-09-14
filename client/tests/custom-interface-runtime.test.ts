@@ -97,10 +97,11 @@ let requestedUrl = "";
     };
 };
 
+const scripts: number[] = [];
 const runtime = new CustomInterfaceRuntime({
     widgetManager,
     getCacheSystem: () => undefined,
-    runWidgetScopedClientScript: () => {},
+    runWidgetScopedClientScript: (_uid, scriptId) => scripts.push(scriptId),
     fetchContent: async (path) => (await fetch(`http://localhost:43594${path}`)).json(),
 });
 
@@ -118,6 +119,11 @@ assert.equal(widgets.get(uid(12)).scrollHeight, 538, "the view scrolls its decla
 assert.equal(widgets.get(uid(12)).scrollWidth, 200);
 assert.equal(widgets.get(uid(13)).scrollBarTargetUid, uid(12), "the scrollbar drives the view");
 assert.equal(widgets.get(uid(13)).scrollBarAxis, "y");
+const resizeCount = scripts.filter((scriptId) => scriptId === 72).length;
+runtime.tick();
+runtime.tick();
+assert.equal(scripts.filter((scriptId) => scriptId === 72).length, resizeCount,
+    "unchanged scrollbars are not resized every client tick");
 
 // Typing renders through the server's template and respects maxLength.
 const type = (text: string) =>

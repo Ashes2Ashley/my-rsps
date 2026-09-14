@@ -117,6 +117,7 @@ export class CustomInterfaceRuntime {
     private renderedVersion = -1;
     private version = 0;
     private visibleStartRow = -1;
+    private scrollbarState = new Map<number, string>();
     private fetchTimer: ReturnType<typeof setTimeout> | undefined;
     private fetchSequence = 0;
 
@@ -255,6 +256,7 @@ export class CustomInterfaceRuntime {
         this.version = 0;
         this.renderedVersion = -1;
         this.visibleStartRow = -1;
+        this.scrollbarState.clear();
     }
 
     private uid(component: number): number {
@@ -586,6 +588,11 @@ export class CustomInterfaceRuntime {
             return;
         }
         this.initializeScrollView(viewId, scrollbarId);
+        const state = `${view.width | 0}:${view.height | 0}:${view.scrollHeight | 0}:${view.scrollY | 0}`;
+        if (this.scrollbarState.get(scrollbar.uid | 0) === state) {
+            return;
+        }
+        this.scrollbarState.set(scrollbar.uid | 0, state);
         this.deps.runWidgetScopedClientScript(
             scrollbar.uid | 0,
             SCROLLBAR_RESIZE_SCRIPT_ID,
