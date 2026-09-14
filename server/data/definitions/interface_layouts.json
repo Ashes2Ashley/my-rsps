@@ -96,16 +96,14 @@
     "sidebarInterfaceId": 3321
   },
   "duel-offer": {
-    "id": 6575,
-    "name": "Duel offer",
-    "surface": "main-with-sidebar",
-    "sidebarInterfaceId": 3321
+    "id": 755,
+    "name": "Duel options",
+    "surface": "main"
   },
   "duel-confirm": {
-    "id": 6412,
-    "name": "Duel confirmation",
-    "surface": "main-with-sidebar",
-    "sidebarInterfaceId": 3213
+    "id": 756,
+    "name": "Confirm duel options",
+    "surface": "main"
   },
   "equipment-bonuses": {
     "id": 15106,

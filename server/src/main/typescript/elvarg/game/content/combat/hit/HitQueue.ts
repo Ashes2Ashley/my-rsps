@@ -80,6 +80,12 @@ export class HitQueue {
         if (hits.length > 0) HitQueue.active.add(this);
     }
 
+    clear(): void {
+        this.pendingHits.length = 0;
+        this.pendingDamage.length = 0;
+        HitQueue.active.delete(this);
+    }
+
     hasPendingWork(): boolean {
         return this.pendingHits.length > 0 || this.pendingDamage.length > 0;
     }

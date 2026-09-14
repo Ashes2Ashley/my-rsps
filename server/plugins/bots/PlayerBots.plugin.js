@@ -224,9 +224,19 @@ const BOT_CONFIG = Object.freeze({
   }),
 });
 
+function registerDuelBotAcceptance(api) {
+  const accept = (event) => {
+    if (event?.player?.isPlayerBot?.() === true) event.accept = true;
+  };
+  for (const eventName of ["duelarena:request", "duelarena:rules-changed", "duelarena:accept", "duelarena:accept-clicked"]) {
+    api.onCustomEvent(eventName, accept);
+  }
+}
+
 module.exports = {
   name: "PlayerBots",
   register(api) {
+    registerDuelBotAcceptance(api);
     initPlayerBotStateCoreAccess(api);
     initBotRecruitRuntimeCoreAccess(api);
     const { botApi, recentBotLogsByUsername } = createBotPluginLogging({
@@ -322,4 +332,5 @@ module.exports = {
       homeRadius: BOT_CONFIG.treeOptions.botHomeRadius,
     });
   },
+  registerDuelBotAcceptance,
 };

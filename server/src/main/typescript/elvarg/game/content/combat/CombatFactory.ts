@@ -525,6 +525,11 @@ export class CombatFactory {
         if (!candidate || candidate === attacker || candidate === primaryTarget) {
             return false;
         }
+        // Duel damage is restricted to the agreed opponent, including spell splashes.
+        if ((attacker.isPlayer() && attacker.getAsPlayer().getDueling().inDuel()) ||
+            (candidate.isPlayer() && candidate.getAsPlayer().getDueling().inDuel())) {
+            return false;
+        }
         if (candidate.getHitpoints() <= 0) {
             return false;
         }
