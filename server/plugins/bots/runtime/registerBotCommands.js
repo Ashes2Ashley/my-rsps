@@ -1,5 +1,9 @@
+const { PlayerRights } = require("../../../src/main/typescript/elvarg/game/model/rights/PlayerRights");
+const { FriendsChatManager } = require("../../interface/FriendsChatManager");
+const { recallRecruitedBot } = require("./BotRecruitRuntime");
 const { callModeHook } = require("../behaviours/hooks/ModeHookContract");
 const { isPvpOnlyBotState } = require("../behaviours/state/PlayerBotState");
+const { ATTR_RECRUIT_OWNER_USERNAME } = require("./BotRecruitConstants");
 
 function registerBotCommands(options) {
   const {
@@ -34,6 +38,46 @@ function registerBotCommands(options) {
     ...Object.keys(assignableBehaviors ?? {}).sort((a, b) => a.localeCompare(b)),
     "auto",
   ].join("|");
+
+  const pendingRecruits = new Map();
+  api.registerCommand("bot", ({ player }) => {
+    if (player.getRights() !== PlayerRights.DEVELOPER) {
+      player.getPacketSender().sendMessage("You do not have permission to use this command.");
+      return true;
+    }
+    const bot = runtime.spawnPvpBot(player.getLocation());
+    if (!bot) {
+      player.getPacketSender().sendMessage("Unable to spawn a PvP bot right now.");
+      return true;
+    }
+    // The factory queues a world login. Clan membership needs the assigned player index.
+    pendingRecruits.set(bot, player);
+    return true;
+  });
+  api.onPlayerProcess(({ player: owner }) => {
+    if (owner.isPlayerBot?.()) return;
+    for (const [bot, pendingOwner] of pendingRecruits) {
+      if (pendingOwner !== owner || !bot.isRegistered()) continue;
+      pendingRecruits.delete(bot);
+      if (!owner.isRegistered()) continue;
+      if (!owner.getRelations().getFriendsChatChannelName()) {
+        FriendsChatManager.setOwnChannelName(owner, owner.getUsername());
+      }
+      const recruited = FriendsChatManager.recruitBot(owner, bot);
+      const state = runtime.botStatesByName.get(bot.getUsername());
+      if (recruited && !recallRecruitedBot(bot, owner, state, behaviorMode)) {
+        bot.setAttribute?.(ATTR_RECRUIT_OWNER_USERNAME, owner.getUsername());
+        bot.setFollowing?.(owner);
+        bot.setMobileInteraction?.(owner);
+        bot.setPositionToFace?.(owner.getLocation?.());
+      }
+      bot.setArea(owner.getArea());
+      bot.moveTo(owner.getLocation().clone());
+      owner.getPacketSender().sendMessage(recruited
+        ? `${bot.getUsername()} is geared, in your clan chat, and ready beside you.`
+        : `${bot.getUsername()} is geared and beside you, but could not join your clan chat.`);
+    }
+  });
 
   api.registerCommand("botme", ({ player, parts }) => {
     if (!hasAdminRights(player)) {

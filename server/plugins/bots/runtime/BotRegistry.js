@@ -79,6 +79,7 @@ function createBotRegistry(options) {
   const entries = providedEntries ?? [];
   const entriesByUsername = providedEntriesByUsername ?? new Map();
   let spawned = 0;
+  let developerBotId = 0;
   let wildernessRoamersAssigned = 0;
   const hotspotSpawnCounts = new Map();
   const wildernessHotspotAssignments = new Map();
@@ -481,7 +482,7 @@ function createBotRegistry(options) {
     if (!plan) {
       return false;
     }
-    const username = claimAvailableWildernessUsername();
+    const username = plan.username ?? claimAvailableWildernessUsername();
     if (!username) {
       return false;
     }
@@ -492,9 +493,9 @@ function createBotRegistry(options) {
       assignedHotspotId != null ? reserveHotspotSpawnIndex(assignedHotspotId) : -1;
     const hotspotSpawn =
       assignedHotspotId != null ? createHotspotSpawn(assignedHotspotId, hotspotSpawnIndex) : null;
-    const botSpawn = assignedHotspotId != null
+    const botSpawn = plan.spawnLocation?.clone() ?? (assignedHotspotId != null
       ? hotspotSpawn
-      : createWildernessRoamerSpawn(spawn, assignedBounds, randomInRange(0, 1_000_000_000));
+      : createWildernessRoamerSpawn(spawn, assignedBounds, randomInRange(0, 1_000_000_000)));
     if (!botSpawn) {
       return false;
     }
@@ -510,6 +511,7 @@ function createBotRegistry(options) {
     bot.setPlayerBot?.(true);
     bot.setAttribute?.(ATTR_SKIP_PERSISTENCE, true);
     setPersistentRespawnResolver(bot, () => {
+      if (plan.spawnLocation) return botSpawn.clone();
       if (assignedHotspotId != null) {
         const respawnIndex = reserveHotspotSpawnIndex(assignedHotspotId);
         const respawnTile = createHotspotSpawn(assignedHotspotId, respawnIndex);
@@ -567,7 +569,7 @@ function createBotRegistry(options) {
     bot.setLastKnownRegion?.(botSpawn.clone());
     botStatesByName.set(username, state);
     playerBotUsernames.add(username);
-    assignmentMap.set(username, assignmentValue);
+    assignmentMap?.set(username, assignmentValue);
 
     addEntry(username, {
       player: bot,
@@ -585,8 +587,8 @@ function createBotRegistry(options) {
     bot.moveTo?.(botSpawn.clone());
     ensureBehaviorTaskStarted();
     spawned++;
-    wildernessRoamersAssigned++;
-    return true;
+    if (assignmentMap) wildernessRoamersAssigned++;
+    return bot;
   }
 
   function spawnRegionalWildernessBot(plan) {
@@ -1127,6 +1129,12 @@ function createBotRegistry(options) {
     hasControllerForPlayer,
     resolveControlledPlayer,
     spawnConfiguredBots,
+    spawnPvpBot(location) {
+      let username;
+      do { username = `DevBot${++developerBotId}`; }
+      while (entriesByUsername.has(username) || worldGetPlayerByName(username));
+      return spawnWildernessBot({ username, spawnLocation: location });
+    },
     scheduleInitialSpawn,
     enableControllerForPlayer,
     disableControllerForPlayer,
