@@ -27,6 +27,7 @@ import {
     subscribeTick,
 } from "../../../network/ServerConnection";
 import { sendLogin } from "../../../network/ServerConnection";
+import { sendPlayerOption } from "../../../network/serverConnection/outgoing/interact";
 import { flushPackets } from "../../../network/packet";
 import { createTextureArray } from "../../../picogl/PicoTexture";
 import { RS_TO_RADIANS } from "../../../rs/MathConstants";
@@ -485,11 +486,10 @@ export function checkInteractions(host: WebGLOsrsRendererHost, ): void {
                     typeof localEcsIndex === "number"
                         ? playerEcs.getTeam(localEcsIndex | 0) | 0
                         : 0;
-                // Whether players may be attacked is a server rule - world.json pvp zones,
-                // which a world can put anywhere - so follow the varbit the server sets
-                // rather than the map's traditional Wilderness rectangle.
+                // The server enables attacks through PvP zones or an active player option.
                 const canAttackPlayers =
-                    (host.osrsClient.varManager?.getVarbit(VARBIT_IN_WILDERNESS) ?? 0) === 1;
+                    (host.osrsClient.varManager?.getVarbit(VARBIT_IN_WILDERNESS) ?? 0) === 1 ||
+                    ClientState.playerOptions.get(1)?.option === "Attack";
                 const targetIsClanMember = isClanMemberName(playerLabel);
 
                 // When hovering a player, Walk here target becomes the player's label.
@@ -555,7 +555,22 @@ export function checkInteractions(host: WebGLOsrsRendererHost, ): void {
 
                 // No selection: insert player actions in 7..0 order.
                 for (let actionIdx = 7; actionIdx >= 0; actionIdx--) {
-                    if (actionIdx === 2) {
+                    const customOption = ClientState.playerOptions.get(actionIdx + 1);
+                    if (actionIdx >= 3 && customOption) {
+                        menuEntries.push({
+                            option: customOption.option,
+                            targetId: sid | 0,
+                            targetType: MenuTargetType.PLAYER,
+                            targetName: playerLabel,
+                            targetLevel: targetCombatLevel,
+                            mapX: localX,
+                            mapY: localY,
+                            playerServerId: sid | 0,
+                            actionIndex: actionIdx,
+                            deprioritized: !customOption.priority,
+                            onClick: () => sendPlayerOption(sid | 0, actionIdx + 1),
+                        });
+                    } else if (actionIdx === 2) {
                         menuEntries.push({
                             option: "Follow",
                             targetId: sid | 0,
@@ -594,7 +609,7 @@ export function checkInteractions(host: WebGLOsrsRendererHost, ): void {
                             },
                         });
                     } else if (actionIdx === 0) {
-                        // Player combat is a Wilderness-only menu action.
+                        // Attack visibility follows the server's current permission.
                         if (!canAttackPlayers) continue;
                         const attackOption = ClientState.playerAttackOption | 0;
                         if (attackOption === 3) continue;

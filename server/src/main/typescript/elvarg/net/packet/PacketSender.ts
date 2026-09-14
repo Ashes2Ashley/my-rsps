@@ -1,3 +1,4 @@
+import { encodePlayerOption } from "../protocol/ClientProtocol";
 import { BIT_MASKS } from "../../game/cache/codec/rs/MathConstants";
 import { PacketBuilder } from "./PacketBuilder";
 import { ValueType } from "./ValueType";
@@ -425,6 +426,13 @@ export class PacketSender {
   }
 
   public sendInteractionOption(
+  public sendPlayerOption(slot: number, option: string, priority = false): this {
+    if (Number.isInteger(slot) && slot >= 1 && slot <= 8) {
+      this.player.getSession().sendClientPacket(encodePlayerOption(slot, option, priority));
+    }
+    return this;
+  }
+
     option: string,
     slot: number,
     top: boolean

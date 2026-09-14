@@ -194,6 +194,7 @@ export class ClientState {
      * 3 = Hidden
      * 4 = Right-click where available for clan members
      */
+    static playerOptions = new Map<number, { option: string; priority: boolean }>();
     static playerAttackOption: number = 0; // Default: depends on combat levels
 
     /** Local player's combat level (used for depends-on-level comparison) */
@@ -346,6 +347,7 @@ export class ClientState {
      * Reset all state (for disconnection/login)
      */
     static reset(): void {
+        this.playerOptions.clear();
         this.mouseCrossX = 0;
         this.mouseCrossY = 0;
         this.mouseCrossColor = 0;
