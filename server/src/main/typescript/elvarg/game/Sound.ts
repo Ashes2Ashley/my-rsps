@@ -40,8 +40,7 @@ export class Sound {
     public static WOODCUTTING_TREE_DOWN = new Sound(2734, 1, 0, 0)
 
     // Getting hit
-    public static MALE_GETTING_HIT = new Sound(512, 1, 0, 0)
-    public static FEMALE_GETTING_HIT = new Sound(506, 1, 0, 0)
+    public static PLAYER_GETTING_HIT = new Sound(513, 1, 0, 0)
     public static DEFENCE_BLOCK = new Sound(511, 1, 0, 0)
 
     // weapon sounds

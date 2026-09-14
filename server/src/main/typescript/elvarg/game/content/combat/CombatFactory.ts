@@ -629,10 +629,7 @@ export class CombatFactory {
         if (target.isPlayer()) {
             const playerTarget = target.getAsPlayer();
             if (resolvedHit.isAccurate() && damage > 0) {
-                const hitSound = playerTarget.getAppearance()?.isMale?.()
-                    ? Sound.MALE_GETTING_HIT
-                    : Sound.FEMALE_GETTING_HIT;
-                Sounds.sendSound(playerTarget, hitSound);
+                Sounds.sendSound(playerTarget, Sound.PLAYER_GETTING_HIT);
             } else {
                 Sounds.sendSound(playerTarget, Sound.DEFENCE_BLOCK);
             }
