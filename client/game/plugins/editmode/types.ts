@@ -1,3 +1,4 @@
+import type { ObjectSpawn } from "./hostProtocol/objectSpawnsMessage";
 /** Loc shape ids, mirrored from rs/config/loctype/LocModelType. */
 export const LOC_SHAPE_NORMAL = 10;
 export const LOC_SHAPE_FLOOR_DECORATION = 22;
@@ -142,6 +143,7 @@ export interface EditModePluginConfig {
     heightLevel: number;
     /** Show every height level, or heightLevel and everything below it. */
     renderAllHeightLevels: boolean;
+    saveObjectSpawns: boolean;
     /** Draw selectable map-function sprites at their floor tiles. */
     showMapIcons: boolean;
     showPvpZones: boolean;
@@ -245,6 +247,7 @@ export interface EditModeHost {
         rotation: number,
     ): void;
     onLocDel(tile: { x: number; y: number }, level: number, shape: number, rotation: number): void;
+    getLocPlacementShape?(locId: number): number;
     getLocName(locId: number): string;
     getNpcName(npcTypeId: number): string;
     /** Name/id search over the cache; the index is built on first use. */
@@ -279,6 +282,8 @@ export interface EditModeHost {
     /** Moves the camera over a world tile, for navigating while flying. */
     jumpCameraToTile(tile: EditModeTile): void;
     /** Serializes the map square under the camera for data/regions/{regionId}.pack. */
+    markMapEditsSaved?(packs: readonly { regionId: number; data: Uint8Array }[], spawns?: ObjectSpawn[]): void;
+    exportObjectSpawns?(edits: readonly EditModeEdit[]): ObjectSpawn[] | undefined;
     exportRegionPack?(
         tile: EditModeTile,
         edits: readonly EditModeEdit[],

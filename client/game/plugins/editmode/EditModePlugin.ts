@@ -1,3 +1,4 @@
+import type { ObjectSpawn } from "./hostProtocol/objectSpawnsMessage";
 import { waterArea, generateIslandEdits } from "./IslandGenerator";
 import { buildPathCorners, createPathTiles } from "./PathGenerator";
 import { generateBuildingEdits, type BuildingShape, type BuildingStyle } from "./BuildingGenerator";
@@ -36,6 +37,7 @@ const DEFAULT_CONFIG: EditModePluginConfig = Object.freeze({
     heightLevel: 0,
     renderAllHeightLevels: true,
     showMapIcons: false,
+    saveObjectSpawns: false,
     showPvpZones: false,
     showSafeZones: false,
     showMultiCombatZones: false,
@@ -243,13 +245,24 @@ export class EditModePlugin {
         this.commit();
     }
 
-    /** Builds one pack for each region with a map edit. */
+    markMapEditsSaved(packs: readonly { regionId: number; data: Uint8Array }[], spawns?: ObjectSpawn[]): void {
+        this.host?.markMapEditsSaved?.(packs, spawns);
+        // Saved map/object data is the new base for subsequent edits and export-mode changes.
+        this.setConfig({ edits: this.config.edits.filter((edit) => edit.kind === "npc") });
+    }
+
+    exportObjectSpawns() {
+        if (!this.config.edits.some((edit) => edit.kind !== "npc")) return undefined;
+        return this.host?.exportObjectSpawns?.(this.config.edits);
+    }
+
+    /** JSON mode keeps object changes out of exported region packs. */
     exportModifiedRegionPacks(): Array<{ regionId: number; data: Uint8Array }> {
         const exportRegionPack = this.host?.exportRegionPack;
         if (!exportRegionPack) return [];
         const tiles = new Map<number, EditModeTile>();
         for (const edit of this.config.edits) {
-            if (edit.kind === "npc") continue;
+            if (edit.kind === "npc" || (this.config.saveObjectSpawns && (edit.kind === "place" || edit.kind === "delete"))) continue;
             tiles.set(((edit.tileX >> 6) << 8) | (edit.tileY >> 6), edit);
         }
         const packs: Array<{ regionId: number; data: Uint8Array }> = [];
@@ -326,6 +339,8 @@ export class EditModePlugin {
             this.refreshPlacementPreview();
         }
         this.commit();
+        // Search results held focus; camera keys are listened for on the canvas.
+        if (nextConfig.tool === "place") this.host?.getCanvas?.()?.focus({ preventScroll: true });
         if (!wasActive && this.config.active && !this.world.loading) {
             this.refreshWorldDefinition();
         }
@@ -381,7 +396,7 @@ export class EditModePlugin {
         if (this.search.kind === "item") return;
         this.setConfig(this.search.kind === "npc"
             ? { npcId: id }
-            : { locId: id, shape: LOC_SHAPE_NORMAL, rotation: 0 });
+            : { locId: id, shape: this.host?.getLocPlacementShape?.(id) ?? LOC_SHAPE_NORMAL, rotation: 0 });
     }
 
     describeDefinition(kind: EditModeSearchKind, id: number): EditModeDefinitionSummary | undefined {
@@ -1318,6 +1333,7 @@ export class EditModePlugin {
             renderAllHeightLevels:
                 input?.renderAllHeightLevels ?? DEFAULT_CONFIG.renderAllHeightLevels,
             showMapIcons: input?.showMapIcons ?? DEFAULT_CONFIG.showMapIcons,
+            saveObjectSpawns: input?.saveObjectSpawns === true,
             showPvpZones: input?.showPvpZones ?? DEFAULT_CONFIG.showPvpZones,
             showSafeZones: input?.showSafeZones ?? DEFAULT_CONFIG.showSafeZones,
             showMultiCombatZones:

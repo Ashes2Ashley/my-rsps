@@ -67,3 +67,27 @@ selectionPlugin.setConfig({ tool: "place" });
 selectionPlugin.setConfig({ tool: "select" });
 assert.ok(cleared > 0, "returning to selection always clears renderer placement state");
 console.log("Edit Mode object placement defaults passed");
+
+// The GE booth has wall models, but no normal (shape 10) model.
+const { CacheSystem } = require("../rs/cache/CacheSystem");
+const { getCacheLoaderFactory } = require("../rs/cache/loader/CacheLoaderFactory");
+const { loadCache, loadCacheInfos, loadCacheList } = require("../scripts/cache/load-util");
+const { LocModelLoader } = require("../rs/config/loctype/LocModelLoader");
+const { getLocPlacementShape } = require("../game/plugins/editmode/LocPlacementPreviewOverlay");
+const info = loadCacheList(loadCacheInfos()).latest;
+const factory = getCacheLoaderFactory(info, CacheSystem.fromFiles(info, loadCache(info).files));
+const booth = factory.getLocTypeLoader().load(10060);
+const modelLoader = new LocModelLoader(factory.getLocTypeLoader(), factory.getModelLoader(), factory.getTextureLoader(), factory.getSeqTypeLoader(), factory.getSeqFrameLoader(), factory.getSkeletalSeqLoader());
+assert.equal(modelLoader.getModelAnimated(booth, 10, 0, -1, -1), undefined);
+const boothShape = getLocPlacementShape(booth);
+assert.equal(boothShape, 0);
+for (const rotation of [0, 1, 2, 3]) {
+    assert(modelLoader.getModelAnimated(booth, boothShape, rotation, -1, -1), "booth preview/placement model exists in each orientation");
+}
+assert.equal(getLocPlacementShape({ types: [0, 10] }), 10, "normal objects retain their preferred shape");
+assert.equal(getLocPlacementShape({ types: [22] }), 22, "floor decorations use their supported shape");
+assert.equal(getLocPlacementShape({}), 10);
+plugin.attach({ getPointerTile: () => undefined, getLocPlacementShape: () => boothShape } as any);
+plugin.useSearchResult(10060);
+assert.equal(plugin.getConfig().shape, 0, "preview and placement share the cache-supported shape");
+console.log("Cache-backed GE booth placement regression passed");

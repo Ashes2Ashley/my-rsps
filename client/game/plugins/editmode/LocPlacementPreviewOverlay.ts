@@ -20,6 +20,11 @@ import { prependDefines } from "../../../render/shaders/ShaderUtil";
 import type { Overlay, OverlayInitArgs, OverlayUpdateArgs } from "../../../ui/devoverlay/Overlay";
 import { RenderPhase } from "../../../ui/devoverlay/Overlay";
 
+/** Prefer a normal object, otherwise use a model shape actually present in the cache. */
+export function getLocPlacementShape(type: { types?: number[] }): number {
+    return type.types?.includes(LocModelType.NORMAL) ? LocModelType.NORMAL : type.types?.[0] ?? LocModelType.NORMAL;
+}
+
 export type LocPlacementPreview = {
     locId: number;
     x: number;
