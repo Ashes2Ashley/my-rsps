@@ -43,11 +43,6 @@ export abstract class Area {
         // By default, do nothing in process.
     }
 
-    public isMulti(character: Mobile): boolean {
-        // By default, Areas are single combat.
-        return false;
-    }
-
     public getBoundaries(): Boundary[] {
         return this.boundaries;
     }

@@ -1,5 +1,3 @@
-const { Area } = require("../../src/main/typescript/elvarg/game/model/areas/Area");
-const { Boundary } = require("../../src/main/typescript/elvarg/game/model/Boundary");
 const { Location } = require("../../src/main/typescript/elvarg/game/model/Location");
 const { CombatMethod } = require("../../src/main/typescript/elvarg/game/content/combat/method/CombatMethod");
 const { PendingHit } = require("../../src/main/typescript/elvarg/game/content/combat/hit/PendingHit");
@@ -17,8 +15,6 @@ const KING_BLACK_DRAGON_IDS = [
 ];
 const KBD_LADDER_DOWN_OBJECT_ID = 18987;
 
-const KingBlackDragonBoundary = new Boundary(2249, 2292, 4672, 4720, 0);
-const KingBlackDragonLocation = new Location(3005, 3850);
 const KingBlackDragonLairLocation = new Location(2271, 4680, 0);
 
 const Breath = {
@@ -27,16 +23,6 @@ const Breath = {
   POISON: 2,
   SHOCK: 3,
 };
-
-class KingBlackDragonArea extends Area {
-  constructor() {
-    super([KingBlackDragonBoundary]);
-  }
-
-  isMulti() {
-    return true;
-  }
-}
 
 class KingBlackDragonCombatMethod extends CombatMethod {
   constructor() {
@@ -150,19 +136,14 @@ class KingBlackDragonCombatMethod extends CombatMethod {
   }
 }
 
-let AreaManager;
 let PrayerHandler;
 let CombatFactory;
 
 module.exports = {
   name: "KingBlackDragon",
   register(api) {
-    AreaManager = api.getAreaManager();
     PrayerHandler = api.getPrayerHandler();
     CombatFactory = api.getCombatFactory();
-    if (!AreaManager.areas.some((area) => area instanceof KingBlackDragonArea)) {
-      AreaManager.areas.push(new KingBlackDragonArea());
-    }
 
     api.onObjectFirstClick(KBD_LADDER_DOWN_OBJECT_ID, ({ player }) => {
       player.moveTo(KingBlackDragonLairLocation);
