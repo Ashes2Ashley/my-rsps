@@ -3,8 +3,8 @@
 const { GameConstants } = require("../../../../../src/main/typescript/elvarg/game/GameConstants");
 const { Misc } = require("../../../../../src/main/typescript/elvarg/util/Misc");
 const {
-  ClanChatManager,
-} = require("../../../../interface/ClanChat.plugin");
+  FriendsChatManager,
+} = require("../../../../interface/FriendsChatManager");
 const { resolveAlternativeLoadoutId } = require("../../pvp/PvpAssignment");
 const { applyGeneratedPvpLoadout } = require("../../policies/PvpLoadoutPolicy");
 const {
@@ -195,7 +195,7 @@ class ClanRecruitActionNode {
     if ((bot.getHitpoints?.() ?? 0) <= 0) {
       return false;
     }
-    const ownerClan = ClanChatManager.getClanChat(owner);
+    const ownerClan = FriendsChatManager.getOwnedChannel(owner);
     return ownerClan != null && bot.getCurrentClanChat?.() === ownerClan;
   }
 

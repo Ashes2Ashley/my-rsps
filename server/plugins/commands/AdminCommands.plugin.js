@@ -18,7 +18,6 @@ const { Sounds } = require("../../src/main/typescript/elvarg/game/Sounds");
 const { Animation } = require("../../src/main/typescript/elvarg/game/model/Animation");
 const { Graphic } = require("../../src/main/typescript/elvarg/game/model/Graphic");
 const { Task } = require("../../src/main/typescript/elvarg/game/task/Task");
-const { ClanChatManager } = require("../interface/ClanChat.plugin");
 const { PlayerSave } = require("../../src/main/typescript/elvarg/game/entity/impl/player/persistence/PlayerSave");
 const { DamageFormulas } = require("../../src/main/typescript/elvarg/game/content/combat/formula/DamageFormulas");
 const { ServerLogger } = require("../../src/main/typescript/elvarg/util/ServerLogger");
@@ -1172,7 +1171,6 @@ module.exports = {
               p.requestLogout();
             }
           }
-          ClanChatManager.save();
           Server.getLogger().info("Update task finished!");
         })
       );

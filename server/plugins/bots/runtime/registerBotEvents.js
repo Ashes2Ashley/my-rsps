@@ -1,6 +1,6 @@
 const {
-  ClanChatManager,
-} = require("../../interface/ClanChat.plugin");
+  FriendsChatManager,
+} = require("../../interface/FriendsChatManager");
 const {
   ATTR_RECRUIT_OWNER_USERNAME,
   ATTR_RECRUIT_RETURN_AFTER_DEATH_AT,
@@ -46,7 +46,7 @@ function isActiveClanRecruit(owner, bot) {
   if (owner.getPrivateArea?.() !== bot.getPrivateArea?.()) {
     return false;
   }
-  const ownerClan = ClanChatManager.getClanChat(owner);
+  const ownerClan = FriendsChatManager.getOwnedChannel(owner);
   return ownerClan != null && bot.getCurrentClanChat?.() === ownerClan;
 }
 
@@ -153,7 +153,7 @@ function handleClanRecruitAssist({ runtime, behaviorMode, player, target, nowMs,
     return;
   }
 
-  const ownerClan = ClanChatManager.getClanChat(player);
+  const ownerClan = FriendsChatManager.getOwnedChannel(player);
   if (!ownerClan) {
     return;
   }
