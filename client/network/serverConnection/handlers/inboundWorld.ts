@@ -41,6 +41,14 @@ import { applyGroundItemsDelta, cloneGroundItemsPayload } from "../utils/groundI
 import { sanitizeBankSlotMessage, sanitizeInventorySlotMessage, sanitizeSpellResult } from "../utils/sanitize";
 
 export function handleInboundWorld(msg: any): boolean {
+    if (msg.type === "player_option") {
+        const { slot, option, priority } = msg.payload;
+        if (Number.isInteger(slot) && slot >= 1 && slot <= 8) {
+            if (option) ClientState.playerOptions.set(slot, { option, priority });
+            else ClientState.playerOptions.delete(slot);
+        }
+        return true;
+    }
     if (msg.type === "region_replacement") {
         try {
             const client = ((typeof window !== "undefined" ? window : globalThis) as any)

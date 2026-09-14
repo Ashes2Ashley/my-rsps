@@ -5,7 +5,7 @@ import {
   encodeChatMessage,
   encodeFriendsChatSnapshot,
 } from "../src/main/typescript/elvarg/net/protocol/ClientProtocol";
-import { FriendsChatManager } from "../src/main/typescript/elvarg/game/content/FriendsChatManager";
+const { FriendsChatManager } = require("../plugins/interface/FriendsChatManager");
 import { PlayerSave } from "../src/main/typescript/elvarg/game/entity/impl/player/persistence/PlayerSave";
 import { PlayerRelations } from "../src/main/typescript/elvarg/game/model/PlayerRelations";
 import { World } from "../src/main/typescript/elvarg/game/World";
@@ -14,6 +14,7 @@ import { Misc } from "../src/main/typescript/elvarg/util/Misc";
 const friendsListPlugin = require("../plugins/interface/FriendsList.plugin.js");
 const socialHooks: Record<string, (event: any) => void> = {};
 friendsListPlugin.register({
+  onCanAttack: (handler: (event: any) => void) => { socialHooks.attack = handler; },
   onPlayerLogin: (handler: (event: any) => void) => { socialHooks.login = handler; },
   onPlayerLogout: (handler: (event: any) => void) => { socialHooks.logout = handler; },
   onSocialPacket: (handler: (event: any) => void) => { socialHooks.packet = handler; },
@@ -118,14 +119,18 @@ assert.deepStrictEqual(setupOpens.slice(1), [
 ]);
 
 function socialPlayer(index: number, username: string): any {
+  let currentChannel: unknown = null;
+  const friends = new Map<bigint, number>();
   let channelName = "";
   let lastOwner = "";
   let activeChannel = "";
   let pendingNameAction: any;
   const relations = {
-    getFriendList: () => [],
+    getFriendList: () => [...friends.keys()],
     getIgnoreList: () => [],
-    getFriendRank: () => 0,
+    getFriendRank: (name: bigint) => friends.get(name) ?? 0,
+    addFriend: (name: bigint) => { if (!friends.has(name)) friends.set(name, 0); },
+    setFriendRank: (name: bigint, rank: number) => { friends.set(name, rank); return true; },
     getFriendsChatChannelName: () => channelName,
     setFriendsChatChannelName: (value: string) => { channelName = value; },
     getFriendsChatEntryRank: () => -1,
@@ -141,6 +146,9 @@ function socialPlayer(index: number, username: string): any {
   };
   return {
     getIndex: () => index,
+    isPlayerBot: () => false,
+    getCurrentClanChat: () => currentChannel,
+    setCurrentClanChat: (value: unknown) => { currentChannel = value; },
     getUsername: () => username,
     getLongUsername: () => Misc.stringToLongBigInt(username),
     getRights: () => ({ getId: () => 0 }),
@@ -168,6 +176,23 @@ channelOwner.getPendingNameAction().execute("Owner Chat");
 assert.strictEqual(manager.channels.get("owner a b")?.profile.channelName, "Owner Chat");
 FriendsChatManager.handleAction(channelGuest, { action: "join", name: "Owner A B" });
 assert.strictEqual(channelGuest.getClanChatName(), "Owner_A_B");
+const recruit = socialPlayer(103, "RecruitBot");
+recruit.isPlayerBot = () => true;
+assert.equal(FriendsChatManager.recruitBot(channelOwner, recruit), true);
+assert.equal(recruit.getCurrentClanChat(), FriendsChatManager.getOwnedChannel(channelOwner));
+assert.equal(recruit.getCurrentClanChat(), channelGuest.getCurrentClanChat());
+const attackEvent = { attacker: channelOwner, target: recruit, allow: null as boolean | null };
+socialHooks.attack(attackEvent);
+assert.equal(attackEvent.allow, false, "plugin protects members of the live channel");
+const allowedAttack = { ...attackEvent, allow: true };
+socialHooks.attack(allowedAttack);
+assert.equal(allowedAttack.allow, true, "preserve earlier attack decisions");
+assert.equal(channelOwner.getRelations().getFriendRank(recruit.getLongUsername()), 1);
+FriendsChatManager.handleAction(recruit, { action: "leave" });
+attackEvent.allow = null;
+socialHooks.attack(attackEvent);
+assert.equal(attackEvent.allow, null, "leaving removes clan attack protection");
+assert.equal(recruit.getCurrentClanChat(), null);
 
 manager.channels.clear();
 manager.membershipByPlayer.clear();

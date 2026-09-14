@@ -115,6 +115,31 @@ const EQUIPMENT_LAYOUT = [
 ];
 const EQUIPMENT_SLOTS = EQUIPMENT_LAYOUT.map((entry) => entry.slot);
 
+function addEquipmentWidgets(add, parent, x, y, options = {}) {
+  const backgroundStart = options.backgroundStart ?? EQUIPMENT_BACKGROUND_START;
+  const placeholderStart = options.placeholderStart ?? EQUIPMENT_PLACEHOLDER_START;
+  const itemStart = options.itemStart ?? EQUIPMENT_SLOT_START;
+  const columnPitch = options.columnPitch ?? EQUIPMENT_PITCH;
+  const rowPitch = options.rowPitch ?? EQUIPMENT_PITCH;
+  for (const { slot, column, row } of EQUIPMENT_LAYOUT) {
+    const slotX = x + column * columnPitch;
+    const slotY = y + row * rowPitch;
+    add(backgroundStart + slot, parent, {
+      type: TYPE_GRAPHIC, rawX: slotX, rawY: slotY, rawWidth: 36, rawHeight: 36,
+      width: 36, height: 36, spriteId: SLOT_BACKGROUND_SPRITE,
+    });
+    add(placeholderStart + slot, parent, {
+      type: TYPE_GRAPHIC, rawX: slotX, rawY: slotY + 2, rawWidth: 32, rawHeight: 32,
+      width: 32, height: 32, spriteId: EQUIPMENT_PLACEHOLDER_SPRITES[slot],
+    });
+    add(itemStart + slot, parent, {
+      type: TYPE_GRAPHIC, rawX: slotX, rawY: slotY + 2, rawWidth: 36, rawHeight: 32,
+      width: 36, height: 32, itemQuantityMode: 2, borderType: 1,
+      graphicShadow: SLOT_SHADOW, shadowColor: SLOT_SHADOW, text: "",
+    });
+  }
+}
+
 const STAT_ROW_COUNT = STAT_SKILL_ICONS.length;
 const STAT_BOX_LEFT_START = 240;
 const STAT_BOX_RIGHT_START = 250;
@@ -318,19 +343,7 @@ function buildPresetsWidgetGroup() {
   );
   const equipmentX =
     EQUIPMENT_X + Math.floor((EQUIPMENT_WIDTH - EQUIPMENT_COLUMNS * EQUIPMENT_PITCH) / 2);
-  for (const entry of EQUIPMENT_LAYOUT) {
-    slot(
-      EQUIPMENT_SLOT_START + entry.slot,
-      equipmentX + entry.column * EQUIPMENT_PITCH,
-      EQUIPMENT_Y + entry.row * EQUIPMENT_PITCH,
-      EQUIPMENT_PITCH,
-      {
-        component: EQUIPMENT_BACKGROUND_START + entry.slot,
-        placeholderComponent: EQUIPMENT_PLACEHOLDER_START + entry.slot,
-        placeholderSpriteId: EQUIPMENT_PLACEHOLDER_SPRITES[entry.slot],
-      }
-    );
-  }
+  addEquipmentWidgets(add, root, equipmentX, EQUIPMENT_Y);
   label(COMPONENT.SPELLBOOK, root, EQUIPMENT_X, SPELLBOOK_Y, EQUIPMENT_WIDTH, {
     textColor: COLOUR_MUTED,
     xTextAlignment: 1,
@@ -443,9 +456,11 @@ module.exports = {
   CUSTOM_ROW_COUNT,
   INVENTORY_SLOT_START,
   INVENTORY_SLOT_COUNT,
+  EQUIPMENT_BACKGROUND_START,
   EQUIPMENT_SLOT_START,
   EQUIPMENT_PLACEHOLDER_START,
   EQUIPMENT_SLOTS,
+  addEquipmentWidgets,
   STAT_ROW_START,
   STAT_MAX_ROW_START,
   STAT_ROW_COUNT,

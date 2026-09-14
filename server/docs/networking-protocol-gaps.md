@@ -300,10 +300,10 @@ xrsps-typescript first.
   confirming client and server are consistent with each other - this isn't an oversight on one
   side, clan-chat-sending simply isn't wired up anywhere in this client/protocol at all.
   `xrsps-typescript/server/src/network/packet/ClientBinaryDecoder.ts:595-603`
-- **What elvarg has today:** clan chat join/leave/setup/rank-management all work fine (they're
-  widget/button-driven, going through the live `onButton`/`onInterfaceActionButton` plugin hooks).
-  Only *sending a message* is blocked. `allowChat()` (mute + word-filter check) is still defined in
-  `plugins/interface/ClanChat.plugin.js` for when this gets fixed - just nothing calls it right now.
+- **Current elvarg implementation:** `plugins/interface/FriendsList.plugin.js` routes social
+  packets and widget actions to `plugins/interface/FriendsChatManager.js`, including channel
+  messages with mute and word-filter checks. The legacy clan implementation has been removed;
+  the xrsps client observations above describe the earlier protocol gap.
 - **To fix:** implement `CHAT_SENDCLAN` in the xrsps client to actually call `sendChat` with a
   distinguishable clan flag, extend `encodeChat`/`ClientPacketId.CHAT`'s wire format to carry a
   third messageType value, then mirror that in elvarg's own decoder (`ClientProtocol.ts:154,

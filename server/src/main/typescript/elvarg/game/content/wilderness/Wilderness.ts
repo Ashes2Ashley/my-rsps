@@ -2,12 +2,20 @@ import { Location } from "../../model/Location";
 import { Mobile } from "../../entity/impl/Mobile";
 import { WORLD_ZONE_BOUNDARIES } from "../../definition/WorldDefinition";
 
+import { RegionManager } from "../../collision/RegionManager";
+
 export class Wilderness {
+    public static isInSafeBuilding(location: Location | null | undefined): boolean {
+        return !!location && WORLD_ZONE_BOUNDARIES["all-buildings-safe"].some((boundary) => boundary.inside(location)) &&
+            (RegionManager.getRegion(location.getX(), location.getY())
+                ?.isUnderRoof(location.getX(), location.getY(), location.getZ()) ?? false);
+    }
+
     public static isInLocation(location: Location | null | undefined): boolean {
         if (!location) {
             return false;
         }
-        return !WORLD_ZONE_BOUNDARIES.safe.some((boundary) => boundary.inside(location))
+        return !Wilderness.isInSafeBuilding(location) && !WORLD_ZONE_BOUNDARIES.safe.some((boundary) => boundary.inside(location))
             && WORLD_ZONE_BOUNDARIES.pvp.some((boundary) => boundary.inside(location));
     }
 

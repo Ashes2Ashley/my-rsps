@@ -1,6 +1,5 @@
 const { Task } = require("../../src/main/typescript/elvarg/game/task/Task");
 const { GameConstants } = require("../../src/main/typescript/elvarg/game/GameConstants");
-const { ObjectIdentifiers } = require("../../src/main/typescript/elvarg/util/ObjectIdentifiers");
 const Presets = require("./pvp/Presets");
 
 function openPresets({ player }) {
@@ -47,15 +46,6 @@ function openPresetsAfterDeath({ victim }) {
   TaskManager.submit(new OpenPresetsAfterDeath(victim));
 }
 
-function loadObjectSpawns() {
-  return [
-    { id: ObjectIdentifiers.ORNATE_POOL_OF_REJUVENATION, type: 10, face: 0,
-      position: { x: 3085, y: 3518, z: 0 } },
-    { id: ObjectIdentifiers.ALTAR_OF_THE_OCCULT, type: 10, face: 0,
-      position: { x: 3087, y: 3518, z: 0 } },
-  ];
-}
-
 module.exports = {
   name: "PvpMode",
   register(api) {
@@ -63,6 +53,5 @@ module.exports = {
     Presets.register(api);
     api.registerCommand("presets", openPresets);
     api.onPlayerDefeated(openPresetsAfterDeath);
-    api.registerDefinitionSource("object_spawns", { load: loadObjectSpawns });
   },
 };

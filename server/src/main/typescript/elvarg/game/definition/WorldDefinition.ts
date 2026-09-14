@@ -3,7 +3,7 @@ import * as path from "path";
 import { Boundary } from "../model/Boundary";
 import { Location } from "../model/Location";
 
-export type WorldZoneTag = "pvp" | "multi-combat" | "safe";
+export type WorldZoneTag = string;
 
 export interface WorldPosition {
     x: number;
@@ -106,9 +106,9 @@ export function parseWorldZone(value: unknown, label = "world zone"): WorldZone 
         throw new WorldDefinitionValidationError(`${label}.tags must be a non-empty array`);
     }
     for (const tag of new Set(zone.tags)) {
-        if (tag !== "pvp" && tag !== "multi-combat" && tag !== "safe") {
+        if (typeof tag !== "string") {
             throw new WorldDefinitionValidationError(
-                `${label} has unsupported tag: ${String(tag)}`
+                `${label}.tags must contain strings`
             );
         }
         parsed.tags.push(tag);
@@ -149,11 +149,13 @@ export const WORLD_SPAWN = new Location(
     definition.spawn.z
 );
 
-export const WORLD_ZONE_BOUNDARIES: Record<WorldZoneTag, Boundary[]> = {
+export const WORLD_ZONE_BOUNDARIES: Record<WorldZoneTag, Boundary[]> = Object.assign(Object.create(null), {
+    duel: [],
     pvp: [],
     safe: [],
     "multi-combat": [],
-};
+    "all-buildings-safe": [],
+});
 
 function zoneBoundaries(zone: WorldZone): Boundary[] {
     if (zone.minX === undefined) {
@@ -164,12 +166,10 @@ function zoneBoundaries(zone: WorldZone): Boundary[] {
 
 function syncRuntime(): void {
     WORLD_SPAWN.set(definition.spawn.x, definition.spawn.y, definition.spawn.z);
-    WORLD_ZONE_BOUNDARIES.pvp.length = 0;
-    WORLD_ZONE_BOUNDARIES.safe.length = 0;
-    WORLD_ZONE_BOUNDARIES["multi-combat"].length = 0;
+    for (const boundaries of Object.values(WORLD_ZONE_BOUNDARIES)) boundaries.length = 0;
     for (const zone of definition.zones) {
         const boundaries = zoneBoundaries(zone);
-        for (const tag of zone.tags) WORLD_ZONE_BOUNDARIES[tag].push(...boundaries);
+        for (const tag of zone.tags) (WORLD_ZONE_BOUNDARIES[tag] ??= []).push(...boundaries);
     }
 }
 

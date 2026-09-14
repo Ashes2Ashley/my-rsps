@@ -1,6 +1,6 @@
 const {
-  ClanChatManager,
-} = require("../../interface/ClanChat.plugin");
+  FriendsChatManager,
+} = require("../../interface/FriendsChatManager");
 const {
   ATTR_RECRUIT_OWNER_USERNAME,
   ATTR_RECRUIT_RETURN_AFTER_DEATH_AT,
@@ -46,7 +46,7 @@ function isActiveClanRecruit(owner, bot) {
   if (owner.getPrivateArea?.() !== bot.getPrivateArea?.()) {
     return false;
   }
-  const ownerClan = ClanChatManager.getClanChat(owner);
+  const ownerClan = FriendsChatManager.getOwnedChannel(owner);
   return ownerClan != null && bot.getCurrentClanChat?.() === ownerClan;
 }
 
@@ -118,7 +118,10 @@ function resolveClanRecruitCombatTarget(owner) {
   if (!candidate || candidate === owner) {
     return null;
   }
-  if (candidate.isPlayer?.() !== true || candidate.isRegistered?.() !== true) {
+  if (
+    (candidate.isPlayer?.() !== true && candidate.isNpc?.() !== true) ||
+    candidate.isRegistered?.() !== true
+  ) {
     return null;
   }
   if ((candidate.getHitpoints?.() ?? 0) <= 0) {
@@ -153,7 +156,7 @@ function handleClanRecruitAssist({ runtime, behaviorMode, player, target, nowMs,
     return;
   }
 
-  const ownerClan = ClanChatManager.getClanChat(player);
+  const ownerClan = FriendsChatManager.getOwnedChannel(player);
   if (!ownerClan) {
     return;
   }
@@ -186,17 +189,19 @@ function handleClanRecruitAssist({ runtime, behaviorMode, player, target, nowMs,
       (targetUsername && state?.pvp?.targetUsername === targetUsername);
 
     if (!alreadyHelping) {
-      setModePvp(
-        bot,
-        state,
-        target,
-        nowMs,
-        CLAN_ASSIST_DURATION_MS,
-        behaviorMode,
-        { allowInCombatTransition: true }
-      );
+      if (target.isPlayer?.() === true) {
+        setModePvp(
+          bot,
+          state,
+          target,
+          nowMs,
+          CLAN_ASSIST_DURATION_MS,
+          behaviorMode,
+          { allowInCombatTransition: true }
+        );
+      }
       bot.getMovementQueue?.().reset?.();
-    } else if (state?.pvp) {
+    } else if (target.isPlayer?.() === true && state?.pvp) {
       state.pvp.endsAt = Math.max(
         Number(state.pvp.endsAt ?? 0),
         nowMs + CLAN_ASSIST_DURATION_MS

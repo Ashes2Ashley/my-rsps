@@ -2,6 +2,7 @@ import { mat4, vec3 } from "gl-matrix";
 
 import { LocModelLoader } from "../../rs/config/loctype/LocModelLoader";
 import { LocModelType } from "../../rs/config/loctype/LocModelType";
+import type { NpcType } from "../../rs/config/npctype/NpcType";
 import type { LocType } from "../../rs/config/loctype/LocType";
 import { getMapIndexFromTile, getMapSquareId } from "../../rs/map/MapFileIndex";
 import type { Model } from "../../rs/model/Model";
@@ -630,7 +631,12 @@ export class SceneRaycaster {
             let resizeY = 1.0;
             let resizeZ = 1.0;
             try {
-                const npcType = this.osrsClient.npcTypeLoader?.load?.(interactId | 0);
+                let npcType: NpcType | undefined = this.osrsClient.npcTypeLoader.load(interactId);
+                while (npcType?.transforms) {
+                    npcType = npcType.transform(this.osrsClient.varManager, this.osrsClient.npcTypeLoader);
+                }
+                // Model-less NPC spawns must not intercept objects behind their bounding box.
+                if (!npcType?.modelIds?.length) continue;
                 if (npcType) {
                     if (typeof npcType.widthScale === "number") {
                         resizeX = Math.max(0.25, npcType.widthScale / 128);
@@ -642,7 +648,10 @@ export class SceneRaycaster {
                         resizeZ = Math.max(0.25, npcType.heightScale / 128);
                     }
                 }
-            } catch {}
+            } catch {
+                // Retry after streamed definitions become available.
+                continue;
+            }
             const horizScale = Math.max(resizeX, resizeY);
             const half = Math.max(0.32, size * 0.42 * horizScale);
             const groundY = this.sampleHeightAt(worldX, worldZ, npcPlane | 0);

@@ -232,6 +232,7 @@ export class Player extends Mobile {
     constructor(playerIO: PlayerSession, spawnLocation?: Location) {
         super(spawnLocation ?? GameConstants.DEFAULT_LOCATION.clone());
         this.session = playerIO;
+        this.aggressionTolerance.start(NpcAggression.NPC_TOLERANCE_SECONDS);
     }
 
 

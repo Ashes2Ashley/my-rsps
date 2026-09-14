@@ -2338,3 +2338,7 @@ export function encodeDefaultAnimations(): Buffer {
 export function encodeLogoutResponse(reason = ""): Buffer {
   return packet(ServerPacket.LOGOUT_RESPONSE, Buffer.concat([Buffer.from([1]), string(reason)]));
 }
+
+export function encodePlayerOption(slot: number, option: string, priority: boolean): Buffer {
+  return encodeServerPacket(ServerPacketId.PLAYER_OPTION, Buffer.concat([Buffer.from([slot, priority ? 1 : 0]), Buffer.from(option + "\0", "utf8")]));
+}

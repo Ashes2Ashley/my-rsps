@@ -8,3 +8,7 @@ export type CustomNpcSpawnsMessage = { type: typeof CUSTOM_NPC_SPAWNS_MESSAGE; s
 export function regionIdForTile(tileX: number, tileY: number): number {
     return ((tileX >> 6) << 8) | (tileY >> 6);
 }
+
+export function formatCustomNpcSpawns(spawns: readonly unknown[]): string {
+    return spawns.length ? "[\n" + spawns.map((spawn) => "  " + JSON.stringify(spawn)).join(",\n") + "\n]\n" : "[]\n";
+}

@@ -1,3 +1,4 @@
+import { encodePlayerOption } from "../protocol/ClientProtocol";
 import { BIT_MASKS } from "../../game/cache/codec/rs/MathConstants";
 import { PacketBuilder } from "./PacketBuilder";
 import { ValueType } from "./ValueType";
@@ -62,6 +63,7 @@ import {
 } from "../protocol/WorldMapProtocol";
 import { CacheDefinitions } from "../../game/cache/CacheDefinitions";
 const CHATBOX_MODAL_TARGET_UID = (162 << 16) | 567;
+const MAIN_MODAL_TARGET_UID = (161 << 16) | 16;
 const VARBIT_MULTICOMBAT_AREA = 4605;
 // Quest completion states consulted by spellbook CS2 scripts. Keep these client
 // flags separate from server-side spell casting so quests can be enforced later.
@@ -263,12 +265,12 @@ export class PacketSender {
   }
 
   sendInterface(id: number): this {
+    this.player.setInterfaceId(id);
     if (this.player.isPlayerBot()) {
       return this;
     }
 
-    this.player.setInterfaceId(id);
-    if (this.player.getSession().sendClientPacket(encodeWidgetOpen(id, true))) return this;
+    return this.sendSubInterface(MAIN_MODAL_TARGET_UID, id, 0);
   }
 
   public sendConfiguredInterface(reference: string | number): this {
@@ -422,6 +424,13 @@ export class PacketSender {
 
   public clearItemOnInterface(frame: number): PacketSender {
     if (this.player.getSession().sendClientPacket(encodeWidgetSetItem(frame, -1, 0))) return this;
+  }
+
+  public sendPlayerOption(slot: number, option: string, priority = false): this {
+    if (Number.isInteger(slot) && slot >= 1 && slot <= 8) {
+      this.player.getSession().sendClientPacket(encodePlayerOption(slot, option, priority));
+    }
+    return this;
   }
 
   public sendInteractionOption(

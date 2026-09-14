@@ -1,3 +1,5 @@
+import { quarterTurnToDirection } from "../../../common/Direction";
+import { OBJECT_SPAWNS_MESSAGE, formatObjectSpawns } from "./hostProtocol/objectSpawnsMessage";
 import FileSaver from "file-saver";
 import {
     REGION_PACK_MESSAGE,
@@ -7,6 +9,7 @@ import type { EditModePlugin } from "./EditModePlugin";
 import { EditorPalette, type PaletteMode } from "./EditorPalette";
 import {
     createCameraIcon,
+    createConfigIcon,
     EditorToolbar,
     createCloseIcon,
     createDuplicateIcon,
@@ -26,7 +29,7 @@ import {
     createWorldMapIcon,
 } from "./EditorToolbar";
 import { WORLD_DEFINITION_MESSAGE } from "./hostProtocol/worldDefinitionMessage";
-import { CUSTOM_NPC_SPAWNS_MESSAGE } from "./hostProtocol/npcSpawnMessage";
+import { CUSTOM_NPC_SPAWNS_MESSAGE, formatCustomNpcSpawns } from "./hostProtocol/npcSpawnMessage";
 import { SHOP_DEFINITIONS_MESSAGE } from "./hostProtocol/shopsMessage";
 import { NPC_INTERACTIONS_MESSAGE } from "./hostProtocol/npcInteractionsMessage";
 import { MenuOpcode } from "../../../ui/menu/MenuState";
@@ -162,7 +165,11 @@ class EditorChrome {
     private readonly heightInput: HTMLInputElement;
     private readonly renderAllInput: HTMLInputElement;
     private readonly mapIconsInput: HTMLInputElement;
+    private readonly saveObjectSpawnsInput: HTMLInputElement;
+    private readonly settingsContent: HTMLDivElement;
+    private settingsDrawer?: HTMLElement;
     private readonly pvpZonesInput: HTMLInputElement;
+    private readonly duelZonesInput: HTMLInputElement;
     private readonly safeZonesInput: HTMLInputElement;
     private readonly multiCombatZonesInput: HTMLInputElement;
     private readonly unsubscribe: () => void;
@@ -232,6 +239,12 @@ class EditorChrome {
                     label: "World map",
                     icon: createWorldMapIcon,
                     action: () => this.toggleWorldMap(),
+                },
+                {
+                    id: "settings",
+                    label: "Editor settings",
+                    icon: createConfigIcon,
+                    action: () => this.toggleSettings(),
                 },
                 {
                     id: "export-region",
@@ -312,13 +325,13 @@ class EditorChrome {
             marginLeft: "8px",
             cursor: "pointer",
         });
-        renderAllLabel.append("Render all HL:");
+        renderAllLabel.append("Render all Height Levels");
         this.renderAllInput = document.createElement("input");
         this.renderAllInput.type = "checkbox";
         this.renderAllInput.addEventListener("change", () =>
             this.plugin.setConfig({ renderAllHeightLevels: this.renderAllInput.checked }),
         );
-        renderAllLabel.appendChild(this.renderAllInput);
+        renderAllLabel.prepend(this.renderAllInput);
         const mapIconsLabel = document.createElement("label");
         Object.assign(mapIconsLabel.style, {
             display: "flex",
@@ -327,13 +340,27 @@ class EditorChrome {
             marginLeft: "8px",
             cursor: "pointer",
         });
-        mapIconsLabel.append("Icons:");
+        mapIconsLabel.append("Show map icons");
         this.mapIconsInput = document.createElement("input");
         this.mapIconsInput.type = "checkbox";
         this.mapIconsInput.addEventListener("change", () =>
             this.plugin.setConfig({ showMapIcons: this.mapIconsInput.checked }),
         );
-        mapIconsLabel.appendChild(this.mapIconsInput);
+        mapIconsLabel.prepend(this.mapIconsInput);
+        this.settingsContent = document.createElement("div");
+        const saveObjectsLabel = document.createElement("label");
+        this.saveObjectSpawnsInput = document.createElement("input");
+        this.saveObjectSpawnsInput.type = "checkbox";
+        this.saveObjectSpawnsInput.addEventListener("change", () =>
+            this.plugin.setConfig({ saveObjectSpawns: this.saveObjectSpawnsInput.checked }),
+        );
+        saveObjectsLabel.append(this.saveObjectSpawnsInput, "Save objects to object-spawns.json");
+        for (const label of [...(browserHostWindow() ? [saveObjectsLabel] : []), renderAllLabel, mapIconsLabel]) {
+            Object.assign(label.style, { display: "grid", gridTemplateColumns: "16px minmax(0, 1fr)", alignItems: "start", columnGap: "12px", margin: "14px 0", lineHeight: "20px", cursor: "pointer" });
+            const input = label.querySelector("input")!;
+            Object.assign(input.style, { width: "16px", height: "16px", margin: "2px 0 0" });
+            this.settingsContent.appendChild(label);
+        }
         const zoneToggle = (
             text: string,
             color: string,
@@ -364,6 +391,8 @@ class EditorChrome {
             this.plugin.setConfig({ showMultiCombatZones: checked }),
         );
         this.multiCombatZonesInput = multiCombatZones.input;
+        const duelZones = zoneToggle("Duel", "#c4b5fd", (checked) => this.plugin.setConfig({ showDuelZones: checked }));
+        this.duelZonesInput = duelZones.input;
         const safeZones = zoneToggle("Safe", "#86efac", (checked) => this.plugin.setConfig({ showSafeZones: checked }));
         this.safeZonesInput = safeZones.input;
         this.bottomBar.append(
@@ -371,10 +400,8 @@ class EditorChrome {
             decrement,
             this.heightInput,
             increment,
-            renderAllLabel,
-            mapIconsLabel,
         );
-        this.bottomBar.append(pvpZones.label, multiCombatZones.label, safeZones.label);
+        this.bottomBar.append(pvpZones.label, multiCombatZones.label, safeZones.label, duelZones.label);
         const refreshMap = document.createElement("button");
         refreshMap.type = "button";
         refreshMap.replaceChildren(createRefreshIcon(), document.createTextNode("Refresh map"));
@@ -419,6 +446,7 @@ class EditorChrome {
         this.palette.remove();
         this.selectionDetails.remove();
         this.bottomBar.remove();
+        this.closeSettings();
         if (this.canvasShell) this.canvasShell.style.bottom = this.previousCanvasBottom;
         requestAnimationFrame(() => window.dispatchEvent(new Event("resize")));
         this.detailPanel?.remove();
@@ -541,11 +569,13 @@ class EditorChrome {
         this.toolbar.setDisabled("shops", !state.world.definition);
         this.pvpZonesInput.disabled = !state.world.definition;
         this.safeZonesInput.disabled = !state.world.definition;
+        this.duelZonesInput.checked = state.config.showDuelZones;
         this.safeZonesInput.checked = state.config.showSafeZones;
         this.multiCombatZonesInput.disabled = !state.world.definition;
         this.heightInput.value = String(state.config.heightLevel);
         this.renderAllInput.checked = state.config.renderAllHeightLevels;
         this.mapIconsInput.checked = state.config.showMapIcons;
+        this.saveObjectSpawnsInput.checked = state.config.saveObjectSpawns;
         this.pvpZonesInput.checked = state.config.showPvpZones;
         this.multiCombatZonesInput.checked = state.config.showMultiCombatZones;
         this.toolbar.setIcon("overlay", () => createOverlayIcon(this.overlayColor(state.config.overlayId)));
@@ -868,7 +898,27 @@ class EditorChrome {
         this.plugin.toggleWorldMap();
     }
 
+    private toggleSettings(): void {
+        if (this.settingsDrawer) {
+            this.closeSettings();
+            return;
+        }
+        this.palette.setVisible(false);
+        this.closeShopBrowser();
+        this.closeShopEditor();
+        const panel = createPanel("settings", "340px");
+        this.settingsDrawer = panel;
+        panel.append(createHeader("Settings", () => this.closeSettings()), this.settingsContent);
+        (browserHostWindow() ? this.saveObjectSpawnsInput : this.renderAllInput).focus();
+    }
+
+    private closeSettings(): void {
+        this.settingsDrawer?.remove();
+        this.settingsDrawer = undefined;
+    }
+
     private toggleShopBrowser(): void {
+        this.closeSettings();
         if (this.shopBrowser) {
             this.closeShopBrowser();
             return;
@@ -1153,14 +1203,16 @@ class EditorChrome {
 
     private exportRegions(): void {
         try {
+            if (!browserHostWindow()) this.plugin.setConfig({ saveObjectSpawns: false });
+            const objectSpawns = this.plugin.exportObjectSpawns();
             const exported = this.plugin.exportModifiedRegionPacks();
             const world = this.plugin.getWorldDefinitionForSave();
             const shopsDirty = this.shopsDirty;
             const npcInteractionsDirty = this.npcInteractionsDirty;
             const customNpcs = this.plugin.getConfig().edits
                 .filter((edit) => edit.kind === "npc")
-                .map((edit) => ({ id: edit.locId, tileX: edit.tileX, tileY: edit.tileY, plane: edit.plane, direction: edit.rotation }));
-            if (exported.length === 0 && !world && customNpcs.length === 0 && !shopsDirty && !npcInteractionsDirty) {
+                .map((edit) => ({ id: edit.locId, tileX: edit.tileX, tileY: edit.tileY, plane: edit.plane, direction: quarterTurnToDirection(edit.rotation) }));
+            if (objectSpawns === undefined && exported.length === 0 && !world && customNpcs.length === 0 && !shopsDirty && !npcInteractionsDirty) {
                 this.toast("No world or map edits to save");
                 return;
             }
@@ -1169,6 +1221,9 @@ class EditorChrome {
             const host = browserHostWindow();
             if (host && !host.closed) {
                 const hostOrigin = browserHostOrigin();
+                if (objectSpawns !== undefined) host.postMessage(
+                    { type: OBJECT_SPAWNS_MESSAGE, contents: formatObjectSpawns(objectSpawns) }, hostOrigin,
+                );
                 for (const pack of exported) {
                     const message = { type: REGION_PACK_MESSAGE, ...pack } as const;
                     host.postMessage(message, hostOrigin);
@@ -1196,14 +1251,19 @@ class EditorChrome {
                     this.npcInteractionsDirty = false;
                 }
                 const saved = [
+                    objectSpawns !== undefined ? "object additions/deletions" : "",
                     exported.length ? `${exported.length} edited region pack${exported.length === 1 ? "" : "s"}` : "",
                     world ? "world spawn" : "",
                     customNpcs.length ? `${customNpcs.length} custom NPC spawn${customNpcs.length === 1 ? "" : "s"}` : "",
                     shopsDirty ? "shops" : "",
                     npcInteractionsDirty ? "NPC shop actions" : "",
                 ].filter(Boolean).join(" and ");
+                this.plugin.markMapEditsSaved(exported, objectSpawns);
                 this.toast(`Saved ${saved}`);
                 return;
+            }
+            if (objectSpawns !== undefined) {
+                FileSaver.saveAs(new Blob([formatObjectSpawns(objectSpawns)], { type: "application/json" }), "object-spawns.json");
             }
             if (shopsDirty) {
                 FileSaver.saveAs(new Blob([JSON.stringify(this.shops, null, 2) + "\n"], { type: "application/json" }), "shops.json");
@@ -1228,10 +1288,11 @@ class EditorChrome {
             }
             if (customNpcs.length) {
                 FileSaver.saveAs(
-                    new Blob([JSON.stringify(customNpcs.map(({ id, tileX: x, tileY: y, plane: level, direction }) => ({ id, x, y, level, direction })), null, 2) + "\n"], { type: "application/json" }),
-                    "npc_spawns.json",
+                    new Blob([formatCustomNpcSpawns(customNpcs.map(({ id, tileX: x, tileY: y, plane: level, direction }) => ({ id, x, y, level, direction })))], { type: "application/json" }),
+                    "npc-spawns-custom.json",
                 );
             }
+            this.plugin.markMapEditsSaved(exported, objectSpawns);
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
             console.error("[edit-mode] Region export failed", error);

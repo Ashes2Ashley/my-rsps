@@ -1,8 +1,18 @@
-const { FriendsChatManager } = require("../../src/main/typescript/elvarg/game/content/FriendsChatManager");
+const { FriendsChatManager } = require("./FriendsChatManager");
 
 module.exports = {
   name: "FriendsList",
   register(api) {
+    api.onCanAttack((event) => {
+      if (event.allow !== null) return;
+      const { attacker, target } = event;
+      if (!attacker || !target || attacker === target) return;
+      const channel = attacker.getCurrentClanChat?.();
+      if (channel == null || channel !== target.getCurrentClanChat?.()) return;
+      attacker.getPacketSender().sendMessage("You cannot attack a player who is in your clan chat.");
+      event.allow = false;
+    });
+
     api.onPlayerLogin(({ player }) => {
       FriendsChatManager.onLogin(player);
     });

@@ -36,13 +36,13 @@ const parsedWorld = {
     disabledPlugins: ["PvpMode"],
     experienceMultiplier: 5,
 };
-for (const tags of [[], ["pvp"], ["pvp", "multi-combat"]]) {
+for (const tags of [[], ["custom:arena", "__proto__"], ["duel"], ["pvp"], ["pvp", "multi-combat"], ["pvp", "all-buildings-safe"]]) {
     const world = { ...parsedWorld, zones: [{ tags }, ...parsedWorld.zones] };
     const parsed = parseBrowserHostWorldDefinition(JSON.stringify(world));
     assert.deepEqual(parsed, world, "Global rules must not reject the spawn or be lost on save");
     assert.deepEqual(parseBrowserHostWorldDefinition(JSON.stringify(parsed)), world);
 }
-for (const zone of [{ minX: 1, tags: ["pvp"] }, { tags: ["unknown"] }, { ...parsedWorld.zones[0], tags: [] }]) {
+for (const zone of [{ minX: 1, tags: ["pvp"] }, { tags: [123] }, { ...parsedWorld.zones[0], tags: [] }]) {
     assert.throws(() => parseEditModeWorldDefinition({ ...parsedWorld, zones: [zone] }));
 }
 // Local zone interaction becomes available after asynchronous world loading.
@@ -59,11 +59,14 @@ assert.equal(map.zoneAt(50, 50), undefined);
 const { EditModePlugin } = require("../game/plugins/editmode/EditModePlugin");
 const zoneEditor = new EditModePlugin();
 zoneEditor.world = { loading: false, definition: { ...parsedWorld, zones: [] } };
-for (const tag of ["pvp", "multi-combat", "safe"]) {
+for (const tag of ["pvp", "multi-combat", "safe", "duel"]) {
     zoneEditor.addWorldZone({ minX: 1, maxX: 2, minY: 3, maxY: 4 }, tag);
 }
-assert.deepEqual(zoneEditor.getWorldDefinitionForSave().zones.map((zone: any) => zone.tags), [["pvp"], ["multi-combat"], ["safe"]]);
+assert.deepEqual(zoneEditor.getWorldDefinitionForSave().zones.map((zone: any) => zone.tags), [["pvp"], ["multi-combat"], ["safe"], ["duel"]]);
 assert.equal(zoneEditor.getConfig().showSafeZones, true);
+assert.equal(zoneEditor.getConfig().showDuelZones, true);
+visibleZones = { zones: [{ ...parsedWorld.zones[0], tags: ["duel"] }], showDuel: true };
+assert.equal(map.zoneAt(50, 50), 0, "Duel zones remain selectable with only Duel enabled");
 assert.deepEqual(parseEditModeWorldDefinition(zoneEditor.getWorldDefinitionForSave()).zones[2].tags, ["safe"]);
 zoneEditor.setWorldZoneType(0, "safe");
 assert.deepEqual(zoneEditor.getWorldDefinitionForSave().zones[0].tags, ["safe"]);

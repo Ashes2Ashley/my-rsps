@@ -83,14 +83,8 @@ export class AreaManager {
     }
 
     public static inMulti(c: Mobile): boolean {
-        if (c.getArea() != null) {
-            return c.getArea().isMulti(c);
-        }
         const location = c.getLocation();
-        if (Wilderness.isInLocation(location)) {
-            return Wilderness.isMulti(location.getX(), location.getY());
-        }
-        return false;
+        return Wilderness.isMulti(location.getX(), location.getY());
     }
 
     /**

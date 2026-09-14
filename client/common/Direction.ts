@@ -154,6 +154,11 @@ export const DIRECTION_TO_ORIENTATION: ReadonlyArray<number> = [
     256, 0, 1792, 512, 1536, 768, 1024, 1280,
 ];
 
+/** Convert the editor's quarter turns to the spawn file's eight-direction index. */
+export function quarterTurnToDirection(rotation: number): number {
+    return DIRECTION_TO_ORIENTATION.indexOf((rotation & 3) * 512);
+}
+
 /**
  * Converts a direction into a 0..2047 orientation value compatible with client rotation logic.
  */

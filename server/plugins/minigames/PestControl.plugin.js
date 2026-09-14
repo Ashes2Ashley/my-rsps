@@ -396,7 +396,6 @@ class PestControlMatchArea extends PrivateArea {
   }
 
   getName() { return `Pest Control (${this.match.boat.name})`; }
-  isMulti() { return true; }
   allowSummonPet() { return false; }
 
   postEnter(mobile) {

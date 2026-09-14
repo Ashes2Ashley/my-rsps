@@ -1652,6 +1652,11 @@ export class WidgetManager {
         const parent = this.interfaceParents.get(targetUid);
         if (!parent) return;
 
+        for (const [childTargetUid] of [...this.interfaceParents]) {
+            if (((childTargetUid >>> 16) & 0xffff) === parent.group) {
+                this.closeSubInterface(childTargetUid);
+            }
+        }
         this.interfaceParents.delete(targetUid);
         // PERF: Maintain reverse lookup for O(1) visibility checks
         this.groupToContainerUid.delete(parent.group);

@@ -496,6 +496,10 @@ export class CombatFactory {
         if (attacker.getPrivateArea() !== target.getPrivateArea()) {
             return CanAttackResponse.CANT_ATTACK_IN_AREA;
         }
+        if (attacker.isPlayer() && target.isPlayer() &&
+            (Wilderness.isInSafeBuilding(attacker.getLocation()) || Wilderness.isInSafeBuilding(target.getLocation()))) {
+            return CanAttackResponse.CANT_ATTACK_IN_AREA;
+        }
         const pluginCanAttack = PluginManager.emitCanAttack(attacker, target);
         if (pluginCanAttack === true) {
             return CanAttackResponse.CAN_ATTACK;
@@ -519,6 +523,11 @@ export class CombatFactory {
         spellRadius: number
     ): boolean {
         if (!candidate || candidate === attacker || candidate === primaryTarget) {
+            return false;
+        }
+        // Duel damage is restricted to the agreed opponent, including spell splashes.
+        if ((attacker.isPlayer() && attacker.getAsPlayer().getDueling().inDuel()) ||
+            (candidate.isPlayer() && candidate.getAsPlayer().getDueling().inDuel())) {
             return false;
         }
         if (candidate.getHitpoints() <= 0) {
@@ -596,6 +605,12 @@ export class CombatFactory {
             return;
         }
 
+        // Safe buildings take effect immediately, including projectiles already in flight.
+        if (attacker.isPlayer() && target.isPlayer() &&
+            (Wilderness.isInSafeBuilding(attacker.getLocation()) || Wilderness.isInSafeBuilding(target.getLocation()))) {
+            return;
+        }
+
         // Before target takes damage, manipulate the hit to handle last-second effects.
         let resolvedHit = target.manipulateHit(qHit);
         if (!resolvedHit) {
@@ -619,10 +634,7 @@ export class CombatFactory {
         if (target.isPlayer()) {
             const playerTarget = target.getAsPlayer();
             if (resolvedHit.isAccurate() && damage > 0) {
-                const hitSound = playerTarget.getAppearance()?.isMale?.()
-                    ? Sound.MALE_GETTING_HIT
-                    : Sound.FEMALE_GETTING_HIT;
-                Sounds.sendSound(playerTarget, hitSound);
+                Sounds.sendSound(playerTarget, Sound.PLAYER_GETTING_HIT);
             } else {
                 Sounds.sendSound(playerTarget, Sound.DEFENCE_BLOCK);
             }
@@ -979,7 +991,15 @@ export class CombatFactory {
             currentTarget.getHitpoints() > 0 &&
             (typeof currentTarget.isRegistered !== "function" || currentTarget.isRegistered());
 
-        if (!hasActiveDifferentTarget) {
+        // In multi-combat, an NPC may change to a player who has just attacked it.
+        // A single NPC still has one active target and attack sequence at a time.
+        const npcCanRetargetInMulti =
+            target.isNpc() &&
+            attacker.isPlayer() &&
+            AreaManager.inMulti(attacker) &&
+            AreaManager.inMulti(target);
+
+        if (!hasActiveDifferentTarget || npcCanRetargetInMulti) {
             let auto_ret = false;
             if (target.isPlayer()) {
                 auto_ret =

@@ -41,3 +41,32 @@ raycaster.osrsClient.locTypeLoader = {
 assert.equal(raycaster.getResolvedLocType(405), undefined, "do not cache a pending definition as absent");
 assert.equal(raycaster.getResolvedLocType(405)?.id, 405);
 console.log("Scene raycaster streaming regression passed");
+
+// Perdu's spawn overlaps the chair at 3090, 3494. An absent NPC model must
+// leave the chair selectable, while a visible NPC still receives normal hits.
+let npcType: any = { name: "null" };
+raycaster.osrsClient.npcTypeLoader = { load: () => npcType };
+raycaster.osrsClient.npcEcs = {
+    queryByMap: () => [1], isActive: () => true, isLinked: () => true,
+    getMapId: () => 12342, getWorldX: () => 3090 * 128,
+    getWorldY: () => 3494 * 128, getSize: () => 1,
+    getNpcTypeId: () => 7458, getLevel: () => 0, getServerId: () => 60001,
+};
+raycaster.sampleHeightAt = () => 0;
+const pickNpc = () => {
+    const hits: any[] = [];
+    raycaster.collectNpcHitsForMap(
+        { id: 12342, mapX: 48, mapY: 54 },
+        { origin: [3090, -1, 3490], direction: [0, 0, 1] },
+        10, hits, 0,
+    );
+    return hits;
+};
+assert.equal(pickNpc().length, 0, "model-less NPC does not intercept the chair");
+npcType = { modelIds: [123] };
+assert.equal(pickNpc()[0]?.interactId, 7458, "visible NPC remains selectable");
+npcType = { transforms: [-1], transform: () => undefined };
+assert.equal(pickNpc().length, 0, "hidden NPC transform does not intercept scenery");
+npcType = { transforms: [1], transform: () => ({ modelIds: [123] }) };
+assert.equal(pickNpc().length, 1, "visible transformed NPC remains selectable");
+console.log("Scene raycaster invisible NPC regression passed");

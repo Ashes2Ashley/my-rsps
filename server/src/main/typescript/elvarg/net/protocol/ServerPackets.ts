@@ -57,6 +57,7 @@ export const enum ServerPacketId {
     SPELL_RESULT = 85,
     DEBUG_PACKET = 86,
     DESTINATION = 87,
+    PLAYER_OPTION = 88,
 
     // ========================================
     // INTERFACES/WIDGETS (100-119)
@@ -186,6 +187,7 @@ export const SERVER_PACKET_LENGTHS: Record<ServerPacketId, number> = {
     [ServerPacketId.PROJECTILES]: -2,
     [ServerPacketId.SPELL_RESULT]: -2,
     [ServerPacketId.DEBUG_PACKET]: -2,
+    [ServerPacketId.PLAYER_OPTION]: -1,
     [ServerPacketId.DESTINATION]: 4, // worldX(2) + worldY(2)
 
     [ServerPacketId.WIDGET_OPEN]: 3, // groupId(2) + modal(1)

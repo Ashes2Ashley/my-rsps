@@ -30,6 +30,23 @@ export class ObjectManager {
     public static onRegionChange(player: Player, baseX: number, baseY: number, level: number) {
         // Region sync should only target the requesting player.
         // Broadcasting every object spawn globally here causes redundant updates.
+        // Apply base-map removals before additions, including replacements with a different shape.
+        for (const object of World.getRemovedObjects()) {
+            if (!object) {
+                continue;
+            }
+            if (player.getPrivateArea() !== object.getPrivateArea()) {
+                continue;
+            }
+            const location = object.getLocation();
+            if (location.getZ() !== level
+                || location.getX() < baseX || location.getX() >= baseX + this.SCENE_SIZE
+                || location.getY() < baseY || location.getY() >= baseY + this.SCENE_SIZE) {
+                continue;
+            }
+            player.getPacketSender().sendObjectRemoval(object);
+        }
+
         for (const object of World.getObjects()) {
             if (!object) {
                 continue;
@@ -48,29 +65,13 @@ export class ObjectManager {
             }
             player.getPacketSender().sendObject(object);
         }
-
-        for (const object of World.getRemovedObjects()) {
-            if (!object) {
-                continue;
-            }
-            if (player.getPrivateArea() !== object.getPrivateArea()) {
-                continue;
-            }
-            const location = object.getLocation();
-            if (location.getZ() !== level
-                || location.getX() < baseX || location.getX() >= baseX + this.SCENE_SIZE
-                || location.getY() < baseY || location.getY() >= baseY + this.SCENE_SIZE) {
-                continue;
-            }
-            player.getPacketSender().sendObjectRemoval(object);
-        }
     }
 
     public static register(object: GameObject, playerUpdate: boolean) {
         // Check for matching object on this tile.
         for (let index = World.getObjects().length - 1; index >= 0; index--) {
             const o = World.getObjects()[index];
-            if (o.getLocation().equals(object.getLocation()) && object.getPrivateArea() == o.getPrivateArea()) {
+            if (o.getType() === object.getType() && o.getLocation().equals(object.getLocation()) && object.getPrivateArea() == o.getPrivateArea()) {
                 World.getObjects().splice(index, 1);
             }
         }

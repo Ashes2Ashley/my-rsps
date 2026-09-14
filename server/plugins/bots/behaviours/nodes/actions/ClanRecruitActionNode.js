@@ -3,8 +3,8 @@
 const { GameConstants } = require("../../../../../src/main/typescript/elvarg/game/GameConstants");
 const { Misc } = require("../../../../../src/main/typescript/elvarg/util/Misc");
 const {
-  ClanChatManager,
-} = require("../../../../interface/ClanChat.plugin");
+  FriendsChatManager,
+} = require("../../../../interface/FriendsChatManager");
 const { resolveAlternativeLoadoutId } = require("../../pvp/PvpAssignment");
 const { applyGeneratedPvpLoadout } = require("../../policies/PvpLoadoutPolicy");
 const {
@@ -78,6 +78,13 @@ class ClanRecruitActionNode {
       player.setFollowing?.(assistTarget);
       player.setMobileInteraction?.(assistTarget);
       player.setPositionToFace?.(assistTarget.getLocation?.());
+      if (assistTarget.isNpc?.() === true) {
+        if (player.getCombat?.().getTarget?.() !== assistTarget) {
+          player.getMovementQueue?.().reset?.();
+          player.getCombat?.().attack?.(assistTarget);
+        }
+        return "running";
+      }
       if (
         state.mode !== this.behaviorMode.PVP ||
         state?.pvp?.targetUsername !== assistTarget.getUsername?.()
@@ -195,7 +202,7 @@ class ClanRecruitActionNode {
     if ((bot.getHitpoints?.() ?? 0) <= 0) {
       return false;
     }
-    const ownerClan = ClanChatManager.getClanChat(owner);
+    const ownerClan = FriendsChatManager.getOwnedChannel(owner);
     return ownerClan != null && bot.getCurrentClanChat?.() === ownerClan;
   }
 
@@ -229,6 +236,10 @@ class ClanRecruitActionNode {
       null;
     if (!candidate || candidate === bot || candidate === owner) {
       return null;
+    }
+    if (candidate.isNpc?.() === true) {
+      return candidate.isRegistered?.() === true && (candidate.getHitpoints?.() ?? 0) > 0
+        && (candidate.getPrivateArea?.() ?? null) === (bot.getPrivateArea?.() ?? null) ? candidate : null;
     }
     if (candidate.isPlayer?.() !== true) {
       return null;

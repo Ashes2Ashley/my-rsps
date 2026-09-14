@@ -330,6 +330,8 @@ export function decodeServerPacket(data: Uint8Array | ArrayBuffer): DecodedServe
                 },
             };
 
+        case ServerPacketId.PLAYER_OPTION:
+            return { type: "player_option", payload: { slot: reader.readByte(), priority: reader.readByte() !== 0, option: reader.readString() } };
         case ServerPacketId.DESTINATION:
             return {
                 type: "destination",

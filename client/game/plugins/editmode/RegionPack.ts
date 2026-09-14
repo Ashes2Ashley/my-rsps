@@ -1,3 +1,4 @@
+import type { ObjectSpawn } from "./hostProtocol/objectSpawnsMessage";
 import type { EditModeEdit } from "./types";
 
 const MAP_SIZE = 64;
@@ -254,6 +255,7 @@ export function buildRegionPack(
     terrainData: Uint8Array | Int8Array,
     edits: readonly EditModeEdit[],
     wideTerrain: boolean,
+    includeObjectEdits = true,
 ): Uint8Array {
     const mapX = regionId >> 8;
     const mapY = regionId & 0xff;
@@ -265,7 +267,7 @@ export function buildRegionPack(
     ) {
         throw new Error("The active region is missing from the cache");
     }
-    const objects = applyLocEdits(bytes(objectData), edits, mapX, mapY);
+    const objects = includeObjectEdits ? applyLocEdits(bytes(objectData), edits, mapX, mapY) : bytes(objectData);
     const terrain = patchTerrain(bytes(terrainData), edits, mapX, mapY, wideTerrain);
     const pack = new Uint8Array(28 + objects.length + terrain.length);
     const view = new DataView(pack.buffer);
@@ -358,4 +360,54 @@ export function buildAreaClipboard(
     return JSON.stringify({ format: "elvarg-map-area", version: 1, origin: { x: bounds.minX, y: bounds.minY },
         width: bounds.maxX - bounds.minX + 1, height: bounds.maxY - bounds.minY + 1,
         planes: PLANE_COUNT, wideTerrain, tiles, objects });
+}
+
+/** Compare complete previews to their original map, preserving ids needed for collision removal. */
+export function diffRegionObjects(regionId: number, original: Uint8Array, edited: Uint8Array): ObjectSpawn[] {
+    const before = decodeLocs(original);
+    const after = decodeLocs(edited);
+    const key = (loc: Loc) => `${loc.id}:${loc.x}:${loc.y}:${loc.plane}:${loc.shape}:${loc.rotation}`;
+    const beforeKeys = new Set(before.map(key));
+    const afterKeys = new Set(after.map(key));
+    const record = (loc: Loc): ObjectSpawn => ({
+        id: loc.id,
+        position: { x: ((regionId >> 8) << 6) + loc.x, y: ((regionId & 0xff) << 6) + loc.y, z: loc.plane },
+        type: loc.shape,
+        face: loc.rotation,
+    });
+    return [
+        ...before.filter((loc) => !afterKeys.has(key(loc))).map((loc) => ({ ...record(loc), remove: true })),
+        ...after.filter((loc) => !beforeKeys.has(key(loc))).map(record),
+    ];
+}
+
+export function objectSpawnEdits(spawns: readonly ObjectSpawn[]): EditModeEdit[] {
+    return spawns.map((spawn) => ({
+        kind: spawn.remove ? "delete" : "place",
+        locId: spawn.id, tileX: spawn.position.x, tileY: spawn.position.y, plane: spawn.position.z,
+        shape: spawn.type ?? 10, rotation: spawn.face ?? 0,
+    }));
+}
+
+/** Preserve untouched records; pack mode consumes records baked into exported regions. */
+export function buildObjectSpawnExport(
+    spawns: readonly ObjectSpawn[],
+    edits: readonly EditModeEdit[],
+    saveToJson: boolean,
+    getObjectData: (regionId: number) => Uint8Array,
+): ObjectSpawn[] | undefined {
+    const regionId = (x: number, y: number) => ((x >> 6) << 8) | (y >> 6);
+    const regions = new Set(edits.filter((edit) => edit.kind !== "npc" &&
+        (!saveToJson || edit.kind === "place" || edit.kind === "delete" || edit.kind === "clear")
+    ).map((edit) => regionId(edit.tileX, edit.tileY)));
+    const result = spawns.filter((spawn) => !regions.has(regionId(spawn.position.x, spawn.position.y)));
+    if (!saveToJson) return result.length === spawns.length ? undefined : result;
+    if (regions.size === 0) return undefined;
+    const combined = [...objectSpawnEdits(spawns), ...edits];
+    for (const region of regions) {
+        const original = getObjectData(region);
+        const edited = applyLocEdits(original, combined, region >> 8, region & 0xff);
+        result.push(...diffRegionObjects(region, original, edited));
+    }
+    return result;
 }

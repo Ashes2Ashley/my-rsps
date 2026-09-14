@@ -610,7 +610,8 @@ class ClientConnection {
               this.player.getDialogueManager().isActive() ||
               this.player.getPacketSender().hasInterruptibleInterface();
             if (hadSomethingOpen) {
-              this.player.closeInterruptibleInterfaces();
+              // IF_CLOSE is explicit: clear even interfaces that world interactions preserve.
+              this.player.getPacketSender().closeInterruptibleInterfaces();
             } else {
               // Nothing was open - real OSRS opens the logout tab here.
               // TODO: needs the exact tab-switch mechanism confirmed against

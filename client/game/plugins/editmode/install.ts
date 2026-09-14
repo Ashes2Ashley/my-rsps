@@ -1,3 +1,4 @@
+import { OBJECT_SPAWNS_MESSAGE, OBJECT_SPAWNS_REQUEST_MESSAGE, parseObjectSpawns, type ObjectSpawn, type ObjectSpawnsMessage } from "./hostProtocol/objectSpawnsMessage";
 import { isKnownWaterTextureId } from "../../../render/water/WaterTextureIds";
 import { getContentApiBase } from "../../../network/serverConnection/contentApi";
 import { ClientState } from "../../ClientState";
@@ -63,11 +64,12 @@ import {
 } from "./MapIconGroundOverlay";
 import {
     LocPlacementPreviewOverlay,
+    getLocPlacementShape,
     type LocPlacementPreviewClient,
     type LocPlacementPreviewRenderer,
 } from "./LocPlacementPreviewOverlay";
 import { ModelImageCaptureOverlay } from "./ModelImageCaptureOverlay";
-import { buildAreaClipboard, buildRegionPack, parseRegionPack } from "./RegionPack";
+import { buildAreaClipboard, buildRegionPack, parseRegionPack, buildObjectSpawnExport, objectSpawnEdits } from "./RegionPack";
 import {
     ZoneGroundOverlay,
     type ZoneGroundRect,
@@ -304,7 +306,7 @@ export function parseEditModeWorldDefinition(value: unknown): EditModeWorldDefin
         const zone = value as Record<string, unknown>;
         if (
             !Array.isArray(zone.tags) ||
-            zone.tags.some((tag) => tag !== "pvp" && tag !== "multi-combat" && tag !== "safe")
+            zone.tags.some((tag) => typeof tag !== "string")
         ) {
             throw new Error(`World API zone ${index} has invalid tags`);
         }
@@ -533,7 +535,7 @@ export function installEditMode(client: OsrsClient): EditModePlugin {
         () => {
             const state = plugin.getState();
             return state.world.definition
-                ? { zones: state.world.definition.zones, showPvp: state.config.showPvpZones, showMulti: state.config.showMultiCombatZones, showSafe: state.config.showSafeZones }
+                ? { zones: state.world.definition.zones, showPvp: state.config.showPvpZones, showMulti: state.config.showMultiCombatZones, showDuel: state.config.showDuelZones, showSafe: state.config.showSafeZones }
                 : undefined;
         },
         (index, bounds) => plugin.resizeWorldZone(index, bounds),
@@ -574,6 +576,9 @@ export function installEditMode(client: OsrsClient): EditModePlugin {
     let zoneGroundOverlay: ZoneGroundOverlay | undefined;
     let zoneGroundManager: TerrainHost["overlayManager"];
     const editorRegionReplacements = new Map<number, EditorRegionReplacement>();
+    let objectSpawns: ObjectSpawn[] | undefined = browserHostWindow() ? undefined : [];
+    let objectSpawnPreviewPending = false;
+    const sceneEdits = (edits: readonly EditModeEdit[]) => [...objectSpawnEdits(objectSpawns ?? []), ...edits];
     const mapIconSprites = new Map<number, HTMLCanvasElement>();
     const mapIconLocs = new WeakMap<MinimapIcon, { locId: number; rotation?: number } | null>();
     let previousInteractHighlightConfig:
@@ -859,8 +864,9 @@ export function installEditMode(client: OsrsClient): EditModePlugin {
             const showPvp = state.config.showPvpZones && zone.tags.includes("pvp");
             const showMulti =
                 state.config.showMultiCombatZones && zone.tags.includes("multi-combat");
+            const showDuel = state.config.showDuelZones && zone.tags.includes("duel");
             const showSafe = state.config.showSafeZones && zone.tags.includes("safe");
-            if (!showPvp && !showMulti && !showSafe) continue;
+            if (!showPvp && !showMulti && !showSafe && !showDuel) continue;
             for (let i = 0; i < renderer.mapManager.visibleMapCount; i++) {
                 const map = renderer.mapManager.visibleMaps[i];
                 if (
@@ -893,6 +899,7 @@ export function installEditMode(client: OsrsClient): EditModePlugin {
                         alpha: ZONE_OVERLAY_ALPHA,
                     });
                 }
+                if (showDuel) rects.push({ minX, maxX, minY, maxY, plane: zone.z, colorRgb: 0xc4b5fd, alpha: ZONE_OVERLAY_ALPHA });
                 if (showMulti) {
                     rects.push({
                         minX,
@@ -911,7 +918,7 @@ export function installEditMode(client: OsrsClient): EditModePlugin {
     };
     const syncWorldZoneLoop = (): void => {
         const state = plugin.getState();
-        const visible = state.config.showPvpZones || state.config.showMultiCombatZones || state.config.showSafeZones;
+        const visible = state.config.showDuelZones || state.config.showPvpZones || state.config.showMultiCombatZones || state.config.showSafeZones;
         if (state.config.active && state.world.definition && visible) {
             if (zoneFrame === undefined) zoneFrame = requestAnimationFrame(drawWorldZones);
             return;
@@ -1272,6 +1279,32 @@ export function installEditMode(client: OsrsClient): EditModePlugin {
         }
     };
 
+    const refreshEditedRegions = async (regionIds: readonly number[]) => {
+        for (const regionId of regionIds) {
+            try {
+                const tile = {
+                    tileX: (regionId >> 8) << 6,
+                    tileY: (regionId & 0xff) << 6,
+                    plane: 0,
+                };
+                let pack;
+                try {
+                    pack = buildEditorRegionPack(client, tile, sceneEdits(plugin.getConfig().edits), editorRegionReplacements);
+                } catch (error) {
+                    if (!client.js5) throw error;
+                    // Reading sparse map archives queues their download. The
+                    // rendered worker map does not guarantee main-thread data.
+                    await client.js5.settled();
+                    pack = buildEditorRegionPack(client, tile, sceneEdits(plugin.getConfig().edits), editorRegionReplacements);
+                }
+                const replacement = parseRegionPack(pack.data);
+                client.onRegionReplacement({ ...replacement, allowReload: true });
+            } catch (error) {
+                console.warn(`[edit-mode] failed to rebuild region ${regionId}`, error);
+            }
+        }
+    };
+
     plugin.attach({
         getCanvas: () => client.renderer?.canvas as HTMLCanvasElement | undefined,
         getCameraTile: () => ({
@@ -1550,6 +1583,11 @@ export function installEditMode(client: OsrsClient): EditModePlugin {
             renderer?.pendingLocUpdates.add(renderer.getMapIdForWorldTile(tile.x, tile.y));
             client.onLocDel(tile, level, shape, rotation);
         },
+        getLocPlacementShape: (locId) => {
+            const base = client.locTypeLoader.load(locId);
+            const type = base.transforms ? base.transform(client.varManager, client.locTypeLoader) ?? base : base;
+            return getLocPlacementShape(type);
+        },
         getLocName: (locId) => client.locTypeLoader?.load(locId)?.name ?? "",
         getNpcName: (npcTypeId) => client.npcTypeLoader?.load(npcTypeId)?.name ?? "",
         search: async (kind, query) => {
@@ -1632,11 +1670,28 @@ export function installEditMode(client: OsrsClient): EditModePlugin {
         },
         copyArea: (bounds, edits) => buildAreaClipboard(
             bounds,
-            (tileX, tileY) => buildEditorRegionPack(client, { tileX, tileY, plane: 0 }, edits, editorRegionReplacements).data,
+            (tileX, tileY) => buildEditorRegionPack(client, { tileX, tileY, plane: 0 }, sceneEdits(edits), editorRegionReplacements).data,
             client.loadedCache?.info.game === "oldschool" && (client.loadedCache?.info.revision ?? 0) >= 209,
         ),
+        markMapEditsSaved: (packs, spawns) => {
+            for (const pack of packs) {
+                const parsed = parseRegionPack(pack.data);
+                editorRegionReplacements.set(pack.regionId, parsed);
+            }
+            if (spawns !== undefined) objectSpawns = spawns;
+        },
+        exportObjectSpawns: (edits) => {
+            if (!objectSpawns) throw new Error("Object spawns are still loading from the host; try Save again shortly");
+            return buildObjectSpawnExport(objectSpawns, edits, plugin.getConfig().saveObjectSpawns, (regionId) =>
+                parseRegionPack(buildEditorRegionPack(client, {
+                    tileX: (regionId >> 8) << 6, tileY: (regionId & 0xff) << 6, plane: 0,
+                }, [], editorRegionReplacements).data).objectData,
+            );
+        },
         exportRegionPack: (tile, edits) => {
-            return buildEditorRegionPack(client, tile, edits, editorRegionReplacements);
+            if (!objectSpawns) throw new Error("Object spawns are still loading from the host; try Save again shortly");
+            const saveToJson = plugin.getConfig().saveObjectSpawns;
+            return buildEditorRegionPack(client, tile, saveToJson ? edits : sceneEdits(edits), editorRegionReplacements, !saveToJson);
         },
         rotateCamera: (deltaX, deltaY) => {
             const camera = client.camera;
@@ -1694,32 +1749,7 @@ export function installEditMode(client: OsrsClient): EditModePlugin {
             if (!renderer?.getPreferredMapForWorldTile(tile.tileX, tile.tileY)) return undefined;
             return renderer.getTileHeightAtPlane(tile.tileX, tile.tileY, tile.plane);
         },
-        refreshEditedRegions: async (regionIds) => {
-            for (const regionId of regionIds) {
-                try {
-                    const tile = {
-                        tileX: (regionId >> 8) << 6,
-                        tileY: (regionId & 0xff) << 6,
-                        plane: 0,
-                    };
-                    let pack;
-                    try {
-                        pack = buildEditorRegionPack(client, tile, plugin.getConfig().edits, editorRegionReplacements);
-                    } catch (error) {
-                        if (!client.js5) throw error;
-                        // Reading sparse map archives queues their download. The
-                        // rendered worker map does not guarantee main-thread data.
-                        await client.js5.settled();
-                        pack = buildEditorRegionPack(client, tile, plugin.getConfig().edits, editorRegionReplacements);
-                    }
-                    const replacement = parseRegionPack(pack.data);
-                    editorRegionReplacements.set(replacement.regionId, replacement);
-                    client.onRegionReplacement({ ...replacement, allowReload: true });
-                } catch (error) {
-                    console.warn(`[edit-mode] failed to rebuild region ${regionId}`, error);
-                }
-            }
-        },
+        refreshEditedRegions,
         despawnNpc: (serverId) => {
             // Dev-only: reuse the server despawn path rather than duplicating
             // the ECS/world-view teardown it performs.
@@ -1728,6 +1758,10 @@ export function installEditMode(client: OsrsClient): EditModePlugin {
     });
 
     plugin.subscribe(() => {
+        if (objectSpawnPreviewPending && plugin.getState().scenePreview) {
+            objectSpawnPreviewPending = false;
+            void refreshEditedRegions([...new Set((objectSpawns ?? []).map((spawn) => regionIdForTile(spawn.position.x, spawn.position.y)))]);
+        }
         syncMapIconLoop();
         syncWorldZoneLoop();
         syncWorldSpawnHighlight();
@@ -1780,8 +1814,22 @@ export function installEditMode(client: OsrsClient): EditModePlugin {
             );
         };
         window.addEventListener("message", (event: MessageEvent) => {
-            if (event.origin !== hostOrigin) return;
-            const message = event.data as RegionPackMessage | NpcSpawnMessage | undefined;
+            if (event.origin !== hostOrigin || event.source !== host) return;
+            const message = event.data as RegionPackMessage | NpcSpawnMessage | ObjectSpawnsMessage | undefined;
+            if (message?.type === OBJECT_SPAWNS_MESSAGE) {
+                try {
+                    if (objectSpawns) return;
+                    objectSpawns = parseObjectSpawns(message.contents);
+                    objectSpawnPreviewPending = true;
+                    if (plugin.getState().scenePreview) {
+                        objectSpawnPreviewPending = false;
+                        void refreshEditedRegions([...new Set(objectSpawns.map((spawn) => regionIdForTile(spawn.position.x, spawn.position.y)))]);
+                    }
+                } catch (error) {
+                    console.warn("[edit-mode] ignored invalid object spawns", error);
+                }
+                return;
+            }
             if (message?.type === NPC_SPAWN_MESSAGE) {
                 const regionIds = Array.isArray(message.regionIds) ? message.regionIds : [];
                 if (!npcRuntimeReady()) {
@@ -1835,6 +1883,11 @@ export function installEditMode(client: OsrsClient): EditModePlugin {
             }
         };
         host.postMessage({ type: REGION_PACK_REQUEST_MESSAGE }, hostOrigin);
+        const requestObjectSpawns = () => {
+            if (!objectSpawns && !host.closed) host.postMessage({ type: OBJECT_SPAWNS_REQUEST_MESSAGE }, hostOrigin);
+        };
+        requestObjectSpawns();
+        window.setInterval(requestObjectSpawns, 2000);
         window.setInterval(syncNpcSpawnRegions, 500);
         syncNpcSpawnRegions();
     }
@@ -1979,7 +2032,8 @@ function buildEditorRegionPack(
     client: OsrsClient,
     tile: EditModeTile,
     edits: readonly EditModeEdit[],
-    replacements: ReadonlyMap<number, EditorRegionReplacement>,
+    replacements: Map<number, EditorRegionReplacement>,
+    includeObjectEdits = true,
 ): { regionId: number; data: Uint8Array } {
     const mapX = tile.tileX >> 6;
     const mapY = tile.tileY >> 6;
@@ -1991,6 +2045,10 @@ function buildEditorRegionPack(
     const objectData =
         replacement?.objectData ?? (xteas ? mapFileLoader.getLocData(mapX, mapY, xteas) : undefined);
     if (!terrainData || !objectData) throw new Error(`Region ${regionId} is not loaded`);
+    // Keep the imported/cache base separate from temporary editor preview packs.
+    if (!replacements.has(regionId)) replacements.set(regionId, {
+        terrainData: new Uint8Array(terrainData), objectData: new Uint8Array(objectData),
+    });
     return {
         regionId,
         data: buildRegionPack(
@@ -2002,6 +2060,7 @@ function buildEditorRegionPack(
             edits,
             client.loadedCache?.info.game === "oldschool" &&
                 (client.loadedCache?.info.revision ?? 0) >= 209,
+            includeObjectEdits,
         ),
     };
 }

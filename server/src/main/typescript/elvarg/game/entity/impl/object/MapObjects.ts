@@ -135,8 +135,9 @@ export class MapObjects {
 
             if (this.mapObjects.has(hash)) {
                 const list = this.mapObjects.get(hash);
-                for (let i = 0; i < list.length; i++) {
-                    if (list[i].getId() === object.getId() && list[i].getLocation().equals(object.getLocation())) {
+                for (let i = list.length - 1; i >= 0; i--) {
+                    if (list[i].getId() === object.getId() && list[i].getType() === object.getType()
+                        && list[i].getFace() === object.getFace() && list[i].getLocation().equals(object.getLocation())) {
                         list.splice(i, 1);
                     }
                 }

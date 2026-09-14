@@ -255,6 +255,58 @@ function botsSkipUnattackableTargets() {
     console.log("  bots: out-of-range candidates filtered before pathing");
 }
 
+function buildingSafetyIsImmediate() {
+    const { Region } = require("../src/main/typescript/elvarg/game/collision/Region");
+    const { RegionManager } = require("../src/main/typescript/elvarg/game/collision/RegionManager");
+    const { CombatFactory, CanAttackResponse } = require("../src/main/typescript/elvarg/game/content/combat/CombatFactory");
+    const region = new Region(0, 0, 0);
+    region.roofTiles = new Uint8Array(2048);
+    const index = ((3100 & 63) << 6) | (3600 & 63);
+    region.roofTiles[index >> 3] |= 1 << (index & 7);
+    assert.equal(region.isUnderRoof(3100, 3600, 0), true);
+    assert.equal(region.isUnderRoof(3101, 3600, 0), false);
+    assert.equal(region.isUnderRoof(3100, 3600, 1), false);
+    assert.equal(region.isUnderRoof(3100, 3600, 4), false);
+    const original = RegionManager.getRegion;
+    const safeBuildingZones = WORLD_ZONE_BOUNDARIES["all-buildings-safe"];
+    const previousZones = [...safeBuildingZones];
+    RegionManager.getRegion = () => region;
+    try {
+        safeBuildingZones.length = 0;
+        assert.equal(WildernessRules.isInLocation(IN_WILDERNESS), true);
+        assert.deepEqual(parseWorldZone({ tags: ["all-buildings-safe"] }).tags, ["all-buildings-safe"]);
+        safeBuildingZones.push(new Boundary(3100, 3100, 3600, 3600, 0));
+        assert.equal(WildernessRules.isInSafeBuilding(new Location(3164, 3600, 0)), false, "roof outside tagged zone is not safe");
+        assert.equal(WildernessRules.isInLocation(IN_WILDERNESS), false);
+        let location = new Location(3101, 3600, 0);
+        const target = {
+            isPlayer: () => true,
+            getLocation: () => location,
+            getWildernessLevel: () => 10, // deliberately stale after stepping indoors
+            getPrivateArea: () => null,
+            getHitpoints: () => 99,
+            getCombat: () => ({}),
+            isUntargetable: () => false,
+            isNeedsPlacement: () => false,
+            manipulateHit: () => { throw new Error("safe target must never resolve damage"); },
+        };
+        const attacker = { ...target, getLocation: () => new Location(3101, 3600, 0) };
+        location = IN_WILDERNESS;
+        for (const [a, b] of [[attacker, target], [target, attacker], [target, target]]) {
+            const event = { attacker: a, target: b, allow: null };
+            canAttack!(event);
+            assert.equal(event.allow, false, "building safety blocks either side immediately");
+        }
+        assert.equal(CombatFactory.canAttackByPolicy(attacker, target), CanAttackResponse.CANT_ATTACK_IN_AREA);
+        CombatFactory.executeHit({ getAttacker: () => attacker, getTarget: () => target });
+        location = new Location(3101, 3600, 0);
+        assert.equal(WildernessRules.isInLocation(location), true, "leaving the roof restores PvP");
+    } finally {
+        RegionManager.getRegion = original;
+        safeBuildingZones.splice(0, safeBuildingZones.length, ...previousZones);
+    }
+}
+
 async function main() {
     await CachePipeline.initialize(path.resolve(__dirname, ".."));
     register();
@@ -262,6 +314,7 @@ async function main() {
     multiIconUsesTheWebclientVarbit();
     levelRangeIsEnforced();
     botsSkipUnattackableTargets();
+    buildingSafetyIsImmediate();
     console.log("wilderness plugin ok");
 }
 
