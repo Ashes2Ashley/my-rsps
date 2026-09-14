@@ -424,6 +424,7 @@ module.exports = {
 
     api.onInterfaceActionButton(COLLECTION_BUTTONS, handleCollectionButton);
     api.onItemFirstAction(handleInventoryItem);
+    api.onInterfaceActionButton(SIDE_ITEMS, (event) => event.action === 1 && handleInventoryItem(event));
     api.onInterfaceActionButton(EXCHANGE_BUTTONS, handleExchangeButton);
   },
 };
