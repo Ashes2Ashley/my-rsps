@@ -701,7 +701,7 @@ function PluginHubPanel({ osrsClient }: { osrsClient: OsrsClient }): JSX.Element
             {
                 id: "hd",
                 name: "117 HD",
-                description: "HD lighting, environments and shadows. Keeps the existing water rendering.",
+                description: "HD lighting, environments and shadows.",
                 enabled: hdEnabled,
                 setEnabled: hdPlugin.setEnabled,
             },
