@@ -12,7 +12,6 @@
     { "minX": 2940, "maxX": 3392, "minY": 3525, "maxY": 3968, "z": 0, "tags": ["pvp"] },
     { "minX": 2986, "maxX": 3012, "minY": 10338, "maxY": 10366, "z": 0, "tags": ["pvp"] },
     { "minX": 3653, "maxX": 3720, "minY": 3441, "maxY": 3538, "z": 0, "tags": ["pvp"] },
-    { "minX": 3650, "maxX": 3653, "minY": 3457, "maxY": 3472, "z": 0, "tags": ["pvp"] },
     { "minX": 3150, "maxX": 3199, "minY": 3796, "maxY": 3869, "z": 0, "tags": ["pvp"] },
     { "minX": 2994, "maxX": 3041, "minY": 3733, "maxY": 3790, "z": 0, "tags": ["pvp"] },
     { "minX": 3061, "maxX": 3074, "minY": 10253, "maxY": 10262, "z": 0, "tags": ["pvp"] },
@@ -31,6 +30,7 @@
     { "minX": 2371, "maxX": 2422, "minY": 5062, "maxY": 5117, "z": 0, "tags": ["multi-combat"] },
     { "minX": 2896, "maxX": 2927, "minY": 3595, "maxY": 3630, "z": 0, "tags": ["multi-combat"] },
     { "minX": 2892, "maxX": 2932, "minY": 4435, "maxY": 4464, "z": 0, "tags": ["multi-combat"] },
-    { "minX": 3279, "maxX": 3307, "minY": 3156, "maxY": 3179, "z": 0, "tags": ["multi-combat"] }
+    { "minX": 3279, "maxX": 3307, "minY": 3156, "maxY": 3179, "z": 0, "tags": ["multi-combat"] },
+    { "minX": 2247, "maxX": 2296, "minY": 4674, "maxY": 4718, "z": 0, "tags": ["multi-combat"] }
   ]
 }
