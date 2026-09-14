@@ -57,7 +57,7 @@ export interface EditModeNpcMenuOption {
 /** The on-disk npc_interactions.json object, keyed by NPC type id. */
 export type EditModeNpcInteractions = Record<string, Record<string, unknown>>;
 
-export type EditModeWorldZoneTag = "duel" | "pvp" | "multi-combat" | "safe" | "all-buildings-safe";
+export type EditModeWorldZoneTag = string;
 
 export interface EditModeBoundedWorldZone {
     minX: number;

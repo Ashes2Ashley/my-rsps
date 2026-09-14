@@ -36,13 +36,13 @@ const parsedWorld = {
     disabledPlugins: ["PvpMode"],
     experienceMultiplier: 5,
 };
-for (const tags of [[], ["duel"], ["pvp"], ["pvp", "multi-combat"], ["pvp", "all-buildings-safe"]]) {
+for (const tags of [[], ["custom:arena", "__proto__"], ["duel"], ["pvp"], ["pvp", "multi-combat"], ["pvp", "all-buildings-safe"]]) {
     const world = { ...parsedWorld, zones: [{ tags }, ...parsedWorld.zones] };
     const parsed = parseBrowserHostWorldDefinition(JSON.stringify(world));
     assert.deepEqual(parsed, world, "Global rules must not reject the spawn or be lost on save");
     assert.deepEqual(parseBrowserHostWorldDefinition(JSON.stringify(parsed)), world);
 }
-for (const zone of [{ minX: 1, tags: ["pvp"] }, { tags: ["unknown"] }, { ...parsedWorld.zones[0], tags: [] }]) {
+for (const zone of [{ minX: 1, tags: ["pvp"] }, { tags: [123] }, { ...parsedWorld.zones[0], tags: [] }]) {
     assert.throws(() => parseEditModeWorldDefinition({ ...parsedWorld, zones: [zone] }));
 }
 // Local zone interaction becomes available after asynchronous world loading.

@@ -122,6 +122,8 @@ const pair = () => { const a = player("Alice"), b = player("Bob"); option(a, b);
 const agree = (a: any, b: any) => { click(a, 755, 86); click(b, 755, 86); click(a, 756, 51); click(b, 756, 51); };
 
 assert.deepEqual(parseWorldZone({ tags: ["duel"] }), { tags: ["duel"] });
+assert.deepEqual(parseWorldZone({ tags: ["custom:arena", "__proto__"] }), { tags: ["custom:arena", "__proto__"] });
+assert.throws(() => parseWorldZone({ tags: [123] }));
 assert.ok(WORLD_ZONE_BOUNDARIES.duel.some(b => b.inside(new Location(3366, 3266, 0))));
 assert.deepEqual(decodeServerPacket(encodePlayerOption(4, "Challenge", false)), {
   type: "player_option", payload: { slot: 4, option: "Challenge", priority: false },
