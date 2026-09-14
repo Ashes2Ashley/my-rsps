@@ -231,6 +231,12 @@ function registerDuelBotAcceptance(api) {
   for (const eventName of ["duelarena:request", "duelarena:rules-changed", "duelarena:accept", "duelarena:accept-clicked"]) {
     api.onCustomEvent(eventName, accept);
   }
+  api.onCustomEvent("duelarena:validate-winnings", (event) => {
+    if (event?.player?.isPlayerBot?.() === true) event.handled = true;
+  });
+  api.onCustomEvent("duelarena:settle-winnings", (event) => {
+    if (event?.player?.isPlayerBot?.() === true) event.handled = true;
+  });
 }
 
 module.exports = {
