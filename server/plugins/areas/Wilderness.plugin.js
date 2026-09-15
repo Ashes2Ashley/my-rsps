@@ -1,3 +1,10 @@
+const { Equipment } = require("../../src/main/typescript/elvarg/game/model/container/impl/Equipment");
+const { Animation } = require("../../src/main/typescript/elvarg/game/model/Animation");
+const { BonusManager } = require("../../src/main/typescript/elvarg/game/model/equipment/BonusManager");
+const { WeaponInterfaces } = require("../../src/main/typescript/elvarg/game/content/combat/WeaponInterfaces");
+const { GameObject } = require("../../src/main/typescript/elvarg/game/entity/impl/object/GameObject");
+const { MapObjects } = require("../../src/main/typescript/elvarg/game/entity/impl/object/MapObjects");
+
 const { Wilderness } = require("../../src/main/typescript/elvarg/game/content/wilderness/Wilderness");
 const { hasGlobalWorldTag } = require("../../src/main/typescript/elvarg/game/definition/WorldDefinition");
 const { Obelisks } = require("../../src/main/typescript/elvarg/game/content/Obelisks");
@@ -499,6 +506,45 @@ function onNpcAggressionTolerance(state, event) {
   }
 }
 
+// https://oldschool.runescape.wiki/w/Web — use the item's bonus, not total equipment bonuses.
+function webCutChance(item) {
+  if (!item || item.getId() <= 0) return 0;
+  const definition = item.getDefinition();
+  if (definition.isNoted()) return 0;
+  if (definition.getName() === "Knife") return 0.5;
+  if (definition.getEquipmentType().getSlot() !== Equipment.WEAPON_SLOT) return 0;
+  if (/^Wilderness sword [1-4]$/.test(definition.getName())) return 1;
+  const slash = definition.getBonuses()?.[BonusManager.ATTACK_SLASH] ?? 0;
+  if (slash <= 0) return 0;
+  const type = definition.getWeaponInterface();
+  const floor = type === WeaponInterfaces.SCIMITAR || type === WeaponInterfaces.LONGSWORD ? 0.5 : 0.2;
+  return Math.min(1, Math.max(floor, slash / 100));
+}
+
+function slashWeb(api, event, usedItem) {
+  if (event.objectId !== 733) return false;
+  event.handled = true;
+  const { player, object } = event;
+  if (player.busy() || !MapObjects.get(733, object.getLocation(), object.getPrivateArea())) return;
+  const chance = usedItem ? webCutChance(usedItem) : Math.max(
+    webCutChance(player.getEquipment().getItems()[Equipment.WEAPON_SLOT]),
+    ...player.getInventory().getItems().map(webCutChance),
+  );
+  if (!chance) {
+    player.getPacketSender().sendMessage("You need a knife or a weapon with a slash bonus to cut this web.");
+    return;
+  }
+  player.performAnimation(new Animation(911));
+  if (Math.random() >= chance) {
+    player.getPacketSender().sendMessage("You fail to cut through the web.");
+    return;
+  }
+  const slashed = new GameObject(734, object.getLocation().clone(), object.getType(), object.getFace(), object.getPrivateArea());
+  api.getObjectManager().deregister(object, true);
+  api.getObjectManager().register(slashed, true);
+  player.getPacketSender().sendMessage("You slash through the web.");
+}
+
 function pullLever(api, event) {
   const { player, location } = event;
   if (location.z !== 0) return false;
@@ -538,8 +584,13 @@ module.exports = {
     api.onNpcAggressionTolerance((event) => onNpcAggressionTolerance(state, event));
     api.onObjectFirstClick(Obelisks.OBELISK_IDS, onObeliskClick);
     api.onObjectInteraction("Lever", { Pull: (event) => pullLever(api, event) });
-
-    api.log("registered");
+    api.onObjectInteraction("Web", { Slash: (event) => slashWeb(api, event) });
+    api.onItemOnObject("Knife", "Web", (event) => slashWeb(api, event, event.item), { noted: false });
+    api.onItemOnObject((event) => {
+      if (event.object.getDefinition().getName() === "Web" && webCutChance(event.item) > 0) {
+        slashWeb(api, event, event.item);
+      }
+    });
   },
   // Shared with bot target selection so the rule has one home.
   canAttackByWildernessLevel,
