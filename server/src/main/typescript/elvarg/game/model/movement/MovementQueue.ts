@@ -1245,12 +1245,9 @@ export class MovementQueue {
                 task.stop();
                 return;
             }
-            // Finish the route selected from the object's size, rotation and access
-            // mask before operating it, even if another side passes generic reach.
-            if (this.points.length === 0 &&
-                this.player.getLocation().getX() === this.pathX &&
-                this.player.getLocation().getY() === this.pathY &&
-                PathFinder.reachedObject(
+            // The reach check already respects shape, rotation and access flags.
+            // Accept either reachable side, even if the original route ended elsewhere.
+            if (this.points.length === 0 && PathFinder.reachedObject(
                 this.player,
                 objectX,
                 objectY,
@@ -1259,7 +1256,9 @@ export class MovementQueue {
                 routeSpec.reachAngle,
                 routeSpec.reachShape,
                 routeSpec.reachBlockAccessFlags
-            ) && !this.player.getMovementQueue().didMoveThisCycle()) {
+            )) {
+                // Arrival is not a failed route: operate on the following cycle.
+                if (this.didMoveThisCycle()) return;
                 if (objectX === this.player.getLocation().getX() && objectY === this.player.getLocation().getY()) {
                     this.player.setDirection([Direction.WEST, Direction.NORTH, Direction.EAST, Direction.SOUTH][direction]);
                 }
@@ -1289,6 +1288,17 @@ export class MovementQueue {
             MovementQueue.log(
                 `[walkToObject] ${this.ownerLabel()} failed route=${this.player.getMovementQueue().hasRoute()} current=${this.player.getLocation().getX()},${this.player.getLocation().getY()} expected=${finalDestinationX},${finalDestinationY}`
             );
+            console.warn("[object-route] unreachable", {
+                objectId: id,
+                shape: type,
+                rotation: direction,
+                target: [objectX, objectY],
+                player: [this.player.getLocation().getX(), this.player.getLocation().getY(), this.player.getLocation().getZ()],
+                routeEnd: [this.pathX, this.pathY],
+                accessMask: routeSpec.reachBlockAccessFlags,
+                routeInvalidated: this.wasRouteInvalidated(),
+                blockedByEntity: this.wasBlockedByDynamicOccupancy(),
+            });
             this.player.getPacketSender().sendMessage("You can't reach that!");
             task.stop();
             TaskManager.cancelTasks(this.player.getIndex());
