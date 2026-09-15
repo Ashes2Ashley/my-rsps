@@ -2520,7 +2520,16 @@ export class PluginManager {
           },
         });
       },
-      onItemOnObject: (handler, filter) => {
+      onItemOnObject: (
+        itemNameOrHandler: string | ((event: PluginItemOnObjectEvent) => void),
+        objectNameOrFilter?: string | PluginItemUseFilter,
+        namedHandler?: (event: PluginItemOnObjectEvent) => void | boolean,
+        namedFilter?: PluginItemUseFilter
+      ) => {
+        const named = typeof itemNameOrHandler === "string";
+        const handler: ((event: PluginItemOnObjectEvent) => void | boolean) | undefined = named ? namedHandler : itemNameOrHandler;
+        const filter = named ? namedFilter : objectNameOrFilter as PluginItemUseFilter | undefined;
+        if (named && typeof objectNameOrFilter !== "string") return;
         if (typeof handler !== "function") {
           return;
         }
@@ -2531,7 +2540,13 @@ export class PluginManager {
               return;
             }
             if (filter?.noted !== undefined && (ItemDefinition.forId(event.itemId).isNoted() !== filter.noted)) return;
-            handler(event);
+            if (named) {
+              if (ItemDefinition.forId(event.itemId).getName() !== itemNameOrHandler
+                || event.object.getDefinition()?.getName() !== objectNameOrFilter) return;
+              if (handler(event) !== false) event.handled = true;
+            } else {
+              handler(event);
+            }
           },
         });
       },

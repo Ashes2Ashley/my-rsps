@@ -630,6 +630,8 @@ export interface PluginApi {
     handler: (event: PluginGroundItemInteractionEvent) => void | boolean
   ): void;
   onItemOnObject(handler: (event: PluginItemOnObjectEvent) => void, filter?: PluginItemUseFilter): void;
+  /** Matches exact item and object names. Return false to fall through. */
+  onItemOnObject(itemName: string, objectName: string, handler: (event: PluginItemOnObjectEvent) => void | boolean, filter?: PluginItemUseFilter): void;
   onItemOnItem(handler: (event: PluginItemOnItemEvent) => void, filter?: PluginItemUseFilter): void;
   /** Matches exact item names in either order; event items retain their original order. */
   onItemOnItem(
