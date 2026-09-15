@@ -624,6 +624,7 @@ export interface PluginApi {
     clickType: number,
     handler: (event: PluginGroundItemInteractionEvent) => void | boolean
   ): void;
+  onGroundItemPickup(handler: (event: PluginGroundItemInteractionEvent) => void | boolean): void;
   onGroundItemSecondClick(
     itemIds: number | number[],
     handler: (event: PluginGroundItemInteractionEvent) => void | boolean
