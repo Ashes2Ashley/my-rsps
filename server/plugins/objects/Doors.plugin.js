@@ -62,29 +62,34 @@ const DOUBLE_DOOR_ID_FAMILIES = Object.freeze([
   Object.freeze([1506, 1507, 1508, 1511]),
   Object.freeze([1512, 1513, 1514]),
   Object.freeze([1516, 1517, 1519, 1520]),
-  Object.freeze([1727, 1728, 1729, 1730]),
+  Object.freeze([1727, 1728, 1571, 1572]),
   Object.freeze([14751, 14752, 14753, 14754]),
   Object.freeze([1521, 1522, 1524, 1525]),
   Object.freeze([1551, 1552, 1553, 1554]),
   Object.freeze([1557, 1558, 1559]),
+  Object.freeze([1568, 1569, 1571, 1572]),
   Object.freeze([1589, 1590, 1591]),
   Object.freeze([1596, 1597, 1598]),
   Object.freeze([4423, 4424, 4425]),
 ]);
-const SPECIAL_DOUBLE_DOOR_LEFT_IDS = new Set([1728, 1730, 14751, 14753]);
+const SPECIAL_DOUBLE_DOOR_LEFT_IDS = new Set([1568, 1571, 1727, 14751, 14753]);
 const SPECIAL_DOUBLE_DOOR_PARTNER_IDS_BY_ID = new Map([
-  [1727, [1728, 1730]],
-  [1728, [1727, 1729]],
-  [1729, [1728, 1730]],
-  [1730, [1727, 1729]],
+  [1568, [1569]],
+  [1569, [1568]],
+  [1571, [1572]],
+  [1572, [1571]],
+  [1727, [1728]],
+  [1728, [1727]],
   [14751, [14752, 14754]],
   [14752, [14751, 14753]],
   [14753, [14752, 14754]],
   [14754, [14751, 14753]],
 ]);
 const SPECIAL_DOUBLE_DOOR_OPEN_IDS_BY_CLOSED_ID = new Map([
-  [1727, 1729],
-  [1728, 1730],
+  [1568, 1571],
+  [1569, 1572],
+  [1727, 1571],
+  [1728, 1572],
   [14751, 14753],
   [14752, 14754],
 ]);
@@ -102,6 +107,11 @@ const COORD_OFFSETS = Object.freeze([
 ]);
 
 const RUNTIME_DOUBLE_DOOR_RECORDS = [];
+
+function doorSound(id, open) {
+  const gate = CacheDefinitions.getObject(id)?.name === "Gate";
+  return gate ? (open ? Sound.GATE_OPEN : Sound.GATE_CLOSE) : (open ? Sound.DOOR_OPEN : Sound.DOOR_CLOSE);
+}
 
 function cloneLocation(x, y, z) {
   return new Location(x, y, z);
@@ -205,10 +215,18 @@ class AutoCloseDoorTask extends Task {
       for (const snapshot of state.closed ?? []) {
         ObjectManager.register(objectFromSnapshot(snapshot), true);
       }
+      for (let i = RUNTIME_DOUBLE_DOOR_RECORDS.length - 1; i >= 0; i--) {
+        const record = RUNTIME_DOUBLE_DOOR_RECORDS[i];
+        if (state.closed.some((snapshot) => snapshot.id === record.originalId &&
+          snapshot.location.x === record.originalX && snapshot.location.y === record.originalY &&
+          snapshot.location.z === record.z)) {
+          RUNTIME_DOUBLE_DOOR_RECORDS.splice(i, 1);
+        }
+      }
       OPEN_OBJECT_STATES.delete(this.anchorKey);
       const closedSample = state.closed?.[0];
       if (closedSample) {
-        Sounds.sendSound(objectFromSnapshot(closedSample), Sound.DOOR_CLOSE);
+        Sounds.sendSound(objectFromSnapshot(closedSample), doorSound(closedSample.id, false));
       }
     }
     this.stop();
@@ -354,7 +372,7 @@ function handleMappedDoor(player, object, objectId, location) {
     rememberOpenObjects(anchorKey, [closedObject], [nextObject]);
   }
 
-  Sounds.sendSound(player, open ? Sound.DOOR_CLOSE : Sound.DOOR_OPEN);
+  Sounds.sendSound(player, doorSound(closedId, !open));
 
   return true;
 }
@@ -764,7 +782,7 @@ function handleDoubleDoor(player, object, objectId, location) {
 
   Sounds.sendSound(
     player,
-    pair.some(isDoubleDoorOpen) ? Sound.DOOR_CLOSE : Sound.DOOR_OPEN
+    doorSound(pair[0].originalId, pair.some(isDoubleDoorOpen))
   );
 
   return true;
