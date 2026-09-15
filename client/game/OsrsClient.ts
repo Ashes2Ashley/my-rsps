@@ -29,6 +29,7 @@ import {
     VARBIT_ROOF_REMOVAL,
     VARBIT_STAMINA_ACTIVE,
     VARC_COMBAT_LEVEL,
+    VARC_ACTIVE_TAB,
     VARP_AREA_SOUNDS_VOLUME,
     VARP_ATTACK_STYLE,
     VARP_MAP_FLAGS_CACHED,
@@ -39,6 +40,7 @@ import {
     VARP_OPTION_RUN,
     VARP_SOUND_EFFECTS_VOLUME,
 } from "../common/vars";
+
 import {
     getDefaultServerAddress,
     getDefaultServerName,
@@ -332,6 +334,34 @@ import { WorldMapController, type WorldMapRenderedIcon } from "./worldMap/WorldM
 import { WorldViewManager } from "./worldview/WorldViewManager";
 
 const DEVICE_OPTION_INTERFACE_SCALING = 27;
+
+// OSRS side-panel order skips inventory because Escape selects it separately.
+const TAB_SHORTCUTS: Readonly<Record<string, number>> = {
+    F1: 0,
+    F2: 1,
+    F3: 2,
+    F4: 4,
+    F5: 5,
+    F6: 6,
+    F7: 7,
+    F8: 8,
+    F9: 9,
+    F10: 10,
+    F11: 11,
+    F12: 12,
+    Escape: 3,
+};
+
+// Enum IDs consumed by the stock tab-switch script (914), per game-frame layout.
+const TAB_SWITCH_SCRIPT = 914;
+const DEFAULT_ROOT_INTERFACE = 161;
+const DEFAULT_DISPLAY_ENUM = 1130;
+const DISPLAY_ENUM_BY_ROOT_INTERFACE: Readonly<Record<number, number>> = {
+    [DEFAULT_ROOT_INTERFACE]: DEFAULT_DISPLAY_ENUM,
+    165: 1132,
+    548: 1129,
+    164: 1131,
+};
 
 // OSRS draw distance is constrained in Scene.setDrawDistanceRaw(25..90).
 const MIN_RENDER_DISTANCE = 25;
@@ -958,6 +988,39 @@ export class OsrsClient {
         rendererType: OsrsRendererType,
         cache?: LoadedCache,
     ) {
+        document.addEventListener(
+            "keydown",
+            (event) => {
+                const shortcut = TAB_SHORTCUTS[event.key] ?? TAB_SHORTCUTS[event.code];
+                const functionKeyEvent =
+                    event.code.startsWith("F") ||
+                    event.key.startsWith("F") ||
+                    event.key.startsWith("Brightness") ||
+                    event.key.startsWith("Audio");
+                if (functionKeyEvent) {
+                    console.info("[OsrsClient] function keydown", {
+                        key: event.key,
+                        code: event.code,
+                        repeat: event.repeat,
+                        loggedIn: this.isLoggedIn(),
+                        hasVarManager: !!this.varManager,
+                    });
+                }
+                if (!this.isLoggedIn() || event.repeat || shortcut === undefined) {
+                    return;
+                }
+
+                this.switchToTab(shortcut);
+                console.info("[OsrsClient] switched game tab from function key", {
+                    key: event.key,
+                    tab: shortcut,
+                    activeTab: this.varManager?.getVarcInt(VARC_ACTIVE_TAB),
+                });
+                event.preventDefault();
+                if (event.key !== "Escape") event.stopImmediatePropagation();
+            },
+            true,
+        );
         this.varcPersistence = new VarcPersistence({
             getVarManager: () => this.varManager,
         });
@@ -3717,6 +3780,15 @@ export class OsrsClient {
         const script = this.cs2Vm.context?.loadScript?.(scriptId | 0);
         if (!script) return;
         this.cs2Vm.run(script, args, []);
+    }
+
+    /** Switch the stock side panel through its cache script so all tab widgets update together. */
+    private switchToTab(tab: number): void {
+        const rootInterface = this.widgetManager?.rootInterface ?? DEFAULT_ROOT_INTERFACE;
+        const displayEnum = DISPLAY_ENUM_BY_ROOT_INTERFACE[rootInterface] ?? DEFAULT_DISPLAY_ENUM;
+        const script = this.cs2Vm?.context?.loadScript?.(TAB_SWITCH_SCRIPT);
+        if (script) this.cs2Vm.run(script, [1, displayEnum, tab], []);
+        else this.varManager?.setVarcInt(VARC_ACTIVE_TAB, tab);
     }
 
     private substituteWidgetScriptMagicArgs(intArgs: number[], widget: any): number[] {
