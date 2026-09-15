@@ -568,8 +568,18 @@ export class SceneRaycaster {
                         const centerX = anchorWorldX + sizeX * 0.5;
                         const centerZ = anchorWorldY + sizeY * 0.5;
                         const groundY = this.sampleHeightAt(centerX, centerZ, level | 0);
-                        const entityX = (anchorWorldX << 7) + (sizeX << 6);
-                        const entityZ = (anchorWorldY << 7) + (sizeY << 6);
+                        let entityX = (anchorWorldX << 7) + (sizeX << 6);
+                        let entityZ = (anchorWorldY << 7) + (sizeY << 6);
+                        if ((packedTypeRot & 0x3f) === LocModelType.WALL_DECORATION_OUTSIDE) {
+                            // Match SceneBuilder's wall decoration placement.
+                            let displacement = 16;
+                            const wallIndex = locTypeRots.findIndex((packed) => (packed & 0x3f) <= LocModelType.WALL_RECT_CORNER);
+                            if (wallIndex >= 0) {
+                                displacement = this.osrsClient.locTypeLoader.load(locIds[wallIndex]).decorDisplacement;
+                            }
+                            entityX += displacement * [1, 0, -1, 0][rawRotation];
+                            entityZ += displacement * [0, -1, 0, 1][rawRotation];
+                        }
 
                         const tHit = this.intersectLocModel(
                             ray,
@@ -825,6 +835,9 @@ export class SceneRaycaster {
         if (modelType === LocModelType.NORMAL_DIAGIONAL) {
             modelType = LocModelType.NORMAL;
             modelRotation = (rawRotation + 4) & 0x7;
+        }
+        if (modelType === LocModelType.WALL_DECORATION_OUTSIDE) {
+            modelType = LocModelType.WALL_DECORATION_INSIDE;
         }
         return { modelType, rawRotation, modelRotation };
     }
