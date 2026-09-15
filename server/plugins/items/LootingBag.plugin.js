@@ -71,7 +71,16 @@ function sendBag(player, deposit = false) {
   sender.sendInterfaceScript(149, [BAG_ITEMS, deposit ? 93 : BAG_INVENTORY, 4, 7, 1, -1, deposit ? "Deposit" : "Withdraw", "", "", "", ""],
     undefined, undefined, { [BAG_INVENTORY]: { capacity: BAG_SIZE,
       slots: bagItems(bag).map((item, slot) => ({ slot, itemId: item.id, quantity: item.amount })) } });
-  sender.sendString(`${bagItems(bag).length}/28`, BAG_TOTAL);
+  const value = bagItems(bag).reduce((total, item) => {
+    const base = ItemDefinition.forId(item.id).unNote();
+    const price = Math.max(1, Math.min(0x7fffffff, Math.floor(ItemDefinition.forId(base).getValue()) || 1));
+    return total + price * item.amount;
+  }, 0);
+  // Match coin stacks in ItemIconRenderer.
+  const amount = value >= 10_000_000 ? `${Math.floor(value / 1_000_000)}M`
+    : value >= 100_000 ? `${Math.floor(value / 1_000)}K` : String(value);
+  const colour = value >= 10_000_000 ? "00ff80" : value >= 100_000 ? "ffffff" : "ffff00";
+  sender.sendString(`Value: <col=${colour}>${amount}</col> gp`, BAG_TOTAL);
   return true;
 }
 
