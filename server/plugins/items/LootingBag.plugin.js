@@ -18,6 +18,7 @@ const BAG_ITEMS = (BAG_INTERFACE << 16) | 5;
 const BAG_TOTAL = (BAG_INTERFACE << 16) | 6;
 const ITEM_FLAGS = (1 << 11) - 2;
 const pendingDeaths = new WeakMap();
+const depositing = new WeakSet();
 
 const isBag = (item) => item?.getDefinition?.()?.getName?.() === "Looting bag";
 const bagItems = (bag) => (bag?.getMetaValue?.(BAG_DATA) ?? []).filter((item) =>
@@ -58,14 +59,16 @@ function take(bag, index, amount) {
   return new Item(stored.id, taken, stored.meta);
 }
 
-function sendBag(player) {
+function sendBag(player, deposit = false) {
   const bag = bagFor(player);
   if (!bag) return false;
+  if (deposit) depositing.add(player);
+  else depositing.delete(player);
   const sender = player.getPacketSender();
   sender.sendSubInterface(SIDEBAR_TARGET, BAG_INTERFACE, 3);
   sender.sendString("Looting bag", (BAG_INTERFACE << 16) | 1);
   sender.sendInterfaceFlagsRange(BAG_ITEMS, 0, BAG_SIZE - 1, ITEM_FLAGS);
-  sender.sendInterfaceScript(149, [BAG_ITEMS, BAG_INVENTORY, 4, 7, 1, -1, "", "", "", "", ""],
+  sender.sendInterfaceScript(149, [BAG_ITEMS, deposit ? 93 : BAG_INVENTORY, 4, 7, 1, -1, deposit ? "Deposit" : "Withdraw", "", "", "", ""],
     undefined, undefined, { [BAG_INVENTORY]: { capacity: BAG_SIZE,
       slots: bagItems(bag).map((item, slot) => ({ slot, itemId: item.id, quantity: item.amount })) } });
   sender.sendString(`${bagItems(bag).length}/28`, BAG_TOTAL);
@@ -94,20 +97,6 @@ function withdraw(player, slot, amount) {
   return true;
 }
 
-function depositInventory(player) {
-  const bag = bagFor(player);
-  if (!bag || !canUseBag(player)) return false;
-  const inventory = player.getInventory();
-  for (let slot = inventory.capacity() - 1; slot >= 0; slot--) {
-    const item = inventory.getItems()[slot];
-    if (!item || item === bag || !canStore(item)) continue;
-    const moved = store(bag, item);
-    if (moved) inventory.deleteAtSlot(slot, moved, false);
-  }
-  inventory.refreshItems();
-  return true;
-}
-
 function itemAction(player, item, option) {
   if (!isBag(item)) return false;
   const action = String(option ?? "").toLowerCase();
@@ -120,11 +109,11 @@ function itemAction(player, item, option) {
   }
   if (action === "check") return sendBag(player);
   if (action === "deposit") {
-    if (!depositInventory(player)) {
+    if (!canUseBag(player)) {
       player.getPacketSender().sendMessage(DEPOSIT_RESTRICTION);
       return true;
     }
-    return sendBag(player);
+    return sendBag(player, true);
   }
   if (action === "settings") {
     player.getPacketSender().sendMessage("Looting bag deposits store as many items as possible.");
@@ -145,6 +134,16 @@ function itemAction(player, item, option) {
 function handleInterface(event) {
   if (event.groupId !== BAG_INTERFACE) return false;
   if (event.childId !== 5 || !Number.isInteger(event.slot)) return false;
+  if (depositing.has(event.player)) {
+    if (event.action !== 1) return true;
+    const item = event.player.getInventory().getItems()[event.slot];
+    const bag = bagFor(event.player);
+    if (bag && canStore(item) && item.getId() === event.itemId) {
+      depositItem(event.player, bag, itemKey(item), item.getAmount());
+      sendBag(event.player, true);
+    }
+    return true;
+  }
   const option = String(event.option ?? "").toLowerCase();
   const amount = option.includes("all") ? Number.MAX_SAFE_INTEGER : option.includes("10") ? 10 : option.includes("5") ? 5 : 1;
   if (option.includes("withdraw") || event.action > 0) return withdraw(event.player, event.slot, amount);
