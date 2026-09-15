@@ -125,6 +125,8 @@ type PluginPerfStat = {
   events: Map<string, PluginPerfEventStat>;
 };
 
+type ObjectInteractionHook = PluginHook<PluginObjectInteractionEvent> & { order: number };
+
 export class PluginManager {
   private static readonly PERF_EVENT_SAMPLE_LIMIT = 128;
   private static readonly MAX_PLUGIN_DEPTH = 2;
@@ -148,7 +150,10 @@ export class PluginManager {
   private static activeRegionsHooks: PluginHook<PluginActiveRegionsEvent>[] = [];
   private static pathBlockedHooks: PluginHook<PluginPathBlockedEvent>[] = [];
   private static objectRouteHooks: PluginHook<PluginObjectRouteEvent>[] = [];
-  private static objectInteractionHooks: PluginHook<PluginObjectInteractionEvent>[] = [];
+  private static objectInteractionHooks: ObjectInteractionHook[] = [];
+  private static objectHooksById = new Map<string, ObjectInteractionHook[]>();
+  private static objectHooksByName = new Map<string, ObjectInteractionHook[]>();
+  private static nextObjectHookOrder = 0;
   private static npcInteractionHooks: PluginHook<PluginNpcInteractionEvent>[] = [];
   private static npcDeathHooks: PluginHook<PluginNpcDeathEvent>[] = [];
   private static canAttackHooks: PluginHook<PluginCanAttackEvent>[] = [];
@@ -645,7 +650,7 @@ export class PluginManager {
     if (!event || !event.player || !event.object || event.handled) {
       return false;
     }
-    if (PluginManager.objectInteractionHooks.length === 0) {
+    if (PluginManager.nextObjectHookOrder === 0) {
       return false;
     }
 
@@ -653,7 +658,14 @@ export class PluginManager {
       event.definition = event.object.getDefinition();
     }
 
-    for (const hook of PluginManager.objectInteractionHooks) {
+    const hooks = [
+      ...PluginManager.objectInteractionHooks,
+      ...(PluginManager.objectHooksById.get(`${event.objectId}:${event.clickType}`) ?? []),
+      ...(PluginManager.objectHooksByName.get(event.definition?.getName()) ?? []),
+    ];
+    // Generic, ID and name handlers retain their original registration priority.
+    hooks.sort((a, b) => a.order - b.order);
+    for (const hook of hooks) {
       if (event.handled) {
         break;
       }
@@ -724,11 +736,11 @@ export class PluginManager {
     return null;
   }
 
-  public static emitCanTeleport(player: any): boolean | null {
+  public static emitCanTeleport(player: any, wildernessLevelLimit: number = 20): boolean | null {
     if (PluginManager.canTeleportHooks.length === 0) {
       return null;
     }
-    const event: PluginCanTeleportEvent = { player, allow: null };
+    const event: PluginCanTeleportEvent = { player, wildernessLevelLimit, allow: null };
     for (const hook of PluginManager.canTeleportHooks) {
       PluginManager.executeHook(hook, event, "can_teleport", "can_teleport");
       if (event.allow !== null) {
@@ -1679,24 +1691,19 @@ export class PluginManager {
         );
       }
 
-      const objectIdSet = new Set(validIds);
-
-      PluginManager.objectInteractionHooks.push({
+      const hook: ObjectInteractionHook = {
         pluginName,
+        order: PluginManager.nextObjectHookOrder++,
         handler: (event) => {
-          if (!event || event.handled || event.clickType !== clickType) {
-            return;
-          }
-          if (!objectIdSet.has(event.objectId)) {
-            return;
-          }
-
-          const result = handler(event);
-          if (result !== false) {
-            event.handled = true;
-          }
+          if (handler(event) !== false) event.handled = true;
         },
-      });
+      };
+      for (const id of new Set(validIds)) {
+        const key = `${id}:${clickType}`;
+        const hooks = PluginManager.objectHooksById.get(key) ?? [];
+        hooks.push(hook);
+        PluginManager.objectHooksById.set(key, hooks);
+      }
     };
 
     const registerGroundItemClickHook = (
@@ -2047,24 +2054,23 @@ export class PluginManager {
         if (typeof handler !== "function" && (typeof handler !== "string" || !actions)) {
           return;
         }
-        const namedActions = new Map(Object.entries(actions ?? {}).filter(([, action]) => typeof action === "function"));
-        PluginManager.objectInteractionHooks.push({
+        const order = PluginManager.nextObjectHookOrder++;
+        if (typeof handler === "function") {
+          PluginManager.objectInteractionHooks.push({ pluginName, order, handler });
+          return;
+        }
+        const namedActions = new Map(Object.entries(actions).filter(([, action]) => typeof action === "function"));
+        const hooks = PluginManager.objectHooksByName.get(handler) ?? [];
+        hooks.push({
           pluginName,
+          order,
           handler: (event) => {
-            if (!event || event.handled || !event.player || !event.object) {
-              return;
-            }
-            if (typeof handler === "function") {
-              handler(event);
-              return;
-            }
             if (!Number.isInteger(event.clickType) || event.clickType < 1 || event.clickType > 5) return;
-            const definition = event.definition;
-            if (definition?.getName() !== handler) return;
-            const action = namedActions.get(definition.getInteractions()?.[event.clickType - 1]);
+            const action = namedActions.get(event.definition?.getInteractions()?.[event.clickType - 1]);
             if (action && action(event) !== false) event.handled = true;
           },
         });
+        PluginManager.objectHooksByName.set(handler, hooks);
       },
       onObjectRoute: (handler) => {
         if (typeof handler !== "function") {
@@ -2514,7 +2520,16 @@ export class PluginManager {
           },
         });
       },
-      onItemOnObject: (handler, filter) => {
+      onItemOnObject: (
+        itemNameOrHandler: string | ((event: PluginItemOnObjectEvent) => void),
+        objectNameOrFilter?: string | PluginItemUseFilter,
+        namedHandler?: (event: PluginItemOnObjectEvent) => void | boolean,
+        namedFilter?: PluginItemUseFilter
+      ) => {
+        const named = typeof itemNameOrHandler === "string";
+        const handler: ((event: PluginItemOnObjectEvent) => void | boolean) | undefined = named ? namedHandler : itemNameOrHandler;
+        const filter = named ? namedFilter : objectNameOrFilter as PluginItemUseFilter | undefined;
+        if (named && typeof objectNameOrFilter !== "string") return;
         if (typeof handler !== "function") {
           return;
         }
@@ -2525,7 +2540,13 @@ export class PluginManager {
               return;
             }
             if (filter?.noted !== undefined && (ItemDefinition.forId(event.itemId).isNoted() !== filter.noted)) return;
-            handler(event);
+            if (named) {
+              if (ItemDefinition.forId(event.itemId).getName() !== itemNameOrHandler
+                || event.object.getDefinition()?.getName() !== objectNameOrFilter) return;
+              if (handler(event) !== false) event.handled = true;
+            } else {
+              handler(event);
+            }
           },
         });
       },

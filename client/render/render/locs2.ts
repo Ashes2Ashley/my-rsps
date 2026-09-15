@@ -370,9 +370,16 @@ export function scheduleLocReload(host: WebGLOsrsRendererHost, mapX: number, map
 
         const id = getMapSquareId(mapX, mapY);
         host.locReloadVersions.set(id, (host.locReloadVersions.get(id) ?? 0) + 1);
-        // There is nothing to refresh until this map is resident. The normal
-        // initial load will snapshot the latest loc state instead.
+        // Completed builds can still be waiting for upload. Their version check
+        // has already passed, so discard them before they restore stale locs.
+        let discarded = false;
+        for (const batch of host.pendingStreamMapsByGeneration.values()) {
+            if (batch.delete(id)) discarded = true;
+        }
+        // In-flight builds check locReloadVersions themselves. Only restart a
+        // completed build here; otherwise the normal load picks up these changes.
         if (!host.mapManager.getMap(mapX, mapY)) {
+            if (discarded) void host.queueLoadMap(mapX, mapY);
             return;
         }
         host.pendingLocReloadMaps.set(id, { mapX: mapX | 0, mapY: mapY | 0 });

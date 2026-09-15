@@ -120,6 +120,8 @@ export class Sound {
     public static CONTAINER_CLOSE = new Sound(326, 1, 0, 0)
     public static DOOR_OPEN = new Sound(62, 1, 0, 0)
     public static DOOR_CLOSE = new Sound(60, 1, 0, 0)
+    public static GATE_OPEN = new Sound(67, 1, 0, 0)
+    public static GATE_CLOSE = new Sound(66, 1, 0, 0)
     public static EQUIPMENT_ON = new Sound(358, 1, 0, 0)
     public static EQUIPMENT_OFF = new Sound(376, 1, 0, 0)
 
