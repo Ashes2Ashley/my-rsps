@@ -1,5 +1,5 @@
 /**
- * Exact-name Talk-to dialogues from data/definitions/npcs-dialogues.json.
+ * Exact-name Talk-to dialogues from data/definitions/npc-dialogues.json.
  * Copy fresh exports from osrsreboxed-db; each record's default selects the variant.
  * Speech, choices, random alternatives and named shops run through existing systems.
  * Prose conditions/effects and unresolved references stop safely pending structured data.
@@ -18,7 +18,7 @@ const { ShopManager } = require("../../src/main/typescript/elvarg/game/model/con
 // These NPCs have executable plugin conversations, not an imported prose transcript.
 const SPECIAL_NPC_DIALOGUES = new Set(["Skully"]);
 
-function startDialogue(api, event, steps) {
+function startDialogue(api, event, steps, branches = {}) {
   const { player } = event;
   const manager = player.getDialogueManager();
   const close = () => player.getPacketSender().sendInterfaceRemoval();
@@ -32,7 +32,7 @@ function startDialogue(api, event, steps) {
     const more = options.length - offset > 5;
     const visible = options.slice(offset, offset + (more ? 4 : 5));
     const pairs = visible.flatMap((option) => [option.text, () => {
-      if (option.condition) return unavailable();
+      if (option.condition || option.hook) return unavailable();
       run([...(option.steps || []), ...rest]);
     }]);
     if (more) pairs.push("More...", () => choices(step, rest, offset + 4));
@@ -51,10 +51,11 @@ function startDialogue(api, event, steps) {
     for (let position = 0; position < queue.length; position++) {
       const step = queue[position];
       const rest = [...(step.steps || []), ...queue.slice(position + 1)];
-      if (typeof step.npc === "string" || typeof step.player === "string") {
+      const namedNpc = step.type === "line" && step.speaker === event.definition.getName();
+      if (!step.hook && (typeof step.npc === "string" || typeof step.player === "string" || namedNpc)) {
         const isPlayer = typeof step.player === "string";
         // NPC chatboxes show four wrapped lines. Split long source lines instead of truncating.
-        const lines = Misc.wrapText(isPlayer ? step.player : step.npc, 53);
+        const lines = Misc.wrapText(isPlayer ? step.player : namedNpc ? step.text : step.npc, 53);
         for (let start = 0; start < lines.length; start += 4) {
           const text = lines.slice(start, start + 4).join(" ");
           chain.add(isPlayer
@@ -69,15 +70,19 @@ function startDialogue(api, event, steps) {
         continue;
       }
       chain.add(new ActionDialogue(index++, { execute: () => {
+        if (step.hook) return unavailable();
         if (step.type === "end") return close();
+        if (step.type === "call" && Object.hasOwn(branches, step.branch) && Array.isArray(branches[step.branch])) {
+          return run([...branches[step.branch], ...rest]);
+        }
         if (step.type === "choice") return choices(step, rest);
         if (step.type === "random" && step.options?.length) {
           const option = step.options[Math.floor(Math.random() * step.options.length)];
-          if (option.condition) return unavailable();
+          if (option.condition || option.hook) return unavailable();
           return run([...(option.steps || []), ...rest]);
         }
-        if (step.type === "action" && step.action === "open_interface") {
-          const target = step.target?.replace(/\.$/, "");
+        if (step.type === "action" && step.action === "open_shop") {
+          const target = step.target;
           const shops = ShopDefinition.all().filter((shop) => shop.getName() === target);
           if (shops.length === 1) {
             close();
@@ -100,14 +105,14 @@ function startDialogue(api, event, steps) {
 module.exports = {
   name: "NpcDialogues",
   register(api) {
-    const file = path.join(GameConstants.DEFINITIONS_DIRECTORY, "npcs-dialogues.json");
+    const file = path.join(GameConstants.DEFINITIONS_DIRECTORY, "npc-dialogues.json");
     const data = JSON.parse(fs.readFileSync(file, "utf8"));
     if (!data || typeof data !== "object" || Array.isArray(data)) {
-      throw new Error(`${file}: expected dialogues keyed by exact NPC name`);
+      throw new Error(`${file}: expected dialogues keyed by transcript name`);
     }
     for (const [name, npc] of Object.entries(data)) {
       if (npc.default === null) continue;
-      const variant = npc.variants?.[npc.default];
+      const variant = npc.steps ?? npc.variants?.[npc.default];
       if (!Array.isArray(variant)) {
         throw new Error(`${file}: invalid default dialogue for ${name}`);
       }
@@ -117,10 +122,10 @@ module.exports = {
         const name = event.definition.getName();
         if (SPECIAL_NPC_DIALOGUES.has(name)) return false;
         const npc = Object.hasOwn(data, name) ? data[name] : undefined;
-        const variant = npc?.variants?.[npc.default];
+        const variant = npc?.steps ?? npc?.variants?.[npc.default];
         startDialogue(api, event, variant?.length ? variant : [
           { npc: "Sorry, i've nothing interesting to talk about yet" },
-        ]);
+        ], npc?.branches);
         return true;
       },
     });
