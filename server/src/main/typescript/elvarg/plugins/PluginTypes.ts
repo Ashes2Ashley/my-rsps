@@ -153,6 +153,7 @@ export interface PluginCanAttackEvent {
 
 export interface PluginCanTeleportEvent {
   player: any;
+  wildernessLevelLimit?: number;
   allow: boolean | null;
 }
 

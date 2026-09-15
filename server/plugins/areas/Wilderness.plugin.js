@@ -472,8 +472,9 @@ function onCanTeleport(state, event) {
   if (!isInWilderness(state, player)) {
     return;
   }
+  const levelLimit = event.wildernessLevelLimit ?? TELEPORT_BLOCK_LEVEL;
   if (
-    wildernessLevelOf(player) > TELEPORT_BLOCK_LEVEL &&
+    wildernessLevelOf(player) > levelLimit &&
     player.getRights() !== PlayerRights.DEVELOPER &&
     !(player.isPlayerBot?.() && hasGlobalWorldTag("pvp"))
   ) {
@@ -483,7 +484,7 @@ function onCanTeleport(state, event) {
     player
       .getPacketSender()
       .sendMessage(
-        `You must be below level ${TELEPORT_BLOCK_LEVEL} of Wilderness to use teleportation spells.`
+        `You must be below level ${levelLimit} of Wilderness to use teleportation spells.`
       );
     event.allow = false;
   }
@@ -496,6 +497,23 @@ function onNpcAggressionTolerance(state, event) {
   if (isInWilderness(state, event.player)) {
     event.override = true;
   }
+}
+
+function pullLever(api, event) {
+  const { player, location } = event;
+  if (location.z !== 0) return false;
+  let destination;
+  if (location.x === 3153 && location.y === 3923) {
+    destination = new Location(3090, 3475);
+  } else if (location.x === 3090 && location.y === 3956) {
+    destination = new Location(2539, 4712);
+  } else if (location.x === 2539 && location.y === 4712) {
+    destination = new Location(3090, 3956);
+  } else {
+    return false;
+  }
+  event.handled = true;
+  api.emitCustomEvent("lever:teleport", { player, destination });
 }
 
 function onObeliskClick(event) {
@@ -519,6 +537,7 @@ module.exports = {
     api.onCanTeleport((event) => onCanTeleport(state, event));
     api.onNpcAggressionTolerance((event) => onNpcAggressionTolerance(state, event));
     api.onObjectFirstClick(Obelisks.OBELISK_IDS, onObeliskClick);
+    api.onObjectInteraction("Lever", { Pull: (event) => pullLever(api, event) });
 
     api.log("registered");
   },

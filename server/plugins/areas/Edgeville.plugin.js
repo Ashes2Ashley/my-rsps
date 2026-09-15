@@ -18,11 +18,32 @@ function openTrapdoor({ player, location }) {
   });
 }
 
+function pullLever({ player, location }) {
+  if (location.x !== 3090 || location.y !== 3475 || location.z !== 0) return false;
+  const start = player.getLocation().clone();
+  pluginApi.sendMultiChatboxPrompt(
+    player,
+    "Warning: deep Wilderness! Players can attack you.",
+    "Yes, teleport me into deep Wilderness.",
+    () => {
+      if (player.getLocation().equals(start)) {
+        pluginApi.emitCustomEvent("lever:teleport", {
+          player,
+          destination: new Location(3153, 3923),
+        });
+      }
+    },
+    "No, stay here.",
+    () => {},
+  );
+}
+
 module.exports = {
   name: "Edgeville",
   register(api) {
     pluginApi = api;
     api.onObjectInteraction("Ladder", { "Climb-up": climbUp });
     api.onObjectInteraction("Trapdoor", { Open: openTrapdoor });
+    api.onObjectInteraction("Lever", { Pull: pullLever });
   },
 };
