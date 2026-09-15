@@ -1,16 +1,18 @@
 "use strict";
 
-const { Skill } = require("../../../../../src/main/typescript/elvarg/game/model/Skill");
 const { Location } = require("../../../../../src/main/typescript/elvarg/game/model/Location");
+const { hasGlobalWorldTag } = require("../../../../../src/main/typescript/elvarg/game/definition/WorldDefinition");
 const { TeleportHandler } = require("../../../../../src/main/typescript/elvarg/game/model/teleportation/TeleportHandler");
 const { TeleportType } = require("../../../../../src/main/typescript/elvarg/game/model/teleportation/TeleportType");
 const { TimerKey } = require("../../../../../src/main/typescript/elvarg/util/timers/TimerKey");
 const { Wilderness } = require("../../../../../src/main/typescript/elvarg/game/content/wilderness/Wilderness");
 const { queueRouteAndFlagAppearance, clearMovementRequest } = require("../../navigation/BotNavigation");
 const { applyGeneratedPvpLoadout } = require("../../policies/PvpLoadoutPolicy");
+const { getEnabledWildernessHotspots, createHotspotAnchorLocation } = require("../../pvp/WildernessHotspotRegistry");
 
 const RETREAT_STEP_TILES = 12;
-const WILDERNESS_DITCH_NORTH_Y = 3525;
+const RETREAT_FOOD_CHARGES = 2;
+const RETREAT_TELEPORT_LEVEL = 20;
 
 class PvpDefensiveActionNode {
   constructor(options = {}) {
@@ -32,15 +34,8 @@ class PvpDefensiveActionNode {
     if (currentHp <= 0 || player.isDyingReturn()) {
       return { handled: true, status: "failure" };
     }
-    const maxHp = Number(
-      player.getSkillManager?.()?.getMaxLevel?.(Skill.HITPOINTS) ?? currentHp
-    );
-    const escapeThreshold = Number(
-      state?.pvp?.escapeThreshold ?? this.getProfile?.(state)?.retreatHpRatio ?? 0.24
-    );
-    if (
-      !pvp.retreat && maxHp > 0 && currentHp / maxHp <= escapeThreshold
-    ) {
+    const foodCharges = state.virtualFoodChargesRemaining ?? this.getProfile(state).foodCharges;
+    if (!pvp.retreat && foodCharges <= RETREAT_FOOD_CHARGES) {
       pvp.retreat = { autoRetaliate: player.autoRetaliateReturn(), teleportStarted: false };
       player.setAutoRetaliate(false);
       clearMovementRequest(player);
@@ -72,32 +67,40 @@ class PvpDefensiveActionNode {
     player.setFollowing(null);
     const home = new Location(state.home.x, state.home.y, state.home.z ?? 0);
     const atHome = player.getLocation().equals(home);
+    const arrived = retreat.destination && player.getLocation().equals(retreat.destination);
     if (retreat.teleportStarted) {
       // Discard combat links from the old location only after arriving.
-      if (atHome) combat.setUnderAttack(null);
+      if (arrived) combat.setUnderAttack(null);
       retreat.teleportStarted = false;
     }
-    if (atHome && !combat.getAttacker()) {
+    if ((atHome || arrived) && !combat.getAttacker()) {
       // Walking home while teleblocked must finish the same recovery as teleporting.
       clearMovementRequest(player);
       if (!applyGeneratedPvpLoadout(player, state, { api: this.api })) return running;
       state.virtualFoodChargesRemaining = null;
       player.setAutoRetaliate(retreat.autoRetaliate);
       pvp.retreat = null;
-      this.stopPvp(player, state, nowMs, "retreated_home");
+      this.stopPvp(player, state, nowMs, "retreated");
       return { handled: true, status: "success" };
     }
 
     const location = player.getLocation();
-    const level = Wilderness.isIn(player) ? Wilderness.levelForY(location.getY()) : 0;
-    const advanced = ["veteran", "elite"].includes(this.getProfile(state).id);
+    const level = !hasGlobalWorldTag("pvp") && Wilderness.isIn(player)
+      ? Wilderness.levelForY(location.getY()) : 0;
     const teleblocked = !combat.getTeleblockTimer().finished();
-    if (level <= 20 && !teleblocked && (advanced || !combat.getAttacker()) &&
-        TeleportHandler.checkReqs(player, home, 20)) {
-      clearMovementRequest(player);
-      TeleportHandler.teleport(player, home, TeleportType.NORMAL, false);
-      retreat.teleportStarted = true;
-      return running;
+    if (level < RETREAT_TELEPORT_LEVEL && !teleblocked) {
+      if (!retreat.destination) {
+        const hotspots = getEnabledWildernessHotspots().filter((hotspot) =>
+          location.getDistance(createHotspotAnchorLocation(hotspot)) > RETREAT_STEP_TILES
+        );
+        retreat.destination = createHotspotAnchorLocation(hotspots[Math.floor(Math.random() * hotspots.length)]) ?? home;
+      }
+      if (TeleportHandler.checkReqs(player, retreat.destination, RETREAT_TELEPORT_LEVEL)) {
+        clearMovementRequest(player);
+        TeleportHandler.teleport(player, retreat.destination, TeleportType.NORMAL, false);
+        retreat.teleportStarted = true;
+        return running;
+      }
     }
 
     if (player.getTimers().has(TimerKey.FREEZE) ||
@@ -107,23 +110,19 @@ class PvpDefensiveActionNode {
       return running;
     }
     player.setRunning(player.getRunEnergy() > 0);
-    if (!combat.getAttacker()) {
+    if (level < RETREAT_TELEPORT_LEVEL && !combat.getAttacker()) {
       queueRouteAndFlagAppearance(player, home.getX(), home.getY(), {
         state, reason: "pvp_retreat_return",
       });
       return running;
     }
-    // Head south in the Wilderness; elsewhere run away from the pursuer.
+    // Run below the teleport limit; while blocked at lower levels, flee the pursuer.
     const attackerLocation = (combat.getAttacker() ?? target)?.getLocation();
     const dx = attackerLocation ? Math.sign(location.getX() - attackerLocation.getX()) : 1;
     const dy = attackerLocation ? Math.sign(location.getY() - attackerLocation.getY()) : 0;
-    let targetX = location.getX() + (level > 0 ? 0 : (dx || (dy ? 0 : 1)) * RETREAT_STEP_TILES);
-    let targetY = location.getY() + (level > 0 ? -RETREAT_STEP_TILES : dy * RETREAT_STEP_TILES);
-    if (level > 0 && location.getY() < 6400 && targetY < WILDERNESS_DITCH_NORTH_Y) {
-      // Flee along the ditch instead of leaving the Wilderness.
-      targetX = location.getX() + (dx || 1) * RETREAT_STEP_TILES;
-      targetY = WILDERNESS_DITCH_NORTH_Y;
-    }
+    const deep = level >= RETREAT_TELEPORT_LEVEL;
+    const targetX = location.getX() + (deep ? 0 : (dx || (dy ? 0 : 1)) * RETREAT_STEP_TILES);
+    const targetY = location.getY() + (deep ? -RETREAT_STEP_TILES : dy * RETREAT_STEP_TILES);
     queueRouteAndFlagAppearance(player, targetX, targetY, { state, reason: "pvp_retreat" });
     return running;
   }

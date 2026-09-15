@@ -1,4 +1,5 @@
 const { Wilderness } = require("../../src/main/typescript/elvarg/game/content/wilderness/Wilderness");
+const { hasGlobalWorldTag } = require("../../src/main/typescript/elvarg/game/definition/WorldDefinition");
 const { Obelisks } = require("../../src/main/typescript/elvarg/game/content/Obelisks");
 const { PlayerRights } = require("../../src/main/typescript/elvarg/game/model/rights/PlayerRights");
 const { Location } = require("../../src/main/typescript/elvarg/game/model/Location");
@@ -473,7 +474,8 @@ function onCanTeleport(state, event) {
   }
   if (
     wildernessLevelOf(player) > TELEPORT_BLOCK_LEVEL &&
-    player.getRights() !== PlayerRights.DEVELOPER
+    player.getRights() !== PlayerRights.DEVELOPER &&
+    !(player.isPlayerBot?.() && hasGlobalWorldTag("pvp"))
   ) {
     player
       .getPacketSender()

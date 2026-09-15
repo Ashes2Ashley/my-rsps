@@ -8,7 +8,6 @@ const {
   ATTR_RECRUIT_OWNER_USERNAME,
 } = require("./BotRecruitConstants");
 const { PvpProfileId } = require("../behaviours/pvp/PvpProfileRegistry");
-const { buildPvpEquipmentDropPlan } = require("./BotPvpDeathDropFormula");
 const LootKeys = require("../../items/LootKeys.plugin");
 
 let World = null;
@@ -133,9 +132,6 @@ function getOrCreateDeathLootPlan(victim, killer, runtime) {
   }
 
   plan = {
-    drops: canRewardKiller
-      ? buildPvpEquipmentDropPlan(victim, profileId)
-      : new WeakSet(),
     killer: canRewardKiller ? killer : null,
   };
   deathLootPlans.set(victim, plan);
@@ -153,11 +149,10 @@ function handleBotDeathItemDrop(event, runtime) {
     event?.killer,
     runtime
   );
-  const selectedDrop = plan?.killer && plan.drops?.has?.(event?.item);
+  const selectedDrop = plan?.killer && event.dropEligible;
 
-  // Let the Loot Keys plugin collect exactly the drops this bot's PvP plan selected.
+  // Use the same skull/protection eligibility for equipped and carried items as players.
   if (selectedDrop && LootKeys.isEligibleKill(event.killer, victim)) {
-    event.dropEligible = true;
     return;
   }
 
