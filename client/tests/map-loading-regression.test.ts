@@ -169,6 +169,7 @@ function locUpdateBeforeInitialMapDoesNotStartADuplicateMapTask(): void {
             loadingMapIds: new Set(),
             getMap: () => undefined,
         },
+        pendingStreamMapsByGeneration: new Map(),
         pendingLocReloadMaps: new Map(),
         pendingLocReloadFlushTimer: undefined,
         beginLocReloadBatch: () => assert.fail("initial load must not start a second reload"),
@@ -177,6 +178,26 @@ function locUpdateBeforeInitialMapDoesNotStartADuplicateMapTask(): void {
     scheduleLocReload(host, mapX, mapY);
     assert.equal(host.locReloadVersions.get(mapId), 1);
     assert.equal(host.pendingLocReloadMaps.size, 0);
+}
+
+function locReplayInvalidatesCompletedMapsWaitingToRender(): void {
+    const mapId = getMapSquareId(48, 154);
+    let reloads = 0;
+    const host = {
+        locReloadVersions: new Map(),
+        mapManager: { getMap: () => undefined },
+        pendingStreamMapsByGeneration: new Map([[1, new Map([[mapId, {}]])]]),
+        queueLoadMap: (x, y) => {
+            assert.deepEqual([x, y], [48, 154]);
+            reloads++;
+        },
+    } as any;
+    scheduleLocReload(host, 48, 154);
+    assert.equal(host.pendingStreamMapsByGeneration.get(1).has(mapId), false,
+        "a completed map with closed doors must not render after open-door replay");
+    assert.equal(reloads, 1, "rebuild a nonresident map whose completed build was invalidated");
+    scheduleLocReload(host, 48, 154);
+    assert.equal(reloads, 1, "later replay packets must not start duplicate builds");
 }
 
 function crossShapeReplacementKeepsBaseWallHidden(): void {
@@ -228,6 +249,7 @@ multipartLocsRequestAllMissingModelsTogether();
 incomingMapsRenderBeforeTheWholeGridIsReady();
 duplicateLocReplayIsIgnored();
 locUpdateBeforeInitialMapDoesNotStartADuplicateMapTask();
+locReplayInvalidatesCompletedMapsWaitingToRender();
 crossShapeReplacementKeepsBaseWallHidden();
 regionReplacementUsesNativeMapData();
 console.log("Map loading regression tests passed");
