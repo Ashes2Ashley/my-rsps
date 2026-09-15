@@ -542,5 +542,6 @@ module.exports = {
   },
   ...LootKeys,
   isSafeLocation,
+  isInsideEnclave,
   _test: { createLootKey, queueDrop, handleInterfaceAction: handleChestInterfaceAction, nativeInventories, open: openChest, openKeySelection, crossingTarget, denySafeZoneAttack, isInsideEnclave, isSafeLocation, passThrough },
 };

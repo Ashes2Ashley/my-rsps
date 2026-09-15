@@ -3,6 +3,7 @@ import { ItemOnGroundManager, OperationType } from "../../../game/entity/impl/gr
 import { Location } from "../../../game/model/Location";
 import { Sounds } from "../../../game/Sounds";
 import { Sound } from "../../../game/Sound";
+import { PluginManager } from "../../../plugins/PluginManager";
 
 export class PickupItemPacketListener {
   public static pickup(player: any, itemId: number, x: number, y: number): void {
@@ -34,25 +35,28 @@ export class PickupItemPacketListener {
       return;
     }
 
-    const inventory = player.getInventory();
-    if (
-      !(
-        inventory.getFreeSlots() > 0 ||
-        (inventory.getFreeSlots() === 0 &&
-          ItemDefinition.forId(itemId).isStackable() &&
-          inventory.contains(itemId))
-      )
-    ) {
-      inventory.full();
-      return;
-    }
-
     const groundItem = ItemOnGroundManager.getGroundItem(
       player.getUsername(),
       itemId,
       position
     );
     if (!groundItem) {
+      return;
+    }
+
+    if (PluginManager.emitGroundItemPickup({
+      player,
+      groundItem,
+      groundItemId: itemId,
+      clickType: 1,
+      location: { x, y, z: position.getZ() },
+      handled: false,
+    })) return;
+
+    const inventory = player.getInventory();
+    if (!(inventory.getFreeSlots() > 0 ||
+      (ItemDefinition.forId(itemId).isStackable() && inventory.contains(itemId)))) {
+      inventory.full();
       return;
     }
 

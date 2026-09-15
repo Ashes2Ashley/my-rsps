@@ -871,15 +871,20 @@ class ClientConnection {
     const item = player.getInventory().getItems()[packet.slot];
     if (!item || item.getId() !== packet.itemId) return;
     const option = packet.option?.toLowerCase() ?? "";
+    const optionIndex = option && option !== "examine"
+      ? (CacheDefinitions.getItem(packet.itemId)?.inventoryActions ?? [])
+          .findIndex((action) => action?.toLowerCase() === option) + 1
+      : packet.optionIndex;
+    if (optionIndex === 0) return;
     if (/^(wield|wear|equip)$/.test(option)) {
       EquipPacketListener.equip(player, packet.itemId, packet.slot, 3214);
-    } else if (option === "drop" || option === "destroy" || packet.optionIndex === 5) {
+    } else if (option === "drop" || option === "destroy" || optionIndex === 5) {
       DropItemPacketListener.drop(player, packet.itemId, 3214, packet.slot);
     } else if (option === "examine") {
       const definition = ItemDefinition.forId(packet.itemId);
       player.getPacketSender().sendMessage(definition.getExamine() || definition.getName());
     } else {
-      ItemActionPacketListener.handleAction(player, packet.widgetId, packet.itemId, packet.slot, packet.optionIndex ?? 1, packet.option);
+      ItemActionPacketListener.handleAction(player, packet.widgetId, packet.itemId, packet.slot, optionIndex ?? 1, packet.option);
     }
   }
 

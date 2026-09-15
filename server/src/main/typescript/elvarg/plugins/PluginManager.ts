@@ -186,6 +186,7 @@ export class PluginManager {
   private static spellOnObjectHooks: PluginHook<PluginSpellOnObjectEvent>[] = [];
   private static groundItemInteractionHooks: PluginHook<PluginGroundItemInteractionEvent>[] =
     [];
+  private static groundItemPickupHooks: PluginHook<PluginGroundItemInteractionEvent>[] = [];
   private static itemActionHooks: PluginHook<PluginItemActionEvent>[] = [];
   private static itemDropHooks: PluginHook<PluginItemDropEvent>[] = [];
   private static buttonClickHooks: PluginHook<PluginButtonClickEvent>[] = [];
@@ -1096,6 +1097,13 @@ export class PluginManager {
     for (const hook of PluginManager.playerDefeatedHooks) {
       PluginManager.executeHook(hook, event, "player_defeated", "player_defeated");
     }
+  }
+
+  public static emitGroundItemPickup(event: PluginGroundItemInteractionEvent): boolean {
+    for (const hook of PluginManager.groundItemPickupHooks) {
+      PluginManager.executeHook(hook, event, "ground_item_pickup", "ground_item_pickup");
+    }
+    return event.handled === true;
   }
 
   public static emitSlayerAssignRequest(player: any): boolean {
@@ -2495,6 +2503,16 @@ export class PluginManager {
       },
       onGroundItemSecondClick: (itemIds, handler) => {
         registerGroundItemClickHook(2, itemIds, handler, "ground-item-second");
+      },
+      onGroundItemPickup: (handler) => {
+        if (typeof handler !== "function") return;
+        PluginManager.groundItemPickupHooks.push({
+          pluginName,
+          handler: (event) => {
+            if (!event || event.handled || !event.player || !event.groundItem) return;
+            handler(event);
+          },
+        });
       },
       onItemOnObject: (handler, filter) => {
         if (typeof handler !== "function") {
