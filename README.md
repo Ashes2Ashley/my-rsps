@@ -9,15 +9,18 @@ A browser-based Old School RuneScape private server with a TypeScript/WebGL clie
 
 ## Quick start
 
-Install [Node.js LTS](https://nodejs.org/en/download) first. No separate Yarn installation is needed.
+Install [Node.js 22.16 or later](https://nodejs.org/en/download) first. No separate Yarn or Corepack installation is needed.
+
+From the repository root:
 
 ```bash
-cd elvarg-typescript
-corepack yarn setup
-corepack yarn start
+npm run setup
+yarn start
 ```
 
 Open <http://localhost:3000>. The first start downloads the game cache automatically.
+
+If setup is interrupted, run `npm run setup` again.
 
 ## Publish your world
 
@@ -28,7 +31,7 @@ WEBRTC_WORLD_ID=my-world
 WEBRTC_WORLD_TOKEN=paste-your-token-here
 ```
 
-Run `corepack yarn start`. Your world appears in the World list once it registers. Keep the token private.
+Run `yarn start`. Your world appears in the World list once it registers. Keep the token private.
 
 ## Credits
 

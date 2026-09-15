@@ -198,9 +198,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"xrsps@workspace:.":
+"tsps@workspace:.":
   version: 0.0.0-use.local
-  resolution: "xrsps@workspace:."
+  resolution: "tsps@workspace:."
   dependencies:
     concurrently: "npm:^9.2.1"
   languageName: unknown
