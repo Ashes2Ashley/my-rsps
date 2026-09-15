@@ -1,10 +1,9 @@
 /**
  * NPC drop tables, driven by the OSRS Wiki dump.
  *
- * Data files (regenerate from OpenRune-Server, then copy in minified):
- *   ./gradlew :tools:wiki-dumping:dumpNpcDrops --args="--all-monsters --wiki-dump=<dir> --npc-drops-json=<out>"
- *   npc-drops.json          -> data/definitions/npc-drops.json
- *   subtables.json          -> data/definitions/npc-drop-subtables.json
+ * Regenerate in ../osrsreboxed-db with `python -m scripts.drops.update`, then copy:
+ *   docs/drops-json/npc-drops.json -> data/definitions/npc-drops.json
+ *   docs/drops-json/subtables.json -> data/definitions/npc-drop-subtables.json
  *
  * Shape: { tables: { "<tableId>": { label, main_max_roll, entries[], tertiary[] } },
  *           npcs:   { "<npcId>": { name, tables: ["<tableId>"] } } }
@@ -307,7 +306,8 @@ function tableForNpc(npcId) {
   if (!tables || tables.length === 0) {
     return null;
   }
-  // An npc id maps to exactly one variant table in the dump; extras would be a data bug.
+  // ponytail: ID variants are resolved by the exporter; context-dependent tables still
+  // use the first entry until encounter/quest conditions have an executable contract.
   return tables[0];
 }
 

@@ -188,3 +188,38 @@ console.log(
     `${stats.shared} shared tables, weighted hits ${hits}/20000, ` +
     `nested-gem hits ${viaNested}/${rolls} (~${Math.round(expected)} expected), ${assumed} assumed rates`
 );
+
+// Variant mappings must survive copying the exporter output into the server.
+for (const [id, tableId] of [
+  [526, "rogue_drop_table15"], [6603, "rogue_drop_table135"],
+  [70, "skeleton_2"], [71, "skeleton"], [77, "skeleton_3"],
+  [2856, "giant_rat_drop_table3"], [2510, "giant_rat_drop_table26"],
+  [2854, "rat"], [2492, "rat_2"],
+] as const) {
+  assert.deepEqual(dump.npcs[id].tables, [tableId], `wrong drop variant for npc ${id}`);
+}
+
+async function checkDeathDrops() {
+  await require("../src/main/typescript/elvarg/game/cache/CachePipeline").CachePipeline.initialize();
+  let onDeath: (event: any) => void;
+  const groundDrops: number[] = [];
+  const location = { x: 3200, y: 3200, z: 0 };
+  const killer = { getAttribute: () => false };
+  plugin.register({
+    getItemOnGroundManager: () => ({ registerLocation: (owner: any, item: any, tile: any) => {
+      assert.equal(owner, killer);
+      assert.equal(tile, location);
+      groundDrops.push(item.getId());
+    } }),
+    onNpcDeath: (handler: typeof onDeath) => { onDeath = handler; },
+    registerCommand: () => {},
+    log: () => {},
+  });
+  for (const npcId of [526, 6603, 70, 71, 77, 2856, 2510, 2492]) {
+    groundDrops.length = 0;
+    onDeath!({ killer, npcId, npc: { getLocation: () => location } });
+    assert.ok(groundDrops.includes(526), `npc ${npcId} must register its guaranteed bones on death`);
+  }
+  console.log("npc drop variants and death-to-ground-item registration ok");
+}
+checkDeathDrops().catch((error) => { console.error(error); process.exitCode = 1; });
