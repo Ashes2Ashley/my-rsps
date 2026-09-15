@@ -9,6 +9,7 @@ import { Location } from "../Location";
 import { PluginManager } from "../../../plugins/PluginManager";
 import { Wilderness } from "../../content/wilderness/Wilderness";
 import { PlayerRights } from "../rights/PlayerRights";
+import { hasGlobalWorldTag } from "../../definition/WorldDefinition";
 
 class TeleportTask extends Task {
     private teleportTick = 0;
@@ -107,7 +108,8 @@ export class TeleportHandler {
             return false;
         }
 
-        if (Wilderness.isIn(player) && player.getWildernessLevel() > wildernessLevelLimit && player.getRights() !== PlayerRights.DEVELOPER) {
+        if (Wilderness.isIn(player) && player.getWildernessLevel() > wildernessLevelLimit && player.getRights() !== PlayerRights.DEVELOPER &&
+            !(player.isPlayerBot() && hasGlobalWorldTag("pvp"))) {
             player.getPacketSender().sendMessage(`You must be below level ${wildernessLevelLimit} of Wilderness to use teleportation.`);
             return false;
         }

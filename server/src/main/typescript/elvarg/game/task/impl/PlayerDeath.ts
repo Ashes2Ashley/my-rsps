@@ -7,7 +7,8 @@ import { PlayerRights } from "../../model/rights/PlayerRights";
 import { Task } from "../Task";
 import { Item } from "../../model/Item";
 import { SkullType } from "../../model/SkullType";
-import { PrayerHandler } from "../../content/PrayerHandler";
+import { PrayerData, PrayerHandler } from "../../content/PrayerHandler";
+import { Skill } from "../../model/Skill";
 import { Location } from "../../model/Location";
 import { BrokenItem } from "../../model/BrokenItem";
 import { Animation } from "../../model/Animation";
@@ -245,7 +246,10 @@ export class PlayerDeathTask extends Task {
         ) {
             return 0;
         }
-        return (player.getSkullTimer() > 0 ? 0 : 3) + (PrayerHandler.isActivated(player, PrayerHandler.PROTECT_ITEM) ? 1 : 0);
+        const protectItem = player.getSkillManager().getMaxLevel(Skill.PRAYER) >= PrayerData.PROTECT_ITEM.requirement &&
+            player.getSkillManager().getCurrentLevel(Skill.PRAYER) > 0 &&
+            PrayerHandler.isActivated(player, PrayerHandler.PROTECT_ITEM);
+        return (player.getSkullTimer() > 0 ? 0 : 3) + (protectItem ? 1 : 0);
     }
 
     private static getItemsToKeep(player: Player): Item[] {

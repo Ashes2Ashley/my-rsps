@@ -330,7 +330,7 @@ function maybeRunPressureCombatScript(context) {
     scheduleFreezeReview,
   } = context ?? {};
   const pvp = state?.pvp;
-  if (!player || !target || !pvp || !isVeteranOrEliteProfile(profile)) {
+  if (!player || !target || !pvp || !profile) {
     return { handled: false, forcedCombatType: null };
   }
   if (!isAttackWindowOpen(player)) {
@@ -361,7 +361,7 @@ function maybeRunPressureCombatScript(context) {
   if (nowMs < Number(pvp.lastPressureScriptAt ?? 0) + cooldownMs) {
     return { handled: false, forcedCombatType: null };
   }
-  if (Math.random() > Number(profile?.nextHitScriptChance ?? 0.6)) {
+  if (Math.random() > Number(profile?.nextHitScriptChance ?? 1)) {
     schedulePressureCheck(state, nowMs, PRESSURE_FAILURE_COOLDOWN_MS);
     return { handled: false, forcedCombatType: null };
   }
@@ -373,7 +373,13 @@ function maybeRunPressureCombatScript(context) {
   const pressureContext = ServerPerf.measurePhase("bot.pvp.pressure_script.context", () =>
     buildPressureContext(player, target, state)
   );
+  const meleeFinisher =
+    pressureContext.targetHpRatio <= Number(profile.nextHitMeleeFinisherHpRatio ?? profile.specFinisherHpRatio ?? 0.45) &&
+    (pressureContext.distance <= MELEE_DISTANCE_TILES || !player.getTimers().has(TimerKey.FREEZE))
+      ? candidates.get(CombatType.MELEE)
+      : null;
   if (
+    !meleeFinisher &&
     ServerPerf.measurePhase("bot.pvp.pressure_script.fast_keep_style", () =>
       isCurrentStyleAlreadyGoodEnough(pressureContext)
     )
@@ -405,7 +411,7 @@ function maybeRunPressureCombatScript(context) {
   }
 
   const bestCandidate = ServerPerf.measurePhase("bot.pvp.pressure_script.choose_candidate", () =>
-    chooseBestCandidate(candidates, state, profile, pressureContext)
+    meleeFinisher ?? chooseBestCandidate(candidates, state, profile, pressureContext)
   );
   if (!bestCandidate) {
     schedulePressureCheck(state, nowMs, PRESSURE_FAILURE_COOLDOWN_MS);

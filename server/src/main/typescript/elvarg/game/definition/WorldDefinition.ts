@@ -186,4 +186,8 @@ export function getWorldDefinition(): WorldDefinitionData {
     return copyWorldDefinition();
 }
 
+export function hasGlobalWorldTag(tag: WorldZoneTag): boolean {
+    return definition.zones.some((zone) => zone.minX === undefined && zone.tags.includes(tag));
+}
+
 syncRuntime();
