@@ -1,6 +1,7 @@
 const { GameConstants } = require("../../../src/main/typescript/elvarg/game/GameConstants");
 const { CacheDefinitions } = require("../../../src/main/typescript/elvarg/game/cache/CacheDefinitions");
-const { PrayerData } = require("../../../src/main/typescript/elvarg/game/content/PrayerHandler");
+const { PrayerData, PrayerHandler } = require("../../../src/main/typescript/elvarg/game/content/PrayerHandler");
+const { SkillManager } = require("../../../src/main/typescript/elvarg/game/content/skill/SkillManager");
 const { CombatSpecial } = require("../../../src/main/typescript/elvarg/game/content/combat/CombatSpecial");
 const { CombatSpells } = require("../../../src/main/typescript/elvarg/game/content/combat/magic/CombatSpells");
 const { Autocasting } = require("../../../src/main/typescript/elvarg/game/content/combat/magic/Autocasting");
@@ -701,10 +702,6 @@ function handlePresetActionButton(player, buttonId) {
   }
 }
 
-let PrayerHandler;
-let CombatFactory;
-let SkillManager;
-
 module.exports = {
   name: "Presets",
   applyPreset,
@@ -714,9 +711,6 @@ module.exports = {
   openPresetInterface,
   shouldOpenOnDeath,
   register(api) {
-    PrayerHandler = api.getPrayerHandler();
-    CombatFactory = api.getCombatFactory();
-    SkillManager = api.getSkillManager();
     api.persistAttribute(CUSTOM_PRESETS_ATTRIBUTE);
     api.registerCustomInterface(INTERFACE_DEFINITION);
 
