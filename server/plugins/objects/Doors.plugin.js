@@ -25,6 +25,11 @@ function hasAction(actions, keyword) {
   return Array.isArray(actions) && actions.some((action) => typeof action === "string" && action.toLowerCase() === keyword);
 }
 
+const DOOR_NAMES = new Set([
+  "Door", "Doors", "Large door", "Castle door", "Cell Door", "Cell door",
+  "Glass door", "Magic door", "Metal door", "Mind Door", "Tent door",
+  "Gate", "Metal gate", "Doorway",
+]);
 let DOOR_CATALOG = null;
 
 function buildDoorCatalog() {
@@ -33,7 +38,7 @@ function buildDoorCatalog() {
   const total = CacheDefinitions.getCounts().objects;
   for (let id = 0; id < total; id++) {
     const def = CacheDefinitions.getObject(id);
-    if (!def || !hasAction(def.actions, "open")) {
+    if (!def || !DOOR_NAMES.has(def.name) || !hasAction(def.actions, "open")) {
       continue;
     }
     const partner = CacheDefinitions.getObject(id + 1);
@@ -793,16 +798,7 @@ module.exports = {
   register: (api) => {
     ObjectManager = api.getObjectManager();
     TaskManager = api.getTaskManager();
-    const catalog = getDoorCatalog();
-    const doubleDoorIds = new Set(DOUBLE_DOOR_ID_FAMILIES.flat());
-    const objectIds = [
-      ...new Set([
-        ...catalog.closedToOpen.keys(),
-        ...catalog.openToClosed.keys(),
-        ...doubleDoorIds,
-      ]),
-    ];
-    api.onObjectFirstClick(objectIds, ({ player, object, objectId, location }) => {
+    const toggleDoor = ({ player, object, objectId, location }) => {
       if (!player || !object || !location) {
         return false;
       }
@@ -810,7 +806,10 @@ module.exports = {
         return true;
       }
       return handleMappedDoor(player, object, objectId, location);
-    });
+    };
+    for (const name of DOOR_NAMES) {
+      api.onObjectInteraction(name, { Open: toggleDoor, Close: toggleDoor });
+    }
     api.onRegionLoaded(({ regionId }) => {
       if (!Number.isInteger(regionId)) {
         return;
