@@ -395,12 +395,11 @@ function showOptions(session, info = "") {
         })
         .sendSubInterface(uid(CACHE_OPTIONS, 0), OPTIONS, 1);
     }
+    // The duel screens leave the sidebar alone: nothing mounts into the side modal
+    // (161:74), so the tabs stay up throughout instead of blinking out here and
+    // back on at the start of the fight. Rule enforcement lives in the onCan* hooks.
     player.getPacketSender()
-      .sendString(`Dueling with: ${session.players.find(p => p !== player).getUsername()}`, uid(OPTIONS, UI.TITLE))
-      .sendSubInterface((161 << 16) | 74, 85, 3)
-      .sendInterfaceScript(149, [85 << 16, 93, 4, 7, 1, -1, "Stake-1", "Stake-5", "Stake-10", "Stake-All", "Stake-X"])
-      .sendInterfaceScript(151, [85 << 16, 93, 4, 7, 1, -1, "Stake-1", "Stake-5", "Stake-10", "Stake-All", "Stake-X", "", "", "", ""])
-      .sendInterfaceFlagsRange(85 << 16, 0, 27, 1180734);
+      .sendString(`Dueling with: ${session.players.find(p => p !== player).getUsername()}`, uid(OPTIONS, UI.TITLE));
     player.setStatus(PlayerStatus.DUELING);
     if (info) player.getPacketSender().sendMessage(info);
     renderStakes(player, session);
@@ -526,8 +525,7 @@ function showConfirm(session) {
   session.accepted.clear();
   for (const player of session.players) {
     player.getDueling().setState(DuelState.CONFIRM_SCREEN);
-    player.getPacketSender().sendSubInterface((161 << 16) | 74, 149, 1)
-      .sendConfig(3465, 0).sendConfiguredInterface("duel-confirm");
+    player.getPacketSender().sendConfig(3465, 0).sendConfiguredInterface("duel-confirm");
     player.setStatus(PlayerStatus.DUELING);
     for (const child of [50, 51]) player.getPacketSender().sendInterfaceFlags(uid(CONFIRM, child), 2);
     const other = session.players.find(p => p !== player);
