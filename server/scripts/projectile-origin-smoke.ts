@@ -19,4 +19,16 @@ assert.deepEqual(Projectile.centreOf(mobile(3200, 3200, 4)), new Location(3201, 
 // Nonsense sizes must not drag the origin off the mobile.
 assert.deepEqual(Projectile.centreOf(mobile(3200, 3200, 0)), new Location(3200, 3200, 0));
 
+// The King Black Dragon's breath has to cross the gap, not teleport across it: a flat
+// lifetime spent the same 0.3s on 8 tiles as on 1.
+const { breathLifetime } = require("../plugins/bosses/KingBlackDragon.plugin.js");
+const kbd = mobile(3000, 3000, 5);
+const at = (x: number, y: number) => ({ getLocation: () => new Location(x, y, 0) });
+
+// Centre tile is (3002, 3002), so a player on the dragon's doorstep is 3 tiles out.
+assert.equal(breathLifetime(kbd, at(3005, 3002)), 70);
+// ...and one at the edge of its 8-tile range is 8 tiles from that centre.
+assert.equal(breathLifetime(kbd, at(3010, 3002)), 120);
+assert.ok(breathLifetime(kbd, at(3010, 3002)) > breathLifetime(kbd, at(3005, 3002)));
+
 console.info("projectile origin smoke passed");
