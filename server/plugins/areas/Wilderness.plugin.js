@@ -244,14 +244,22 @@ function mountPvpIcons(player) {
 }
 
 // The block belongs to PvP ground, not to the Wilderness: a PvP zone anywhere on the map
-// shows the skull, and its safe carve-outs show the same skull with the red cross. Driven
-// off the tile rather than an entry/exit edge: every tick reconverges, so a teleport, a
-// login or a missed transition can't strand the block on screen.
+// shows the skull, and its safe carve-outs show the same skull with the red cross. The duel
+// arena's glowing axe (SpriteID.OVERLAY_DUEL, which cache script 386 puts on the same
+// graphic) hangs in this block too, so its zones keep it on screen - one owner per widget,
+// or whichever plugin syncs last hides the other's icon.
+function needsPvpOverlay(location) {
+  return Wilderness.isPvpArea(location)
+    || (!!location && WORLD_ZONE_BOUNDARIES.duel.some((boundary) => boundary.inside(location)));
+}
+
+// Driven off the tile rather than an entry/exit edge: every tick reconverges, so a teleport,
+// a login or a missed transition can't strand the block on screen.
 function syncPvpIcons(player, location = player?.getLocation?.()) {
   if (!player || player?.isPlayerBot?.() === true) {
     return;
   }
-  const visible = Wilderness.isPvpArea(location);
+  const visible = needsPvpOverlay(location);
   if (lastIconsVisible.get(player) === visible) {
     return;
   }

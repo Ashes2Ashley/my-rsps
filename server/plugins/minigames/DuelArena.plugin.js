@@ -23,8 +23,6 @@ const CACHE_OPTIONS = 755;
 const CACHE_ACCEPT = 86;
 const CACHE_DECLINE = 87;
 const COINS = 995;
-const PVP_ICONS_TARGET_UID = (161 << 16) | 3;
-const PVP_ICONS_INTERFACE = 90;
 const PVP_LAYOUT_SCRIPT = 386;
 const VARBIT_PVPA_BATTLEAREA_STATUS = 14017;
 const VARBIT_PVPA_TRANSMIT_CHALLENGE_OR_BATTLEAREA = 14022;
@@ -282,9 +280,11 @@ function syncDuelIcon(player) {
   if (duelIconVisible.get(player) === visible) return;
   const sender = player.getPacketSender();
   if (visible) {
+    // pvp_icons is mounted for the whole session by the Wilderness plugin, which also owns
+    // the block's visibility. Re-mounting it here reset every widget in the group to its
+    // cache defaults behind that plugin's back, stranding a crossed skull and a level row.
     sender.sendVarbit(VARBIT_PVPA_BATTLEAREA_STATUS, 0)
       .sendVarbit(VARBIT_PVPA_TRANSMIT_CHALLENGE_OR_BATTLEAREA, 1)
-      .sendSubInterface(PVP_ICONS_TARGET_UID, PVP_ICONS_INTERFACE, 1)
       .sendClientScript(PVP_LAYOUT_SCRIPT);
   } else {
     sender.sendVarbit(VARBIT_PVPA_TRANSMIT_CHALLENGE_OR_BATTLEAREA, 0)
