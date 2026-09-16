@@ -8,6 +8,7 @@ import { CombatType } from "../../../content/combat/CombatType";
 
 type CombatStats = {
     name?: string;
+    examine?: string;
     hitpoints?: number;
     attackLevel?: number;
     strengthLevel?: number;
@@ -64,6 +65,9 @@ export class NpcDefinitionLoader extends DefinitionLoader {
     public static fromMonsterDump(monster: any): CombatStats {
         return {
             name: monster.name,
+            // The cache has no NPC examine text (OSRS sends it from the server),
+            // so the dump is the only source for it.
+            examine: typeof monster.examine === "string" ? monster.examine : undefined,
             hitpoints: monster.hitpoints,
             attackLevel: monster.attack_level,
             strengthLevel: monster.strength_level,
@@ -216,6 +220,8 @@ export class NpcDefinitionLoader extends DefinitionLoader {
                 }
                 Object.assign(definition, {
                     stats: levels,
+                    // getExamine() falls back to a generic line, so keep the raw field here.
+                    examine: stat.examine ?? definition.examine,
                     hitpoints: stat.hitpoints ?? definition.getHitpoints(),
                     attackSpeed: stat.attackSpeed ?? definition.getAttackSpeed(),
                     maxHit: stat.maxHit ?? definition.getMaxHit(),

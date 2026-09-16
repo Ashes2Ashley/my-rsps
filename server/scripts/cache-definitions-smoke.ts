@@ -75,6 +75,14 @@ async function main() {
     }
     RegionManager.init();
     assert.equal(ObjectDefinition.forId(2213)?.getName(), CacheDefinitions.getObject(2213).name);
+    // Examine text: the cache only carries it for items, so NPCs come from the
+    // monster dump and locs fall back to a generic line instead of the bare name.
+    assert.equal(NpcDefinition.forId(1).getExamine(), "A strange mole-like being.");
+    assert.equal(NpcDefinition.forId(100).getExamine(), "No one likes crabs...");
+    assert.equal(NpcDefinition.forId(0).getExamine(), "It's a Tool Leprechaun.");
+    assert.equal(ObjectDefinition.forId(1276)?.getExamine(), "It's a Tree.");
+    assert.equal(ObjectDefinition.forId(409)?.getExamine(), "It's an Altar.");
+    assert.equal(ObjectDefinition.forId(1530)?.getExamine(), "It's nothing special.");
     RegionManager.loadMapFiles(3200, 3200);
     assert(RegionManager.getRegionid(12850)?.isLoaded(), "expected Lumbridge clipping to load");
     const analysis = require("../plugins/world/RegionBuildingAnalysisUtil.js");
