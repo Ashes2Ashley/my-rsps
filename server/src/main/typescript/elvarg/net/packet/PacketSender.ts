@@ -664,7 +664,12 @@ export class PacketSender {
 
   closeInterruptibleInterfaces(): this {
     const interfaceId = this.resetInterfaceState();
-    if (this.closeTrackedInterfaces()) return this;
+    if (this.closeTrackedInterfaces()) {
+      if (interfaceId === 300 || interfaceId === 334 || interfaceId === 335) {
+        this.sendSubInterface((161 << 16) | 79, MAIN_INVENTORY_GROUP_ID, 1);
+      }
+      return this;
+    }
     if (interfaceId >= 0) this.player.getSession().sendClientPacket(encodeWidgetClose(interfaceId));
     return this;
   }
