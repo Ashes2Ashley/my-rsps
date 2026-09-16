@@ -51,14 +51,19 @@ class KingBlackDragonCombatMethod extends CombatMethod {
         default:
           break;
       }
-      Projectile.createProjectile(character, target, projectileId, 40, 55, 31, 43).sendProjectile();
+      // Leaves the head (43) for the target's chest (31), not the ground for their scalp.
+      Projectile.createProjectile(
+        character,
+        target,
+        projectileId,
+        40,
+        Projectile.arrivalCycles(character, target),
+        43,
+        31
+      ).sendProjectile();
     } else if (this.currentAttackType === CombatType.MELEE) {
       character.performAnimation(new Animation(91));
     }
-  }
-
-  attackSpeed() {
-    return this.currentAttackType === CombatType.MAGIC ? 6 : 4;
   }
 
   attackDistance() {
@@ -70,7 +75,10 @@ class KingBlackDragonCombatMethod extends CombatMethod {
   }
 
   hits(character, target) {
-    const hit = new PendingHit(character, target, this, 1);
+    // The burn lands when the fire does, not before it.
+    const hitDelay =
+      this.currentAttackType === CombatType.MAGIC ? Projectile.arrivalTicks(character, target) : 1;
+    const hit = new PendingHit(character, target, this, hitDelay);
     if (target.isPlayer()) {
       const player = target.getAsPlayer();
       if (this.currentAttackType === CombatType.MAGIC && this.currentBreath === Breath.DRAGON) {
@@ -112,7 +120,9 @@ class KingBlackDragonCombatMethod extends CombatMethod {
   }
 
   finished(character, target) {
-    if (character.getLocation().getDistance(target.getLocation()) <= 3) {
+    // Distance from the dragon's body, not its south-west corner: standing at its east
+    // side read as 5 tiles away, so it breathed on you point blank instead of biting.
+    if (character.calculateDistance(target) <= 1) {
       if (Misc.randomInclusive(0, 2) === 0) {
         this.currentAttackType = CombatType.MAGIC;
       } else {

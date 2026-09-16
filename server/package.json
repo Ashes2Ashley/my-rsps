@@ -48,6 +48,7 @@
     "test:pathfinding": "TS_NODE_COMPILER_OPTIONS='{\"target\":\"es2020\"}' ts-node ./scripts/pathfinding-smoke.ts",
     "test:combat-pathing": "TS_NODE_COMPILER_OPTIONS='{\"target\":\"es2020\"}' ts-node ./scripts/combat-pathing-smoke.ts",
     "test:route-core": "TS_NODE_COMPILER_OPTIONS='{\"target\":\"es2022\"}' ts-node ./scripts/rsmod-route-core-smoke.ts",
+    "test:projectile-origin": "TS_NODE_COMPILER_OPTIONS='{\"target\":\"es2020\"}' ts-node ./scripts/projectile-origin-smoke.ts",
     "test:weapon-profiles": "TS_NODE_COMPILER_OPTIONS='{\"target\":\"es2020\"}' ts-node ./scripts/weapon-profiles-smoke.ts",
     "test:npc-spawns": "TS_NODE_COMPILER_OPTIONS='{\"target\":\"es2020\"}' ts-node ./scripts/npc-spawns-smoke.ts",
     "test:object-spawns": "TS_NODE_COMPILER_OPTIONS='{\"target\":\"es2020\"}' ts-node ./scripts/object-spawns-smoke.ts",
