@@ -71,8 +71,18 @@ const item = (id = -1, amount = 0): any => ({
 });
 function container(size: number): any {
   const items = Array.from({ length: size }, () => item());
-  return {
+  const self: any = {
     getItems: () => items, capacity: () => size,
+    // Mirrors ItemContainer: clamp to what the slot holds, empty the slot when it runs out.
+    deleteAtSlot(slot: number, amount = 1) {
+      const held = items[slot];
+      if (slot >= 0 && slot < size && held?.isValid()) {
+        const left = held.getAmount() - Math.min(amount, held.getAmount());
+        items[slot] = left > 0 ? item(held.getId(), left) : item();
+      }
+      return self;
+    },
+    refreshItems: () => self,
     getValidItems: () => items.filter(i => i.isValid()),
     getFreeSlots: () => items.filter(i => !i.isValid()).length,
     getAmount: (id: number) => items.filter(i => i.getId() === id).reduce((n, i) => n + i.getAmount(), 0),
@@ -83,6 +93,7 @@ function container(size: number): any {
       to.getItems()[dest] = items[from]; items[from] = item();
     },
   };
+  return self;
 }
 function player(name: string, bot = false): any {
   let interfaceId = -1, status = PlayerStatus.NONE, hp = 99;
@@ -175,14 +186,18 @@ assert.ok(b.packets.some((p: any[]) => p[1] === "You won the duel!"));
 
 const duelist = player("Duelist"), duelBot = player("DuelBot", true);
 option(duelist, duelBot);
-assert.ok(duelist.packets.some((p: any[]) => p[0] === "sendString"
-  && p[1] === "DuelBot has accepted." && p[2] === ((755 << 16) | 83)),
-  "acceptance belongs above the buttons, not in the overlapping bottom widget");
+// The staking interface took over the bottom widget, so duel status reaches the player as
+// chat rather than as text written into the duel screen.
+assert.ok(duelist.packets.some((p: any[]) => p[0] === "sendMessage"
+  && p[1] === "DuelBot has accepted."), "the opponent's acceptance is reported to the player");
 const beforeRuleChange = duelist.packets.length;
 assert.equal(duelBot.getDueling().getState(), DuelState.ACCEPTED_DUEL_SCREEN);
 click(duelist, 755, 30);
-assert.ok(duelist.packets.slice(beforeRuleChange).some((p: any[]) => p[0] === "sendString"
-  && p[1] === "" && p[2] === ((755 << 16) | 83)), "rule changes clear the previous acceptance");
+// Acceptance is varbits 14027 and 14030, both bits of varp 3465, so zeroing the varp clears
+// it. With staking off the cache interface renders itself from that and the rule mask in
+// varp 286; only the custom staking UI has its widgets written by hand.
+assert.ok(duelist.packets.slice(beforeRuleChange).some((p: any[]) => p[0] === "sendConfig"
+  && p[1] === 3465 && p[2] === 0), "rule changes clear the previous acceptance");
 assert.equal(duelBot.getDueling().getState(), DuelState.ACCEPTED_DUEL_SCREEN, "bot must re-accept player rule changes");
 click(duelist, 755, 86);
 assert.equal(duelist.getInterfaceId(), 756);
