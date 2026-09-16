@@ -68,7 +68,7 @@ export class TeleportHandler {
         if (wildernessWarning) {
             let warning = "";
             const wilderness = Wilderness.isInLocation(targetLocation);
-            const wildernessLevel = Wilderness.levelForY(targetLocation.getY());
+            const wildernessLevel = Wilderness.levelAt(targetLocation.getX(), targetLocation.getY());
             if (wilderness) {
                 warning += "Are you sure you want to teleport there? ";
                 if (wildernessLevel > 0) {

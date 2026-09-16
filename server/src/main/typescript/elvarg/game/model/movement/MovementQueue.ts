@@ -658,7 +658,7 @@ export class MovementQueue {
         const inWilderness = Wilderness.isInLocation(location);
 
         if (inWilderness) {
-            const wildernessLevel = Wilderness.levelForY(location.getY());
+            const wildernessLevel = Wilderness.levelAt(location.getX(), location.getY());
             const multiIcon = Wilderness.isMulti(location.getX(), location.getY()) ? 1 : 0;
             player.setWildernessLevel(wildernessLevel);
             player.setMultiIcon(multiIcon);

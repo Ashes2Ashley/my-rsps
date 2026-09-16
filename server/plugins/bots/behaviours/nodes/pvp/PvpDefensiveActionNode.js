@@ -86,7 +86,7 @@ class PvpDefensiveActionNode {
 
     const location = player.getLocation();
     const level = !hasGlobalWorldTag("pvp") && Wilderness.isIn(player)
-      ? Wilderness.levelForY(location.getY()) : 0;
+      ? Wilderness.levelAt(location.getX(), location.getY()) : 0;
     const teleblocked = !combat.getTeleblockTimer().finished();
     if (level < RETREAT_TELEPORT_LEVEL && !teleblocked) {
       if (!retreat.destination) {
