@@ -635,13 +635,13 @@ class ClientConnection {
         case "examine_npc":
           if (this.player) {
             const definition = NpcDefinition.forId(packet.id);
-            this.player.getPacketSender().sendMessage(definition.getExamine() || definition.getName());
+            this.player.getPacketSender().sendMessage(definition.getExamine());
           }
           continue;
         case "examine_object":
           if (this.player) {
             const definition = ObjectDefinition.forId(packet.id);
-            this.player.getPacketSender().sendMessage(definition?.description || definition?.getName() || "It's an object.");
+            this.player.getPacketSender().sendMessage(definition?.getExamine() ?? "It's nothing special.");
           }
           continue;
         case "appearance":

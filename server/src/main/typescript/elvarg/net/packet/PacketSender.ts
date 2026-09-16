@@ -664,7 +664,12 @@ export class PacketSender {
 
   closeInterruptibleInterfaces(): this {
     const interfaceId = this.resetInterfaceState();
-    if (this.closeTrackedInterfaces()) return this;
+    if (this.closeTrackedInterfaces()) {
+      if (interfaceId === 300 || interfaceId === 334 || interfaceId === 335) {
+        this.sendSubInterface((161 << 16) | 79, MAIN_INVENTORY_GROUP_ID, 1);
+      }
+      return this;
+    }
     if (interfaceId >= 0) this.player.getSession().sendClientPacket(encodeWidgetClose(interfaceId));
     return this;
   }
@@ -1039,6 +1044,10 @@ export class PacketSender {
     type = 1,
     options: Parameters<typeof encodeWidgetOpenSub>[3] = {}
   ): this {
+    const existing = this.subInterfaceTargets.get(groupId);
+    if (existing && existing.targetUid !== targetUid) {
+      this.player.getSession().sendClientPacket(encodeWidgetCloseSub(existing.targetUid));
+    }
     for (const [mountedGroupId, mounted] of this.subInterfaceTargets) {
       if (mounted.targetUid === targetUid && mountedGroupId !== groupId) {
         this.subInterfaceTargets.delete(mountedGroupId);

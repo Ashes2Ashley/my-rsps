@@ -1,5 +1,6 @@
 import { CacheDefinitions } from "../cache/CacheDefinitions";
 import { CombatType } from "../content/combat/CombatType";
+import { Misc } from "../../util/Misc";
 
 export class NpcDefinition {
     static definitions: Map<number, NpcDefinition> = new Map<number, NpcDefinition>();
@@ -93,8 +94,16 @@ export class NpcDefinition {
         return this.name;
     }
     
+    /**
+     * OSRS keeps NPC examine text server-side, so the cache carries none of it -
+     * the real text comes from monsters-complete.json via NpcDefinitionLoader.
+     * Everything the dump does not cover gets a generic line rather than the
+     * bare name the examine packet used to echo back.
+     */
     public getExamine(): string {
-        return this.examine;
+        if (this.examine) return this.examine;
+        if (!this.name || this.name === "null") return "It's nothing special.";
+        return `It's ${Misc.anOrA(this.name)} ${this.name}.`;
     }
     
     public getSize(): number {

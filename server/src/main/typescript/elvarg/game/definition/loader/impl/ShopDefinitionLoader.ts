@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import { GameConstants } from "../../../GameConstants";
+import { CacheDefinitions } from "../../../cache/CacheDefinitions";
 import {
     ShopDefinition,
     ShopStockDefinition,
@@ -20,6 +21,8 @@ interface RawShopDefinition {
     name?: unknown;
     currency?: unknown;
     originalStock?: unknown;
+    items?: unknown;
+    stockAmount?: unknown;
     defaultRestockTicks?: unknown;
     restockTicks?: unknown;
     defaultDestockTicks?: unknown;
@@ -31,8 +34,11 @@ export class ShopDefinitionLoader extends DefinitionLoader {
     public static readonly CORE_SOURCE = "core";
     public static readonly DEFAULT_STOCK_CHANGE_TICKS = 4;
     public static readonly GENERAL_STORE_SOLD_ITEM_DESTOCK_TICKS = 100;
+    private itemIdsByName?: Map<string, number>;
+    private unresolvedItemNames = new Set<string>();
 
     public load(): boolean {
+        this.unresolvedItemNames.clear();
         const contributed = this.loadSources<RawShopDefinition>(
             ShopDefinitionLoader.DEFINITION_TYPE
         );
@@ -71,7 +77,7 @@ export class ShopDefinitionLoader extends DefinitionLoader {
         console.info(
             `[shops] Loaded ${definitions.length} definitions from ` +
             `${sources.map((source) => source.name).join("+")} ` +
-            `(candidates=${candidates}, invalid=${invalid})`
+            `(candidates=${candidates}, invalid=${invalid}, unresolvedStock=${this.unresolvedItemNames.size})`
         );
         return contributed.failures === 0;
     }
@@ -81,11 +87,16 @@ export class ShopDefinitionLoader extends DefinitionLoader {
     }
 
     private readCoreDefinitions(): RawShopDefinition[] {
-        const parsed: unknown = JSON.parse(fs.readFileSync(this.file(), "utf8"));
-        if (!Array.isArray(parsed)) {
-            throw new Error("shops.json must contain an array");
+        const files = [this.file(), GameConstants.DEFINITIONS_DIRECTORY + "CustomShops.json"];
+        const definitions: RawShopDefinition[] = [];
+        for (const file of files) {
+            const parsed: unknown = JSON.parse(fs.readFileSync(file, "utf8"));
+            if (!Array.isArray(parsed)) {
+                throw new Error(`${file} must contain an array`);
+            }
+            definitions.push(...parsed as RawShopDefinition[]);
         }
-        return parsed as RawShopDefinition[];
+        return definitions;
     }
 
     private toDefinition(raw: RawShopDefinition, source: string): ShopDefinition | null {
@@ -126,6 +137,22 @@ export class ShopDefinitionLoader extends DefinitionLoader {
                 });
             }
         }
+        const stockAmount = this.normalizeAmount(raw.stockAmount ?? 1);
+        for (const item of this.items(raw.items)) {
+            const itemId = typeof item === "number" ? item : this.itemIdForName(item);
+            if (itemId === null || stockAmount <= 0) {
+                if (typeof item === "string") {
+                    this.unresolvedItemNames.add(item);
+                }
+                continue;
+            }
+            stock.push({
+                id: itemId,
+                amount: stockAmount,
+                restockTicks: null,
+                price: null,
+            });
+        }
 
         const name = typeof raw.name === "string" && raw.name.trim()
             ? raw.name.trim()
@@ -148,6 +175,40 @@ export class ShopDefinitionLoader extends DefinitionLoader {
     private normalizeAmount(value: unknown): number {
         const amount = Number(value);
         return Number.isFinite(amount) ? Math.max(0, Math.floor(amount)) : 0;
+    }
+
+    private items(value: unknown): Array<string | number> {
+        const items: Array<string | number> = [];
+        for (const item of Array.isArray(value) ? value : [value]) {
+            if (typeof item === "number" && Number.isInteger(item) && item > 0) {
+                items.push(item);
+            } else if (typeof item === "string") {
+                items.push(...item.split(",").map((name) => name.trim()).filter(Boolean));
+            }
+        }
+        return items;
+    }
+
+    private itemIdForName(name: string): number | null {
+        if (!this.itemIdsByName) {
+            this.itemIdsByName = new Map<string, number>();
+            const count = CacheDefinitions.getCounts().items;
+            for (let itemId = 0; itemId < count; itemId++) {
+                const itemName = CacheDefinitions.getItem(itemId).name;
+                if (itemName && !this.itemIdsByName.has(this.normalizeItemName(itemName))) {
+                    this.itemIdsByName.set(this.normalizeItemName(itemName), itemId);
+                }
+            }
+        }
+        return this.itemIdsByName.get(this.normalizeItemName(name)) ?? null;
+    }
+
+    private normalizeItemName(name: string): string {
+        return name
+            .toLowerCase()
+            .replace(/[’']/g, "")
+            .replace(/\b([a-z]+)s\b/g, "$1")
+            .replace(/[^a-z0-9+]+/g, "");
     }
 
     private parseTicks(value: unknown): number | null {

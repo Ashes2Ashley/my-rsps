@@ -1476,6 +1476,18 @@ module.exports = {
       return true;
     }, OWNER_RIGHTS);
 
+    api.registerCommand("shop", ({ player, parts }) => {
+      const shopId = parseIntArg(parts[1]);
+      if (shopId === null || shopId < 0) {
+        player.getPacketSender().sendMessage("Usage: ::shop [id]");
+        return true;
+      }
+      if (!ShopManager.open(player, shopId)) {
+        player.getPacketSender().sendMessage(`Shop ${shopId} does not exist.`);
+      }
+      return true;
+    }, OWNER_RIGHTS);
+
     api.registerCommand("reloadnpcspawns", ({ player }) => {
       try {
         const loader = new NpcSpawnDefinitionLoader();

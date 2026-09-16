@@ -27,7 +27,8 @@ export class PendingInterfaceUpdates {
         if (this.queues.size === 0) {
             return false;
         }
-        const uid = (payload as { uid?: unknown })?.uid;
+        const event = payload as { action?: unknown; uid?: unknown; targetUid?: unknown };
+        const uid = event.action === "open_sub" ? event.targetUid : event.uid;
         if (typeof uid !== "number") {
             return false;
         }
