@@ -138,10 +138,12 @@ export class ShopDefinitionLoader extends DefinitionLoader {
             }
         }
         const stockAmount = this.normalizeAmount(raw.stockAmount ?? 1);
-        for (const itemName of this.itemNames(raw.items)) {
-            const itemId = this.itemIdForName(itemName);
+        for (const item of this.items(raw.items)) {
+            const itemId = typeof item === "number" ? item : this.itemIdForName(item);
             if (itemId === null || stockAmount <= 0) {
-                this.unresolvedItemNames.add(itemName);
+                if (typeof item === "string") {
+                    this.unresolvedItemNames.add(item);
+                }
                 continue;
             }
             stock.push({
@@ -175,13 +177,16 @@ export class ShopDefinitionLoader extends DefinitionLoader {
         return Number.isFinite(amount) ? Math.max(0, Math.floor(amount)) : 0;
     }
 
-    private itemNames(value: unknown): string[] {
-        if (typeof value === "string") {
-            return value.split(",").map((name) => name.trim()).filter(Boolean);
+    private items(value: unknown): Array<string | number> {
+        const items: Array<string | number> = [];
+        for (const item of Array.isArray(value) ? value : [value]) {
+            if (typeof item === "number" && Number.isInteger(item) && item > 0) {
+                items.push(item);
+            } else if (typeof item === "string") {
+                items.push(...item.split(",").map((name) => name.trim()).filter(Boolean));
+            }
         }
-        return Array.isArray(value)
-            ? value.filter((name): name is string => typeof name === "string" && Boolean(name.trim()))
-            : [];
+        return items;
     }
 
     private itemIdForName(name: string): number | null {
