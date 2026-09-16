@@ -49,3 +49,46 @@ ctx.pushInt(4151);
 handlers.get(Opcodes.RESUME_OBJDIALOG)(ctx, 0, null);
 assert.deepEqual(selected, ["obj", 4151]);
 assert.equal(ctx.intStackSize, 0);
+
+// ::npcs reuses the same chatbox search: opened with NPC_SEARCH_TITLE, OC_FIND reads npc
+// names, OC_NAME labels those rows with them, and no item icon is drawn for an npc id.
+import { registerConfigOps } from "../rs/cs2/handlers/ConfigOps";
+import { isNpcSearchResult, setNpcSearch } from "../rs/cs2/npcSearch";
+
+registerConfigOps(handlers);
+const npcs = ["Goblin", "Goblin Guard", "Hill Giant"];
+const items = ["Goblin mail", "Bronze sword"];
+ctx.stringStack = [];
+ctx.stringStackSize = 0;
+ctx.pushString = (value: string) => { ctx.stringStack[ctx.stringStackSize++] = value; };
+ctx.popString = () => ctx.stringStack[--ctx.stringStackSize];
+ctx.npcTypeLoader = { getCount: () => npcs.length, load: (id: number) => ({ name: npcs[id] }) };
+ctx.objTypeLoader = { load: (id: number) => (items[id] ? { name: items[id] } : null) };
+
+const find = (query: string) => {
+    ctx.pushString(query);
+    ctx.pushInt(0);
+    handlers.get(Opcodes.OC_FIND)(ctx, 0, null);
+    return ctx.popInt();
+};
+const name = (id: number) => {
+    ctx.pushInt(id);
+    handlers.get(Opcodes.OC_NAME)(ctx, 0, null);
+    return ctx.popString();
+};
+
+setNpcSearch(false);
+assert.equal(find("goblin"), 1, "an item search only sees items");
+assert.equal(name(0), "Goblin mail");
+
+setNpcSearch(true);
+assert.equal(find("goblin"), 2, "an npc search sees every npc whose name matches");
+assert.deepEqual(ctx.itemSearchResults, [0, 1]);
+assert.equal(name(0), "Goblin", "result rows are labelled with the npc name");
+assert.ok(isNpcSearchResult(1), "rows of the open npc search draw no item icon");
+assert.ok(!isNpcSearchResult(2), "ids outside the results stay item lookups");
+
+setNpcSearch(false);
+assert.equal(name(0), "Goblin mail", "closing the npc search restores item names");
+
+console.log("npc search opcode tests passed");

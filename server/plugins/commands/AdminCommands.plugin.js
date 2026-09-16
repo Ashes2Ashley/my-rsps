@@ -327,6 +327,75 @@ function queueNpcSpawn(player, id, amount = 1, onSpawn = null, xOffset = 0, yOff
   return spawned;
 }
 
+// The cache's chatbox search (clientscript 750) searches names client side and resumes the
+// dialogue with the id that was picked - everything a spawner needs, without a server-drawn
+// interface. Opening it with NPC_SEARCH_TITLE switches the client's search over to npc names.
+const SEARCH_SCRIPT = 750;
+const ITEM_SEARCH_TITLE = "Item Search";
+const NPC_SEARCH_TITLE = "NPC Search";
+
+function openSpawnSearch(player, title, spawn) {
+  player.setEnteredSyntaxAction({
+    execute: (input) => {
+      const id = parseIntArg(input);
+      if (id !== null && id >= 0) {
+        spawn(id);
+      }
+      // Re-open so one search can spawn as much as you like; Escape closes it.
+      openSpawnSearch(player, title, spawn);
+    },
+  });
+  player.getPacketSender().sendInterfaceScript(SEARCH_SCRIPT, [title, 0, -1, 0]);
+}
+
+function spawnSearchedItem(player, amount, id) {
+  // Re-checked here: the pick arrives on a later tick, and this is a privileged action.
+  if (!adminOrAbove(player) || id >= CacheDefinitions.getCounts().items) {
+    return;
+  }
+  // Stacks are a signed 32-bit value; the container clamps and stops on a full inventory.
+  player.getInventory().adds(id, Math.min(amount, 2147483647));
+  player
+    .getPacketSender()
+    .sendMessage(`Spawned ${amount} x ${ItemDefinition.forId(id)?.getName?.() ?? "item"} (${id}).`);
+}
+
+function spawnSearchedNpc(player, amount, id) {
+  if (!ownerOrDev(player) || id >= CacheDefinitions.getCounts().npcs) {
+    return;
+  }
+  const spawned = queueNpcSpawn(player, id, amount);
+  player
+    .getPacketSender()
+    .sendMessage(`Spawned ${spawned} x ${NpcDefinition.forId(id)?.getName?.() ?? "npc"} (${id}).`);
+}
+
+function itemSearchCommand({ player, parts }) {
+  if (!requireRights(player, adminOrAbove)) {
+    return true;
+  }
+  const amount = parts.length > 1 ? parseIntArg(parts[1]) : 1;
+  if (amount === null || amount < 1) {
+    player.getPacketSender().sendMessage("Usage: ::items [amount]");
+    return true;
+  }
+  openSpawnSearch(player, ITEM_SEARCH_TITLE, (id) => spawnSearchedItem(player, amount, id));
+  return true;
+}
+
+function npcSearchCommand({ player, parts }) {
+  if (!requireRights(player, ownerOrDev)) {
+    return true;
+  }
+  const amount = parts.length > 1 ? parseIntArg(parts[1]) : 1;
+  if (amount === null || amount < 1) {
+    player.getPacketSender().sendMessage("Usage: ::npcs [amount]");
+    return true;
+  }
+  openSpawnSearch(player, NPC_SEARCH_TITLE, (id) => spawnSearchedNpc(player, amount, id));
+  return true;
+}
+
 function getNpcCachedAnimations(npc) {
   return [...new Set([
     npc?.idleSeqId,
@@ -864,6 +933,9 @@ module.exports = {
       player.setNpcTransformationId(id);
       return true;
     });
+
+    api.registerCommand("items", itemSearchCommand);
+    api.registerCommand("npcs", npcSearchCommand);
 
     api.registerCommand("npc", ({ player, parts }) => {
       if (!requireRights(player, ownerOrDev)) {
@@ -1770,6 +1842,9 @@ module.exports = {
     });
   },
   _test: {
+    openSpawnSearch,
+    itemSearchCommand,
+    npcSearchCommand,
     getNpcPossibleAnimations,
     getNpcCachedAnimations,
     getNpcIdsWithSamePossibleAnimations,

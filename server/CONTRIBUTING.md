@@ -146,7 +146,7 @@ and it becomes an addressable resource:
 The client fetches it the first time that group is opened, so opening one only needs the
 usual sub-interface packet. `widgets/custom/CustomInterfaceRuntime.ts` reads the behaviour
 half and owns focus, keystrokes, scrolling and slot binding; see
-`plugins/interface/ItemSpawner.plugin.js` for a worked example.
+`plugins/interface/Commands.plugin.js` for a worked example.
 
 Row data is a separate resource, registered with
 `api.registerContentEndpoint(name, handler)` and served at `/api/<name>`. Use it for
