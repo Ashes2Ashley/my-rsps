@@ -1,5 +1,6 @@
 import { CacheDefinitions } from "../cache/CacheDefinitions";
 import { ObjectIdentifiers } from "../../util/ObjectIdentifiers";
+import { Misc } from "../../util/Misc";
 
 export class ObjectDefinition extends ObjectIdentifiers {
     private static readonly definitions = new Map<number, ObjectDefinition>();
@@ -65,6 +66,19 @@ export class ObjectDefinition extends ObjectIdentifiers {
     }
 
     getName(): string { return this.name; }
+
+    /**
+     * OSRS sends loc examine text from the server, so the cache has none of it
+     * (`desc` only ever gets set on older caches). Without a dump to link up,
+     * unknown locs get a generic line instead of the bare name the examine
+     * packet used to echo back.
+     */
+    getExamine(): string {
+        if (this.description) return this.description;
+        if (!this.name || this.name === "null") return "It's nothing special.";
+        return `It's ${Misc.anOrA(this.name)} ${this.name}.`;
+    }
+
     getSizeX(): number { return this.sizeX; }
     getSizeY(): number { return this.sizeY; }
     hasActions(): boolean { return this.interactive; }

@@ -29,6 +29,7 @@ const COMMANDS = {
     "::redskull - Apply a red skull",
     "::yell [message] - Staff and donors only",
     "::presets - Open the presets interface",
+    "::shops - Browse custom shops",
   ],
   moderator: ["No moderator-only commands are currently registered."],
   admin: [
@@ -90,6 +91,7 @@ const COMMANDS = {
     "::flood [amount] - Start login flood",
     "::reloadpunishments - Reload punishments",
     "::reloadshops - Reload shops",
+    "::shop [id] - Open a shop for testing",
     "::reloaddrops - Reload NPC drops",
     "::reloadnpcspawns - Reload NPC spawns",
     "::reloadnpcdefs - Reload NPC definitions",

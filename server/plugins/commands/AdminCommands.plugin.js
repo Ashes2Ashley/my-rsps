@@ -1630,6 +1630,21 @@ module.exports = {
       return true;
     });
 
+    api.registerCommand("shop", ({ player, parts }) => {
+      if (!requireRights(player, ownerOrDev)) {
+        return true;
+      }
+      const shopId = parseIntArg(parts[1]);
+      if (shopId === null || shopId < 0) {
+        player.getPacketSender().sendMessage("Usage: ::shop [id]");
+        return true;
+      }
+      if (!ShopManager.open(player, shopId)) {
+        player.getPacketSender().sendMessage(`Shop ${shopId} does not exist.`);
+      }
+      return true;
+    });
+
     api.registerCommand("reloadnpcspawns", ({ player }) => {
       if (!requireRights(player, ownerOrDev)) {
         return true;

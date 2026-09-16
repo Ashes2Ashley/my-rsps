@@ -39,7 +39,7 @@ const equipmentModelRenderOrder = (slot: EquipmentSlot): number => {
 };
 
 const equipmentRenderLayer = (slot: EquipmentSlot): number => {
-    if (slot === EquipmentSlot.BODY) return 0;
+    if (slot === EquipmentSlot.BODY || slot === EquipmentSlot.LEGS) return 0;
     if (slot === EquipmentSlot.AMULET) return 4;
     return 7;
 };
