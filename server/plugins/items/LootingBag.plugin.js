@@ -154,7 +154,7 @@ function handleInterface(event) {
     return true;
   }
   const option = String(event.option ?? "").toLowerCase();
-  const amount = option.includes("all") ? Number.MAX_SAFE_INTEGER : option.includes("10") ? 10 : option.includes("5") ? 5 : 1;
+  const amount = option === "" || option.includes("all") ? Number.MAX_SAFE_INTEGER : option.includes("10") ? 10 : option.includes("5") ? 5 : 1;
   if (option.includes("withdraw") || event.action > 0) return withdraw(event.player, event.slot, amount);
   return false;
 }
