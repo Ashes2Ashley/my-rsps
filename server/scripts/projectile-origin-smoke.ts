@@ -19,16 +19,20 @@ assert.deepEqual(Projectile.centreOf(mobile(3200, 3200, 4)), new Location(3201, 
 // Nonsense sizes must not drag the origin off the mobile.
 assert.deepEqual(Projectile.centreOf(mobile(3200, 3200, 0)), new Location(3200, 3200, 0));
 
-// The King Black Dragon's breath has to cross the gap, not teleport across it: a flat
-// lifetime spent the same 0.3s on 8 tiles as on 1.
-const { breathLifetime } = require("../plugins/bosses/KingBlackDragon.plugin.js");
+// Projectiles have to cross the gap, not teleport across it: a flat lifetime spent the
+// same time on 8 tiles as on 1.
 const kbd = mobile(3000, 3000, 5);
-const at = (x: number, y: number) => ({ getLocation: () => new Location(x, y, 0) });
+const player = mobile(3010, 3002, 1);
 
-// Centre tile is (3002, 3002), so a player on the dragon's doorstep is 3 tiles out.
-assert.equal(breathLifetime(kbd, at(3005, 3002)), 70);
-// ...and one at the edge of its 8-tile range is 8 tiles from that centre.
-assert.equal(breathLifetime(kbd, at(3010, 3002)), 120);
-assert.ok(breathLifetime(kbd, at(3010, 3002)) > breathLifetime(kbd, at(3005, 3002)));
+// The KBD's centre tile is (3002, 3002), so the flight is measured from its body.
+assert.equal(Projectile.arrivalCycles(kbd, player), 40 + 8 * 10);
+assert.equal(Projectile.arrivalTicks(kbd, player), 4);
+
+// Closer target, shorter flight - the whole point of the change.
+assert.ok(Projectile.arrivalCycles(kbd, mobile(3005, 3002, 1)) < Projectile.arrivalCycles(kbd, player));
+
+// Vet'ion throws at bare tiles, so raw Locations have to work as endpoints too.
+assert.equal(Projectile.arrivalCycles(kbd, new Location(3010, 3002, 0)), 120);
+assert.equal(Projectile.arrivalCycles(new Location(3002, 3002, 0), new Location(3005, 3002, 0)), 70);
 
 console.info("projectile origin smoke passed");

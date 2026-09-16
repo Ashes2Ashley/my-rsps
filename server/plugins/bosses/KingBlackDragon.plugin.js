@@ -17,16 +17,6 @@ const KBD_LADDER_DOWN_OBJECT_ID = 18987;
 
 const KingBlackDragonLairLocation = new Location(2271, 4680, 0);
 
-/**
- * Client cycles (20ms) from firing the breath to it reaching the target, at the engine's
- * usual 10 per tile. A flat lifetime crossed the dragon's whole 8-tile range in the same
- * 0.3s it took to cross one tile, which is what made the breath look teleported.
- */
-function breathLifetime(character, target) {
-  const distance = Projectile.centreOf(character).getDistance(target.getLocation());
-  return 40 + distance * 10;
-}
-
 const Breath = {
   DRAGON: 0,
   ICE: 1,
@@ -67,17 +57,13 @@ class KingBlackDragonCombatMethod extends CombatMethod {
         target,
         projectileId,
         40,
-        breathLifetime(character, target),
+        Projectile.arrivalCycles(character, target),
         43,
         31
       ).sendProjectile();
     } else if (this.currentAttackType === CombatType.MELEE) {
       character.performAnimation(new Animation(91));
     }
-  }
-
-  attackSpeed() {
-    return this.currentAttackType === CombatType.MAGIC ? 6 : 4;
   }
 
   attackDistance() {
@@ -89,11 +75,9 @@ class KingBlackDragonCombatMethod extends CombatMethod {
   }
 
   hits(character, target) {
-    // 30 client cycles per game tick: the burn lands when the fire does, not before it.
+    // The burn lands when the fire does, not before it.
     const hitDelay =
-      this.currentAttackType === CombatType.MAGIC
-        ? Math.ceil(breathLifetime(character, target) / 30)
-        : 1;
+      this.currentAttackType === CombatType.MAGIC ? Projectile.arrivalTicks(character, target) : 1;
     const hit = new PendingHit(character, target, this, hitDelay);
     if (target.isPlayer()) {
       const player = target.getAsPlayer();
@@ -136,7 +120,9 @@ class KingBlackDragonCombatMethod extends CombatMethod {
   }
 
   finished(character, target) {
-    if (character.getLocation().getDistance(target.getLocation()) <= 3) {
+    // Distance from the dragon's body, not its south-west corner: standing at its east
+    // side read as 5 tiles away, so it breathed on you point blank instead of biting.
+    if (character.calculateDistance(target) <= 1) {
       if (Misc.randomInclusive(0, 2) === 0) {
         this.currentAttackType = CombatType.MAGIC;
       } else {
@@ -165,7 +151,6 @@ let CombatFactory;
 
 module.exports = {
   name: "KingBlackDragon",
-  breathLifetime,
   register(api) {
     PrayerHandler = api.getPrayerHandler();
     CombatFactory = api.getCombatFactory();
