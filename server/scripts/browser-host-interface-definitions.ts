@@ -1,7 +1,6 @@
 const { buildPresetsInterfaceDefinition } = require("../plugins/modes/pvp/presetsWidget");
 
 const plugins = [
-  "ItemSpawner",
   "Commands",
   "DestroyItem",
   "TeleportInterface",

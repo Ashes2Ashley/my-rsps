@@ -1,6 +1,7 @@
-import { sendWidgetAction } from "../../network/ServerConnection";
+import { sendResumeNameDialog, sendWidgetAction } from "../../network/ServerConnection";
 import type { WidgetActionClientPayload } from "../../network/ServerConnection";
 import { sendWidgetActionMessage } from "../../network/ServerConnection";
+import { spawnSearchPick } from "../../rs/cs2/spawnSearch";
 import type { Cs2Vm, ScriptEvent } from "../../rs/cs2/Cs2Vm";
 import { createScriptEvent } from "../../rs/cs2/Cs2Vm";
 import type { VarManager } from "../../rs/config/vartype/VarManager";
@@ -109,6 +110,17 @@ export class WidgetActionRouter {
                   : w?.uid & 0xffff;
 
         if (this.deps.getCustomInterfaces().handleWidgetClick(groupId | 0, childId | 0)) {
+            return;
+        }
+
+        // A spawn search row: the picked amount goes back with the id the row carries,
+        // instead of the cache script's plain "Select".
+        const spawnPick = spawnSearchPick(
+            w,
+            event.opIndex ?? inferWidgetOpId(w, event.option) ?? 1,
+        );
+        if (spawnPick !== null) {
+            sendResumeNameDialog(spawnPick);
             return;
         }
 

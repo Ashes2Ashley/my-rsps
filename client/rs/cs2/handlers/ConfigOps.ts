@@ -14,6 +14,7 @@ import {
     getRelicOrMasteryStructParam,
     getReplacedChallengeStructIds,
 } from "../../../common/gamemode/GamemodeContentStore";
+import { isNpcSearch, isNpcSearchResult, setNpcSearchResults } from "../spawnSearch";
 import { Opcodes } from "../Opcodes";
 import type { HandlerMap } from "./HandlerTypes";
 
@@ -21,7 +22,10 @@ export function registerConfigOps(handlers: HandlerMap): void {
     // === ObjType (Item) ===
     handlers.set(Opcodes.OC_NAME, (ctx) => {
         const itemId = ctx.intStack[--ctx.intStackSize];
-        const name = ctx.objTypeLoader?.load(itemId)?.name ?? "null";
+        // Rows of an npc search are npc ids; everything else stays an item lookup.
+        const name = isNpcSearchResult(itemId)
+            ? (ctx.npcTypeLoader?.load(itemId)?.name ?? "null")
+            : (ctx.objTypeLoader?.load(itemId)?.name ?? "null");
         ctx.pushString(name);
     });
 
@@ -107,7 +111,16 @@ export function registerConfigOps(handlers: HandlerMap): void {
         ctx.itemSearchResults = [];
         ctx.itemSearchIndex = 0;
 
-        if (query.length > 0 && ctx.objTypeLoader) {
+        if (query.length > 0 && isNpcSearch() && ctx.npcTypeLoader) {
+            const count = ctx.npcTypeLoader.getCount();
+            for (let id = 0; id < count; id++) {
+                const npc = ctx.npcTypeLoader.load(id);
+                if (npc?.name && npc.name !== "null" && npc.name.toLowerCase().includes(query)) {
+                    ctx.itemSearchResults.push(id);
+                }
+            }
+            setNpcSearchResults(ctx.itemSearchResults);
+        } else if (query.length > 0 && ctx.objTypeLoader) {
             // Search through all items for matching names
             // Note: This searches items 0-65535 which covers all standard items
             const maxItemId = 65535;
@@ -136,6 +149,7 @@ export function registerConfigOps(handlers: HandlerMap): void {
         // Reset search state
         ctx.itemSearchResults = [];
         ctx.itemSearchIndex = 0;
+        setNpcSearchResults([]);
     });
 
     handlers.set(Opcodes.OC_SHIFTCLICKIOP, (ctx) => {

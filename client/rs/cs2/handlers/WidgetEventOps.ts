@@ -1,6 +1,7 @@
 /**
  * Widget event handler operations: CC_SETON* and IF_SETON*
  */
+import { applySpawnSearchOps } from "../spawnSearch";
 import { Opcodes } from "../Opcodes";
 import type { HandlerMap } from "./HandlerTypes";
 
@@ -54,7 +55,10 @@ export function registerWidgetEventOps(handlers: HandlerMap): void {
     });
 
     handlers.set(Opcodes.CC_SETONOP, (ctx, intOp) => {
-        ctx.setEventHandler(getTargetWidget(ctx, intOp), "onOp");
+        const widget = getTargetWidget(ctx, intOp);
+        ctx.setEventHandler(widget, "onOp");
+        // A spawn search swaps the row's "Select" for the spawn amounts; no-op otherwise.
+        applySpawnSearchOps(widget);
     });
 
     handlers.set(Opcodes.CC_SETONDRAGCOMPLETE, (ctx, intOp) => {

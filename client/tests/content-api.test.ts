@@ -26,8 +26,8 @@ const contentApiTest = (async () => {
             return path.startsWith("/api/interfaces/") ? { groupId: 30002, widgets: [] } : { rows: [{ id: 4151, name: "Abyssal whip" }] };
         } } as any;
         assert.equal((await fetchInterfaceDefinition(30002)).groupId, 30002);
-        assert.equal((await fetchContent("/api/items?q=whip")).rows[0].id, 4151);
-        assert.deepEqual(requested.slice(1), ["/api/interfaces/30002", "/api/items?q=whip"]);
+        assert.equal((await fetchContent("/api/world/shops")).rows[0].id, 4151);
+        assert.deepEqual(requested.slice(1), ["/api/interfaces/30002", "/api/world/shops"]);
         assert.match(requested[0], /^\/browser-host\/interfaces\/30003\.json\?v=\d+$/);
     } finally {
         globalThis.fetch = originalFetch;
