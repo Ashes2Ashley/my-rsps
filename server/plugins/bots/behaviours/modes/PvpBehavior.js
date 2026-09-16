@@ -634,8 +634,9 @@ class PvpBehavior {
       return Math.floor(resolved);
     }
     const location = player.getLocation?.();
+    const x = Number(location?.getX?.() ?? Number.NaN);
     const y = Number(location?.getY?.() ?? Number.NaN);
-    return Number.isFinite(y) ? Wilderness.levelForY(y) : 0;
+    return Number.isFinite(x) && Number.isFinite(y) ? Wilderness.levelAt(x, y) : 0;
   }
 
   isHighWildernessAggressionActive(player) {

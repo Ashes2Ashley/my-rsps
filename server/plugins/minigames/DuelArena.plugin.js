@@ -23,8 +23,6 @@ const CACHE_OPTIONS = 755;
 const CACHE_ACCEPT = 86;
 const CACHE_DECLINE = 87;
 const COINS = 995;
-const PVP_ICONS_TARGET_UID = (161 << 16) | 3;
-const PVP_ICONS_INTERFACE = 90;
 const PVP_LAYOUT_SCRIPT = 386;
 const VARBIT_PVPA_BATTLEAREA_STATUS = 14017;
 const VARBIT_PVPA_TRANSMIT_CHALLENGE_OR_BATTLEAREA = 14022;
@@ -76,6 +74,7 @@ const sessions = new Map();
 const requests = new WeakMap();
 const requestDelay = new WeakMap();
 const menuState = new WeakMap();
+const presets = new WeakMap();
 const lastRules = new WeakMap();
 const pendingSafeDeaths = new WeakSet();
 const duelIconVisible = new WeakMap();
@@ -282,9 +281,11 @@ function syncDuelIcon(player) {
   if (duelIconVisible.get(player) === visible) return;
   const sender = player.getPacketSender();
   if (visible) {
+    // pvp_icons is mounted for the whole session by the Wilderness plugin, which also owns
+    // the block's visibility. Re-mounting it here reset every widget in the group to its
+    // cache defaults behind that plugin's back, stranding a crossed skull and a level row.
     sender.sendVarbit(VARBIT_PVPA_BATTLEAREA_STATUS, 0)
       .sendVarbit(VARBIT_PVPA_TRANSMIT_CHALLENGE_OR_BATTLEAREA, 1)
-      .sendSubInterface(PVP_ICONS_TARGET_UID, PVP_ICONS_INTERFACE, 1)
       .sendClientScript(PVP_LAYOUT_SCRIPT);
   } else {
     sender.sendVarbit(VARBIT_PVPA_TRANSMIT_CHALLENGE_OR_BATTLEAREA, 0)
@@ -545,7 +546,7 @@ function showConfirm(session) {
 function confirmText(player, other, status = "") {
   // Cache script 6193 builds and sizes the scrollable summary in component 53.
   player.getPacketSender().sendInterfaceScript(6193, [
-    sessions.get(player).mask, -1, lastRules.get(player) ?? -1,
+    sessions.get(player).mask, presets.get(player) ?? -1, lastRules.get(player) ?? -1,
     `${other.getUsername()}<br>Your stake: ${stakeText(player)}<br>Opponent stake: ${stakeText(other)}${status ? `<br>${status}` : ""}<br>Hitpoints and boosted stats will be restored.`,
   ]);
 }
@@ -646,6 +647,21 @@ function handleInterface(event) {
   const rule = (stakingEnabled ? OPTION_RULE_BUTTONS : CACHE_RULE_BUTTONS).get(child);
   if (rule) {
     setRules(session, session.mask ^ rule.getConfigId());
+    return;
+  }
+  // The cache screen's preset row: store the current rules, recall them, recall the last
+  // duel's, and the two bulk presets. Only that screen has these components - showOptions
+  // flags them clickable - so the staking UI never reaches them.
+  if (group !== CACHE_OPTIONS) return;
+  if (child === 89) {
+    presets.set(player, session.mask);
+  } else if (child === 90 || child === 92) {
+    setRules(session, (child === 90 ? presets : lastRules).get(player) ?? 0);
+  } else if (child === 94 || child === 96) {
+    const rules = [DuelRule.NO_RANGED, DuelRule.NO_MAGIC, DuelRule.NO_SPECIAL_ATTACKS, DuelRule.NO_PRAYER, DuelRule.NO_POTIONS, DuelRule.NO_FOOD];
+    rules.push(...EQUIPMENT_RULES.filter(rule => child === 96 || rule !== DuelRule.NO_WEAPON));
+    if (child === 94) rules.push(DuelRule.LOCK_WEAPON);
+    setRules(session, rules.reduce((mask, rule) => mask | rule.getConfigId(), 0));
   }
 }
 function handleOption(event) {

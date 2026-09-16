@@ -6,7 +6,7 @@ import { Opcodes } from "../rs/cs2/Opcodes";
 import { Script } from "../rs/cs2/Script";
 
 const range: any = { uid: (90 << 16) | 49, hidden: true, rawY: 18, color: 0xff981f };
-const level: any = { uid: (90 << 16) | 50, hidden: false, rawY: 16, color: 0xffff00 };
+const level: any = { uid: (90 << 16) | 50, hidden: false, rawY: 16, color: 0xffff00, text: "Level: 12" };
 const widgets = new Map([[range.uid, range], [level.uid, level]]);
 const invalidated: number[] = [];
 const widgetManager: any = {
@@ -17,7 +17,7 @@ const widgetManager: any = {
 };
 const varManager: any = { getVarbit: (id: number) => id === 5963 ? 1 : 0 };
 
-assert.equal(applyWildernessHudLayout(widgetManager, varManager, 388), false);
+assert.equal(applyWildernessHudLayout(widgetManager, varManager, 387), false);
 assert.equal(applyWildernessHudLayout(widgetManager, varManager, 386), true);
 assert.deepEqual(
     { hidden: range.hidden, rawY: range.rawY, color: range.color, textColor: range.textColor },
@@ -28,6 +28,19 @@ assert.deepEqual(
     { hidden: false, rawY: 16, color: 0xffff00, textColor: 0xffff00 },
 );
 assert.deepEqual(invalidated, [range.uid, level.uid]);
+
+// A PvP zone outside the levelled Wilderness, or a world that is PvP everywhere: the server
+// hides the level row, and the range it would pair with applies to nobody, so it goes too.
+for (const unlevelled of [{ hidden: true }, { text: "" }] as any[]) {
+    Object.assign(level, unlevelled);
+    range.hidden = false;
+    invalidated.length = 0;
+    assert.equal(applyWildernessHudLayout(widgetManager, varManager, 388), false);
+    assert.equal(range.hidden, true, "no level means no combat range row");
+    assert.equal(level.hidden, unlevelled.hidden === true, "the level row stays the server's");
+    assert.deepEqual(invalidated, [range.uid]);
+    Object.assign(level, { hidden: false, text: "Level: 12" });
+}
 
 function script(id: number, instructions: number[], operands: number[]): Script {
     const value = new Script();
