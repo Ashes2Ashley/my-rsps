@@ -14,7 +14,7 @@ import {
     getRelicOrMasteryStructParam,
     getReplacedChallengeStructIds,
 } from "../../../common/gamemode/GamemodeContentStore";
-import { isNpcSearch, isNpcSearchResult, setNpcSearchResults } from "../npcSearch";
+import { isNpcSearch, isNpcSearchResult, setNpcSearchResults } from "../spawnSearch";
 import { Opcodes } from "../Opcodes";
 import type { HandlerMap } from "./HandlerTypes";
 

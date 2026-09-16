@@ -50,10 +50,19 @@ handlers.get(Opcodes.RESUME_OBJDIALOG)(ctx, 0, null);
 assert.deepEqual(selected, ["obj", 4151]);
 assert.equal(ctx.intStackSize, 0);
 
-// ::npcs reuses the same chatbox search: opened with NPC_SEARCH_TITLE, OC_FIND reads npc
-// names, OC_NAME labels those rows with them, and no item icon is drawn for an npc id.
+// ::items / ::npcs reuse the same chatbox search: opened with a spawn title, OC_FIND reads
+// npc names, OC_NAME labels those rows with them, no item icon is drawn for an npc id, and
+// each row carries the spawn amounts instead of a plain "Select".
 import { registerConfigOps } from "../rs/cs2/handlers/ConfigOps";
-import { isNpcSearchResult, setNpcSearch } from "../rs/cs2/npcSearch";
+import {
+    ITEM_SEARCH_TITLE,
+    NPC_SEARCH_TITLE,
+    SPAWN_OPS,
+    applySpawnSearchOps,
+    isNpcSearchResult,
+    setSpawnSearch,
+    spawnSearchPick,
+} from "../rs/cs2/spawnSearch";
 
 registerConfigOps(handlers);
 const npcs = ["Goblin", "Goblin Guard", "Hill Giant"];
@@ -77,18 +86,37 @@ const name = (id: number) => {
     return ctx.popString();
 };
 
-setNpcSearch(false);
-assert.equal(find("goblin"), 1, "an item search only sees items");
+setSpawnSearch("Grand Exchange Item Search");
+assert.equal(find("goblin"), 1, "the Grand Exchange search only sees items");
 assert.equal(name(0), "Goblin mail");
 
-setNpcSearch(true);
+setSpawnSearch(NPC_SEARCH_TITLE);
 assert.equal(find("goblin"), 2, "an npc search sees every npc whose name matches");
 assert.deepEqual(ctx.itemSearchResults, [0, 1]);
 assert.equal(name(0), "Goblin", "result rows are labelled with the npc name");
 assert.ok(isNpcSearchResult(1), "rows of the open npc search draw no item icon");
 assert.ok(!isNpcSearchResult(2), "ids outside the results stay item lookups");
 
-setNpcSearch(false);
-assert.equal(name(0), "Goblin mail", "closing the npc search restores item names");
+setSpawnSearch(ITEM_SEARCH_TITLE);
+assert.equal(find("goblin"), 1, "an item spawn search still searches items");
+assert.equal(name(0), "Goblin mail", "item rows keep their item names");
 
-console.log("npc search opcode tests passed");
+// Rows are the widgets the search's select script (754) is bound to.
+const row: any = { onOp: [754, 4151, 84], actions: ["Select"] };
+const chatLine: any = { onOp: [123, 1], actions: ["Continue"] };
+applySpawnSearchOps(row);
+applySpawnSearchOps(chatLine);
+assert.deepEqual(row.actions, SPAWN_OPS, "a result row offers the spawn amounts");
+assert.deepEqual(chatLine.actions, ["Continue"], "other chatbox widgets are left alone");
+assert.equal(spawnSearchPick(row, 2), "4151 2", "the pick carries the id and the op");
+assert.equal(spawnSearchPick(row, 5), null, "ops outside the spawn amounts are not ours");
+assert.equal(spawnSearchPick(chatLine, 1), null, "clicks outside the results are not ours");
+
+setSpawnSearch(null);
+assert.equal(name(0), "Goblin mail", "closing the search restores item names");
+assert.equal(spawnSearchPick(row, 1), null, "a closed search claims no clicks");
+const geRow: any = { onOp: [754, 4151, 84], actions: ["Select"] };
+applySpawnSearchOps(geRow);
+assert.deepEqual(geRow.actions, ["Select"], "the Grand Exchange search keeps Select");
+
+console.log("spawn search opcode tests passed");

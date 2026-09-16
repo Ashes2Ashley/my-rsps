@@ -9,7 +9,7 @@ import { markWidgetInteractionDirty } from "../../../widgets/WidgetInteraction";
 import type { WidgetNode } from "../../../widgets/WidgetManager";
 import { getViewportSize } from "../../../common/utils/DeviceUtil";
 import { Cs2ArrayObject } from "../Cs2ArrayObject";
-import { isNpcSearchResult } from "../npcSearch";
+import { isNpcSearchResult } from "../spawnSearch";
 import { Opcodes } from "../Opcodes";
 import type { HandlerContext, HandlerMap } from "./HandlerTypes";
 

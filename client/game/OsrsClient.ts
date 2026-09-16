@@ -162,7 +162,7 @@ import { SpotAnimTypeLoader } from "../rs/config/spotanimtype/SpotAnimTypeLoader
 import { VarManager } from "../rs/config/vartype/VarManager";
 import { chatHistory } from "../rs/cs2/ChatHistory";
 import { Cs2Vm, ScriptArgMagic, type ScriptEvent, createScriptEvent } from "../rs/cs2/Cs2Vm";
-import { NPC_SEARCH_TITLE, setNpcSearch } from "../rs/cs2/npcSearch";
+import { setSpawnSearch } from "../rs/cs2/spawnSearch";
 import { Opcodes as Cs2Opcodes } from "../rs/cs2/Opcodes";
 import { BitmapFont } from "../rs/font/BitmapFont";
 import { encodeInteractionIndex } from "../rs/interaction/InteractionIndex";
@@ -401,8 +401,9 @@ const VARC_CHATBOX_SELECTED_TAB = 41;
 const ACCOUNT_TYPE_MAIN = 0;
 const SCRIPT_HIGHLIGHT_SCREEN_COMPONENT = 2463;
 const SCRIPT_HIGHLIGHT_TEXTBOX_DEFAULT = 2465;
-// Chatbox item search. Its title tells us whether this search is over items or npcs.
+// Chatbox search: its title says whether this one is a spawn search, and 138 closes it.
 const SCRIPT_CHATBOX_SEARCH = 750;
+const SCRIPT_CHATBOX_SEARCH_CLOSE = 138;
 
 // Use shared OSRS rotation scale
 
@@ -2728,7 +2729,9 @@ export class OsrsClient {
                     }
                     console.log(`[OsrsClient] run_script: scriptId=${scriptId}, args=`, args);
                     if (scriptId === SCRIPT_CHATBOX_SEARCH) {
-                        setNpcSearch(args[0] === NPC_SEARCH_TITLE);
+                        setSpawnSearch(args[0]);
+                    } else if (scriptId === SCRIPT_CHATBOX_SEARCH_CLOSE) {
+                        setSpawnSearch(null);
                     }
                     // Apply varps/varbits BEFORE running the script so it can read them
                     if (this.varManager) {

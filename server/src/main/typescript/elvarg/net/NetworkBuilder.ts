@@ -410,10 +410,7 @@ class ClientConnection {
         case "dialogue_input": {
           const action = this.player?.getEnteredSyntaxAction();
           if (action) action.execute(packet.value);
-          // A handler that re-arms itself (a search that re-opens) keeps its action.
-          if (this.player?.getEnteredSyntaxAction() === action) {
-            this.player.setEnteredSyntaxAction(null);
-          }
+          this.player?.setEnteredSyntaxAction(null);
           continue;
         }
         case "widget_action":
