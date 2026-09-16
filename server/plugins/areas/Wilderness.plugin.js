@@ -6,14 +6,18 @@ const { GameObject } = require("../../src/main/typescript/elvarg/game/entity/imp
 const { MapObjects } = require("../../src/main/typescript/elvarg/game/entity/impl/object/MapObjects");
 
 const { Wilderness } = require("../../src/main/typescript/elvarg/game/content/wilderness/Wilderness");
-const { hasGlobalWorldTag } = require("../../src/main/typescript/elvarg/game/definition/WorldDefinition");
+const {
+  hasGlobalWorldTag,
+  WORLD_ZONE_BOUNDARIES,
+} = require("../../src/main/typescript/elvarg/game/definition/WorldDefinition");
 const { Obelisks } = require("../../src/main/typescript/elvarg/game/content/Obelisks");
 const { PlayerRights } = require("../../src/main/typescript/elvarg/game/model/rights/PlayerRights");
 const { Location } = require("../../src/main/typescript/elvarg/game/model/Location");
 const { isSafeLocation: isFeroxSafeLocation } = require("../items/LootKeys.plugin");
 
 function isSafeLocation(location) {
-  return Wilderness.isInSafeBuilding(location) || isFeroxSafeLocation(location);
+  return Wilderness.isInSafeBuilding(location) || isFeroxSafeLocation(location)
+    || (!!location && WORLD_ZONE_BOUNDARIES.safe.some((boundary) => boundary.inside(location)));
 }
 
 // ---------------------------------------------------------------------------
@@ -98,11 +102,13 @@ function wildernessLevelOf(player) {
   if (cached && cached.x === x && cached.y === y) {
     return cached.level;
   }
-  const level = Wilderness.isInLocation(location)
-    ? Math.max(0, Wilderness.levelForY(y))
-    : 0;
+  const level = Wilderness.isInLocation(location) ? Wilderness.levelAt(x, y) : 0;
   derivedLevels.set(player, { x, y, level });
   return level;
+}
+
+function levelForTile(tile) {
+  return tile ? Wilderness.levelAt(tile.x, tile.y) : 0;
 }
 
 function isWildernessLocation(location) {
@@ -212,6 +218,7 @@ const lastIconsVisible = new WeakMap();
 const lastWildernessState = new WeakMap();
 const lastPvpLayoutState = new WeakMap();
 const lastSafeBadgeVisible = new WeakMap();
+const lastLevelRowVisible = new WeakMap();
 
 function mountPvpIcons(player) {
   if (!player || player?.isPlayerBot?.() === true) {
@@ -227,29 +234,53 @@ function mountPvpIcons(player) {
   // A fresh mount resets the group's widgets to their cache defaults.
   lastIconsVisible.delete(player);
   lastSafeBadgeVisible.delete(player);
-  syncPvpIcons(player, isSafeLocation(player.getLocation?.()));
-  syncSafeBadge(player, isSafeLocation(player.getLocation?.()));
+  lastLevelRowVisible.delete(player);
+  syncOverlay(player, player.getLocation?.());
 
   const tile = readPlayerTile(player);
-  if (tile && isWildernessLocation(tile.location)) {
+  if (tile && Wilderness.isPvpArea(tile.location)) {
     syncPvpLayout(player, tile, true);
   }
 }
 
-// Nothing outside the wilderness is wired up yet (skull timer, attack style, PvP worlds),
-// so the server keeps the whole block hidden unless the player has a wilderness level.
-// Driven off the level itself rather than an entry/exit edge: every tick reconverges, so a
-// teleport, a login or a missed transition can't strand the block on screen.
-function syncPvpIcons(player, inSafeZone = isSafeLocation(player?.getLocation?.())) {
+// The block belongs to PvP ground, not to the Wilderness: a PvP zone anywhere on the map
+// shows the skull, and its safe carve-outs show the same skull with the red cross. Driven
+// off the tile rather than an entry/exit edge: every tick reconverges, so a teleport, a
+// login or a missed transition can't strand the block on screen.
+function syncPvpIcons(player, location = player?.getLocation?.()) {
   if (!player || player?.isPlayerBot?.() === true) {
     return;
   }
-  const visible = inSafeZone || (player.getWildernessLevel?.() | 0) > 0;
+  const visible = Wilderness.isPvpArea(location);
   if (lastIconsVisible.get(player) === visible) {
     return;
   }
   lastIconsVisible.set(player, visible);
   player.getPacketSender().sendInterfaceDisplayState(PVP_ICONS_UID, !visible);
+}
+
+// The three overlay bits always move together, so they reconverge together: the block
+// follows PvP ground, the crossed skull follows safe ground, and the level row only exists
+// where a level does.
+function syncOverlay(player, location) {
+  if (!player || player?.isPlayerBot?.() === true) {
+    return;
+  }
+  const tile = Location.readTile(location);
+  syncPvpIcons(player, location);
+  syncSafeBadge(player, isSafeLocation(location));
+  syncLevelRow(player, levelForTile(tile) > 0);
+}
+
+// The level text is painted by cache script 388 from the client's own coordinates, so the
+// only way to keep it off an unlevelled tile is to own the row's visibility here. Nothing
+// in the cache sets this flag - script 386 only reads it, to place the row below.
+function syncLevelRow(player, levelled) {
+  if (lastLevelRowVisible.get(player) === levelled) {
+    return;
+  }
+  lastLevelRowVisible.set(player, levelled);
+  player.getPacketSender().sendInterfaceDisplayState(PVP_LEVEL_UID, !levelled);
 }
 
 function syncSafeBadge(player, inSafeZone) {
@@ -270,7 +301,7 @@ function syncWildernessState(player, inWilderness) {
 }
 
 function syncPvpLayout(player, tile, force = false) {
-  const wildernessLevel = Wilderness.levelForY(tile.y);
+  const wildernessLevel = levelForTile(tile);
   const combatLevel = combatLevelOf(player);
   const multiIcon = Wilderness.isMulti(tile.x, tile.y) ? 1 : 0;
   const state = `${wildernessLevel}:${combatLevel}:${multiIcon}`;
@@ -291,15 +322,16 @@ function refreshWildernessUi(player, tile, inWilderness) {
     return;
   }
 
-  const inSafeZone = isSafeLocation(tile.location);
-  syncPvpIcons(player, inSafeZone);
-  syncSafeBadge(player, inSafeZone);
+  syncOverlay(player, tile.location);
 
   if (inWilderness) {
+    // The varbit is the client's "you may attack players here" switch, so it follows the
+    // PvP ground rather than the level: only the original Wilderness is levelled, and
+    // elsewhere the level row stays empty and the level rules never bite.
+    const level = levelForTile(tile);
     syncWildernessState(player, true);
     player.getPacketSender().sendInteractionOption("Attack", 2, true);
 
-    const level = Wilderness.levelForY(tile.y);
     if (player.getWildernessLevel() !== level) {
       player.setWildernessLevel(level);
     }
@@ -339,9 +371,7 @@ function onPlayerProcess(state, player) {
   }
   const previous = state.tiles.get(player);
   if (Location.isSameTile(previous, tile) && typeof previous.inWilderness === "boolean") {
-    const inSafeZone = isSafeLocation(tile.location);
-    syncPvpIcons(player, inSafeZone);
-    syncSafeBadge(player, inSafeZone);
+    syncOverlay(player, tile.location);
     if (previous.inWilderness) {
       syncPvpLayout(player, tile);
     }
@@ -377,9 +407,7 @@ function enterWilderness(player, tile, wasInWilderness) {
 }
 
 function leaveWilderness(player, tile, wasInWilderness) {
-  const inSafeZone = isSafeLocation(tile.location);
-  syncPvpIcons(player, inSafeZone);
-  syncSafeBadge(player, inSafeZone);
+  syncOverlay(player, tile.location);
   if (wasInWilderness) {
     refreshWildernessUi(player, tile, false);
     return;
@@ -433,6 +461,7 @@ function onPlayerDisconnect(state, player) {
   lastWildernessState.delete(player);
   lastPvpLayoutState.delete(player);
   lastSafeBadgeVisible.delete(player);
+  lastLevelRowVisible.delete(player);
 }
 
 function onCanAttack(state, event) {
