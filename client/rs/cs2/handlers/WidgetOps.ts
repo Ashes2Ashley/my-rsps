@@ -2314,11 +2314,16 @@ export function registerWidgetOps(handlers: HandlerMap): void {
     // cc_setplayermodel_self(keepEquipment)
     //
     handlers.set(Opcodes.CC_SETPLAYERMODEL_SELF, (ctx, intOp) => {
-        const keepEquipment = ctx.intStack[--ctx.intStackSize] === 1;
+        const requestedEquipment = ctx.intStack[--ctx.intStackSize] === 1;
         const w = getTargetWidget(ctx, intOp);
         if (!w) {
             throw new Error("RuntimeException");
         }
+
+        // The Makeover Mage preview is always the player's base appearance.
+        // Its cache script reruns this opcode after each design change.
+        const keepEquipment =
+            requestedEquipment && ((w.groupId ?? ((w.uid >>> 16) & 0xffff)) | 0) !== 679;
 
         w.modelType = 7;
         w.modelId = -1;
