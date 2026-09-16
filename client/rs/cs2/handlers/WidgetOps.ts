@@ -9,7 +9,7 @@ import { markWidgetInteractionDirty } from "../../../widgets/WidgetInteraction";
 import type { WidgetNode } from "../../../widgets/WidgetManager";
 import { getViewportSize } from "../../../common/utils/DeviceUtil";
 import { Cs2ArrayObject } from "../Cs2ArrayObject";
-import { isNpcSearchResult } from "../spawnSearch";
+import { applyNpcRowIcon } from "../spawnSearch";
 import { Opcodes } from "../Opcodes";
 import type { HandlerContext, HandlerMap } from "./HandlerTypes";
 
@@ -475,11 +475,8 @@ function applySetObjectWidget(
 ): void {
     if (!w) return;
 
-    // An npc search reuses the item-search rows; there is no item icon to draw for an npc id.
-    if (isNpcSearchResult(itemId)) {
-        w.itemId = -1;
-        return;
-    }
+    // An npc search reuses the item-search rows: the row shows the npc, not item id `itemId`.
+    if (applyNpcRowIcon(w, itemId)) return;
 
     w.itemId = itemId;
     w.itemQuantity = amount;

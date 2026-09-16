@@ -58,6 +58,7 @@ import {
     ITEM_SEARCH_TITLE,
     NPC_SEARCH_TITLE,
     SPAWN_OPS,
+    applyNpcRowIcon,
     applySpawnSearchOps,
     isNpcSearchResult,
     setSpawnSearch,
@@ -112,7 +113,29 @@ assert.equal(spawnSearchPick(row, 2), "4151 2", "the pick carries the id and the
 assert.equal(spawnSearchPick(row, 5), null, "ops outside the spawn amounts are not ours");
 assert.equal(spawnSearchPick(chatLine, 1), null, "clicks outside the results are not ours");
 
+// npc rows show the npc itself; the renderer picks chathead or body model from the flags.
+setSpawnSearch(NPC_SEARCH_TITLE);
+find("goblin");
+const npcIcon: any = { type: 5, itemId: 7 };
+assert.ok(applyNpcRowIcon(npcIcon, 1), "an npc result row becomes a portrait");
+assert.deepEqual(
+    { type: npcIcon.type, modelType: npcIcon.modelType, npcTypeId: npcIcon.npcTypeId, itemId: npcIcon.itemId },
+    { type: 6, modelType: 2, npcTypeId: 1, itemId: -1 },
+    "the row is handed to the renderer as an npc model",
+);
+assert.ok(npcIcon.isNpcChathead && npcIcon.npcPortraitFit, "flagged for the chathead-then-body path");
+const offResult: any = { type: 5, itemId: 9 };
+assert.equal(applyNpcRowIcon(offResult, 9), false, "ids outside the results are left as items");
+assert.deepEqual(offResult, { type: 5, itemId: 9 }, "a non-result widget is untouched");
+
+setSpawnSearch(ITEM_SEARCH_TITLE);
+const itemIcon: any = { type: 5, itemId: 4151 };
+assert.equal(applyNpcRowIcon(itemIcon, 4151), false, "item rows keep their item icons");
+assert.deepEqual(itemIcon, { type: 5, itemId: 4151 }, "an item row is untouched");
+
 setSpawnSearch(null);
+const closedIcon: any = { type: 5, itemId: 1 };
+assert.equal(applyNpcRowIcon(closedIcon, 1), false, "no portrait work with no search open");
 assert.equal(name(0), "Goblin mail", "closing the search restores item names");
 assert.equal(spawnSearchPick(row, 1), null, "a closed search claims no clicks");
 const geRow: any = { onOp: [754, 4151, 84], actions: ["Select"] };

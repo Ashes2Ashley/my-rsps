@@ -34,6 +34,24 @@ export function isNpcSearchResult(id: number): boolean {
     return mode === "npc" && results.has(id);
 }
 
+/**
+ * Turns a result row's item icon into the npc's portrait. Only npc rows of an open spawn
+ * search get here, so ordinary item icons never touch the model path. The renderer draws
+ * the chathead, falling back to the body model for the ~5k npcs the cache gives no head.
+ */
+export function applyNpcRowIcon(widget: any, npcId: number): boolean {
+    if (!isNpcSearchResult(npcId)) return false;
+    widget.type = 6;
+    widget.modelType = 2;
+    widget.modelId = npcId;
+    widget.isNpcChathead = true;
+    widget.isPlayerChathead = false;
+    widget.npcTypeId = npcId;
+    widget.npcPortraitFit = true;
+    widget.itemId = -1;
+    return true;
+}
+
 function searchRowId(widget: any): number | null {
     // setEventHandler keeps the listener args as [scriptId, id, ...].
     const listener = widget?.onOp;
