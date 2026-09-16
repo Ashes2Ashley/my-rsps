@@ -45,11 +45,40 @@ export class Projectile {
         return (lockon as any).isPlayer() ? -(index + 1) : index + 1;
     }
 
+    /**
+     * A mobile's Location is the south-west tile of its footprint, so anything bigger
+     * than 1x1 (KBD, Jad, Vet'ion...) would fire from - and be shot at - a corner of
+     * its body instead of the middle of it.
+     */
+    public static centreOf(mobile: Mobile): Location {
+        const location = mobile.getLocation();
+        const offset = (Math.max(1, mobile.getSize()) - 1) >> 1;
+        return offset > 0 ? location.transform(offset, offset) : location;
+    }
+
+    /**
+     * Cycles (20ms) between a projectile being sent and it landing, at the engine's usual
+     * 10 per tile on top of the launch delay. Flat lifetimes make a projectile cross a
+     * boss's whole range as fast as it crosses one tile, which reads as teleporting.
+     */
+    public static arrivalCycles(from: Mobile | Location, to: Mobile | Location, delay: number = 40): number {
+        return delay + Projectile.locationOf(from).getDistance(Projectile.locationOf(to)) * 10;
+    }
+
+    /** The same arrival, in game ticks, for lining a hitsplat up with the projectile. */
+    public static arrivalTicks(from: Mobile | Location, to: Mobile | Location, delay: number = 40): number {
+        return Math.ceil(Projectile.arrivalCycles(from, to, delay) / 30);
+    }
+
+    private static locationOf(at: Mobile | Location): Location {
+        return at instanceof Location ? at : Projectile.centreOf(at);
+    }
+
         static createProjectile(source: Mobile, victim: Mobile, projectileId: number, delay: number, speed: number,
                             startHeight: number, endHeight: number) {
         return new Projectile(
-            source.getLocation(),
-            victim.getLocation(),
+            Projectile.centreOf(source),
+            Projectile.centreOf(victim),
             victim,
             projectileId,
             delay,

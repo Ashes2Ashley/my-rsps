@@ -21,13 +21,27 @@ export class VenenatisCombatMethod extends CombatMethod {
     }
 
     hits(character: Mobile, target: Mobile): PendingHit[] {
-        return [new PendingHit(character, target, this, 1)];
+        // The web lands when it arrives, not a tick after it was spat.
+        const delay = this.currentAttackType === CombatType.MAGIC
+            ? Projectile.arrivalTicks(character, target)
+            : 1;
+        return [new PendingHit(character, target, this, delay)];
     }
 
     start(character: Mobile, target: Mobile) {
         if (this.currentAttackType === CombatType.MAGIC) {
             character.performAnimation(VenenatisCombatMethod.MAGIC_ATTACK_ANIMATION);
-            Projectile.createProjectile(character, target, 165, 40, 55, 31, 43).sendProjectile();
+            // Spat from the body (43) at the target's chest (31), and given a flight time
+            // that grows with the gap rather than a flat 0.3s at any range.
+            Projectile.createProjectile(
+                character,
+                target,
+                165,
+                40,
+                Projectile.arrivalCycles(character, target),
+                43,
+                31
+            ).sendProjectile();
         } else if (this.currentAttackType === CombatType.MELEE) {
             character.performAnimation(VenenatisCombatMethod.MELEE_ATTACK_ANIMATION);
         }
