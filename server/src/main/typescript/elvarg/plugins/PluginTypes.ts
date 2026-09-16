@@ -5,6 +5,7 @@ import type { PlayerPersistence } from "../game/entity/impl/player/persistence/P
 import type { ActiveRegionSnapshot } from "../game/ActiveRegionIndex";
 import type { DefinitionSource } from "../game/definition/loader/DefinitionLoader";
 import type { FriendsChatAction } from "../net/protocol/ClientProtocol";
+import type { PlayerRights } from "../game/model/rights/PlayerRights";
 
 export interface PluginPlayerLoginEvent {
   player: any;
@@ -420,6 +421,9 @@ export interface PluginItemDropEvent {
   handled: boolean;
 }
 
+/** Rights allowed to run a command, as PlayerRights constants. Empty means everyone. */
+export type PluginCommandRights = PlayerRights[];
+
 export interface PluginCommandEvent {
   player: any;
   raw: string;
@@ -672,10 +676,21 @@ export interface PluginApi {
     handler: (event: PluginInterfaceActionClickEvent) => void | boolean
   ): void;
   onCommand(handler: (event: PluginCommandEvent) => void): void;
+  /**
+   * Registers a command handler. `rights` limits who may run it - the core denies
+   * everyone else before the handler is called, so handlers never check rights
+   * themselves. Omitted or empty means any player may run it.
+   */
   registerCommand(
     command: string,
-    handler: (event: PluginCommandEvent) => void | boolean
+    handler: (event: PluginCommandEvent) => void | boolean,
+    rights?: PluginCommandRights
   ): void;
+  /**
+   * Overrides the rights a command requires, whoever registered it. An empty array
+   * opens the command to every player - e.g. a spawn-mode plugin granting ::items.
+   */
+  setCommandRights(command: string, rights: PluginCommandRights): void;
   /**
    * Serves a read-only JSON resource at /api/<name> on the game port, for interface data
    * that is request/response shaped (searches, lists, lookups) rather than a game event.

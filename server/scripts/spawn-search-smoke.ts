@@ -1,8 +1,8 @@
 /**
  * ::items / ::npcs spawn search: the command opens the cache's chatbox search, a picked row
  * arrives as "<id> <op>" and spawns that op's amount, Spawn X prompts for one, the search
- * ends on a pick and closes when the player walks away, and both the command and the
- * deferred pick are rights-gated.
+ * ends on a pick and closes when the player walks away, the command registers its rights for
+ * the core to gate on, and the deferred pick re-checks them itself.
  * Usage: TS_NODE_COMPILER_OPTIONS='{"target":"es2020"}' ts-node ./scripts/spawn-search-smoke.ts
  */
 import * as assert from "node:assert/strict";
@@ -84,9 +84,27 @@ async function main() {
   syntaxAction.execute(`${ABYSSAL_WHIP} 1`);
   assert.equal(added.length, 0, "rights are re-checked when the pick arrives");
 
-  scripts.length = 0;
-  itemSearchCommand({ player, parts: ["items"] });
-  assert.equal(scripts.length, 0, "a player cannot open the spawn search");
+  // The command itself is gated by the core off the rights it registers with, not in the handler.
+  const registeredRights = new Map<string, unknown>();
+  require("../plugins/commands/AdminCommands.plugin.js").register({
+    ...Object.fromEntries(
+      ["getWorld", "getSkillManager", "getObjectManager", "getCombatFactory", "getTaskManager",
+       "getRegionManager", "getPlayerPunishment"].map((name) => [name, () => ({})])
+    ),
+    onPlayerProcess: () => {},
+    registerCommand: (command: string, _handler: unknown, rights: unknown) =>
+      registeredRights.set(command, rights),
+  });
+  assert.deepEqual(
+    registeredRights.get("items"),
+    [PlayerRights.ADMINISTRATOR, PlayerRights.OWNER, PlayerRights.DEVELOPER],
+    "::items is registered admin-and-above"
+  );
+  assert.deepEqual(
+    registeredRights.get("npcs"),
+    [PlayerRights.OWNER, PlayerRights.DEVELOPER],
+    "::npcs is registered owner-and-above"
+  );
 
   console.log("spawn search smoke passed");
 }

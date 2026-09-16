@@ -30,9 +30,11 @@ function parseIntArg(value) {
   return Number.isNaN(parsed) ? null : parsed;
 }
 
-function adminOrAbove(player) {
-  return PlayerRights.hasAdminRights(player);
-}
+const ADMIN_RIGHTS = [
+  PlayerRights.ADMINISTRATOR,
+  PlayerRights.OWNER,
+  PlayerRights.DEVELOPER,
+];
 
 function stopPluginPerfStream(username) {
   const existing = pluginPerfStreams.get(username);
@@ -141,11 +143,6 @@ module.exports = {
     });
 
     api.registerCommand("pluginperf", ({ player, parts }) => {
-      if (!adminOrAbove(player)) {
-        player.getPacketSender().sendMessage("You do not have permission to use this command.");
-        return true;
-      }
-
       const firstArg = (parts[1] || "").toLowerCase();
       const legacyLimitArg = parseIntArg(parts[1]);
       const legacyIntervalArg = parseIntArg(parts[2]);
@@ -216,17 +213,13 @@ module.exports = {
         .getPacketSender()
         .sendMessage("Usage: ::pluginperf [once|on|off|reset] [limit] [intervalMs]");
       return true;
-    });
+    }, ADMIN_RIGHTS);
 
     api.registerCommand("serverperf", ({ player, parts }) => {
-      if (!adminOrAbove(player)) {
-        player.getPacketSender().sendMessage("You do not have permission to use this command.");
-        return true;
-      }
       const ticksArg = parseIntArg(parts[1]);
       const ticks = ticksArg && ticksArg > 0 ? Math.min(ticksArg, 300) : 60;
       streamServerPerfToPlayer(player, ticks);
       return true;
-    });
+    }, ADMIN_RIGHTS);
   },
 };

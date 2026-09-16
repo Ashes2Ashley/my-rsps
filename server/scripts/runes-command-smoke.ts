@@ -86,11 +86,21 @@ async function main() {
   );
   assert.equal(partial.messages.length, 1, "no per-rune message spam");
 
-  // Non-staff are refused.
+  // Non-staff are refused - by the core, from the rights array ::runes registered with.
   const mortal = makePlayer(PlayerRights.NONE, []);
   CommandPacketListener.execute(mortal.player, "runes");
   assert.deepEqual(runeStacks(mortal.inventory), [], "players cannot spawn runes");
   assert.deepEqual(mortal.messages, ["You do not have permission to use this command."]);
+
+  // A plugin can override those rights, e.g. a spawn mode opening ::runes to everyone.
+  PluginManager.setCommandRights("runes", []);
+  const spawnMode = makePlayer(PlayerRights.NONE, []);
+  CommandPacketListener.execute(spawnMode.player, "runes");
+  assert.equal(runeStacks(spawnMode.inventory).length, RUNE_IDS.length, "override opens ::runes");
+  PluginManager.setCommandRights("runes", [PlayerRights.OWNER, PlayerRights.DEVELOPER]);
+  const reclosed = makePlayer(PlayerRights.NONE, []);
+  CommandPacketListener.execute(reclosed.player, "runes");
+  assert.deepEqual(runeStacks(reclosed.inventory), [], "override can close ::runes again");
 
   console.log(`::runes command and item drop definitions OK (${itemCount} items)`);
   process.exit(0);

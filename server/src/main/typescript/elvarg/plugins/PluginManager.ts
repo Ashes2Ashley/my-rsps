@@ -44,6 +44,7 @@ import {
   PluginCustomEventName,
   PluginPlayerPathBlockedEvent,
   PluginCommandEvent,
+  PluginCommandRights,
   PluginActiveRegionsEvent,
   PluginPlayerDisconnectEvent,
   PluginPlayerLoginEvent,
@@ -202,6 +203,10 @@ export class PluginManager {
     string,
     PluginHook<PluginCommandEvent>[]
   >();
+  /** Rights each command was registered with. A null value means anyone may run it. */
+  private static commandRights = new Map<string, Set<number> | null>();
+  /** Rights a plugin has overridden a command to, taking priority over registration. */
+  private static commandRightsOverrides = new Map<string, Set<number> | null>();
   private static slayerAssignHooks: Array<{
     pluginName: string;
     handler: (player: any) => boolean;
@@ -1269,6 +1274,52 @@ export class PluginManager {
     return event.handled === true;
   }
 
+  /** Null means "no restriction"; a set holds the rights ids allowed to run the command. */
+  private static normalizeCommandRights(
+    rights: PluginCommandRights | undefined
+  ): Set<number> | null {
+    if (!Array.isArray(rights)) {
+      return null;
+    }
+    const ids = new Set<number>();
+    for (const entry of rights) {
+      const id = (entry as any)?.getId?.();
+      if (Number.isInteger(id)) {
+        ids.add(id);
+      }
+    }
+    return ids.size ? ids : null;
+  }
+
+  private static playerHasCommandRights(player: any, base: string): boolean {
+    const required = PluginManager.commandRightsOverrides.has(base)
+      ? PluginManager.commandRightsOverrides.get(base)
+      : PluginManager.commandRights.get(base);
+    if (!required) {
+      return true;
+    }
+    const rightsId = player?.getRights?.()?.getId?.();
+    return Number.isInteger(rightsId) && required.has(rightsId);
+  }
+
+  /** Overrides the rights a command requires. An empty array opens it to every player. */
+  public static setCommandRights(
+    command: string,
+    rights: PluginCommandRights
+  ): void {
+    if (typeof command !== "string") {
+      return;
+    }
+    const normalized = command.trim().toLowerCase();
+    if (!normalized.length) {
+      return;
+    }
+    PluginManager.commandRightsOverrides.set(
+      normalized,
+      PluginManager.normalizeCommandRights(rights)
+    );
+  }
+
   public static emitCommand(event: PluginCommandEvent): boolean {
     for (const hook of PluginManager.commandHooks) {
       PluginManager.executeHook(hook, event, "command", "command_any");
@@ -1281,6 +1332,13 @@ export class PluginManager {
     const baseHandlers = PluginManager.commandHandlersByBase.get(event.base);
     if (!baseHandlers) {
       return event.handled;
+    }
+
+    if (!PluginManager.playerHasCommandRights(event.player, event.base)) {
+      event.player
+        ?.getPacketSender?.()
+        ?.sendMessage("You do not have permission to use this command.");
+      return true;
     }
 
     for (const hook of baseHandlers) {
@@ -2838,7 +2896,7 @@ export class PluginManager {
           console.error(`[plugins] ${pluginName} custom interface rejected`, error);
         }
       },
-      registerCommand: (command, handler) => {
+      registerCommand: (command, handler, rights) => {
         if (typeof command !== "string" || typeof handler !== "function") {
           return;
         }
@@ -2846,6 +2904,10 @@ export class PluginManager {
         if (!normalized.length) {
           return;
         }
+        PluginManager.commandRights.set(
+          normalized,
+          PluginManager.normalizeCommandRights(rights)
+        );
 
         const wrapper: PluginHook<PluginCommandEvent> = {
           pluginName,
@@ -2864,6 +2926,9 @@ export class PluginManager {
           PluginManager.commandHandlersByBase.get(normalized) ?? [];
         existing.push(wrapper);
         PluginManager.commandHandlersByBase.set(normalized, existing);
+      },
+      setCommandRights: (command, rights) => {
+        PluginManager.setCommandRights(command, rights);
       },
       onObjectClick: (objectIds, clickType, handler) => {
         if (!Number.isInteger(clickType) || clickType < 1 || clickType > 5) {

@@ -1,7 +1,6 @@
 const path = require("path");
 const { GameConstants } = require("../../src/main/typescript/elvarg/game/GameConstants");
 const { Wilderness } = require("../../src/main/typescript/elvarg/game/content/wilderness/Wilderness");
-const { PlayerRights } = require("../../src/main/typescript/elvarg/game/model/rights/PlayerRights");
 const { ObjectIds } = require("../../src/main/typescript/elvarg/util/IdEnums");
 const {
   resetMovementState,
@@ -278,7 +277,6 @@ module.exports = {
     registerBotCommands({
       api,
       botApi,
-      hasAdminRights: (player) => PlayerRights.hasAdminRights(player),
       runtime: boot.runtime,
       behaviorMode: BOT_CONFIG.behaviorMode,
       assignableBehaviors: boot.modeRegistries.assignableBehaviors,
