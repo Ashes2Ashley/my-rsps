@@ -95,7 +95,7 @@ function GroundItemsPanel({ osrsClient }: { osrsClient: OsrsClient }): JSX.Eleme
                 RuneLite-style filtering, highlighting, and value coloring for item labels.
             </p>
             {!config.enabled && (
-                <p className="rl-sidebar-panel-copy">Plugin is currently disabled in xRSPS.</p>
+                <p className="rl-sidebar-panel-copy">Plugin is currently disabled in RSPS.app.</p>
             )}
 
             <label className="rl-sidebar-check">
@@ -442,7 +442,7 @@ function InteractHighlightPanel({ osrsClient }: { osrsClient: OsrsClient }): JSX
                 RuneLite-style object highlight. Hover is blue and active interaction is red.
             </p>
             {!config.enabled && (
-                <p className="rl-sidebar-panel-copy">Plugin is currently disabled in xRSPS.</p>
+                <p className="rl-sidebar-panel-copy">Plugin is currently disabled in RSPS.app.</p>
             )}
             <label className="rl-sidebar-check">
                 <input
@@ -516,7 +516,7 @@ function TileMarkersPanel({ osrsClient }: { osrsClient: OsrsClient }): JSX.Eleme
                 RuneLite-style destination and true tile indicators for your player.
             </p>
             {!config.enabled && (
-                <p className="rl-sidebar-panel-copy">Plugin is currently disabled in xRSPS.</p>
+                <p className="rl-sidebar-panel-copy">Plugin is currently disabled in RSPS.app.</p>
             )}
             <label className="rl-sidebar-check">
                 <input
@@ -802,7 +802,7 @@ function PluginHubPanel({ osrsClient }: { osrsClient: OsrsClient }): JSX.Element
 
     return (
         <div className="rl-sidebar-panel-content rl-sidebar-scrollable">
-            <div className="rl-sidebar-panel-title">xRSPS</div>
+            <div className="rl-sidebar-panel-title">RSPS.app</div>
             <p className="rl-sidebar-panel-copy">
                 Enable or disable plugins. Toggle states persist in local storage.
             </p>
@@ -946,7 +946,7 @@ export function SidebarShell({
             <aside className="rl-sidebar-drawer" aria-hidden={!shouldShowPanel}>
                 <div className="rl-sidebar-drawer-header">
                     <div className="rl-sidebar-heading">
-                        <div className="rl-sidebar-heading-kicker">xRSPS</div>
+                        <div className="rl-sidebar-heading-kicker">RSPS.app</div>
                         <div className="rl-sidebar-heading-title">{drawerTitle}</div>
                     </div>
                     <button

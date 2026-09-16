@@ -9,7 +9,7 @@ export function drawWelcomeScreen(host: LoginRendererHost, ctx: RenderContext, s
 
         if (!host.fontBold12) return;
         const layout = getWelcomeLayout(host);
-        const welcomeName = state.serverName?.trim() || "xRSPS";
+        const welcomeName = state.serverName?.trim() || "RSPS.app";
         drawCenteredText(host, 
             ctx,
             host.fontBold12,

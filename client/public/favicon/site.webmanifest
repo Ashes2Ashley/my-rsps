@@ -1,6 +1,6 @@
 {
-  "name": "xRSPS",
-  "short_name": "xRSPS",
+  "name": "RSPS.app",
+  "short_name": "RSPS.app",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

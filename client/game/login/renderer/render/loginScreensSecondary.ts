@@ -225,7 +225,7 @@ export function drawWelcomeDisplayName(host: LoginRendererHost, ctx: RenderConte
         drawCenteredText(host, 
             ctx,
             host.fontBold12,
-            `Welcome to ${state.serverName?.trim() || "xRSPS"}`,
+            `Welcome to ${state.serverName?.trim() || "RSPS.app"}`,
             host.loginBoxX + 180,
             209,
             0xffff00,
