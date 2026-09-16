@@ -39,6 +39,8 @@ const originalCanReach = CombatRange.canReach;
 const originalRoute = CombatRange.route;
 const originalSubmit = TaskManager.submit;
 const originalCancelTasks = TaskManager.cancelTasks;
+const originalHasActiveTask = TaskManager.hasActiveTask;
+const originalWasTaskActiveThisCycle = TaskManager.wasTaskActiveThisCycle;
 const originalWildernessIsIn = Wilderness.isIn;
 const originalResetWeapon = EquipPacketListener.resetWeapon;
 const equipTestItemId = 999_999;
@@ -517,7 +519,7 @@ try {
     (CombatFactory as any).handleRetaliation = originalHandleRetaliation;
     let retaliationDelay = -1;
     let retaliationDisabled = false;
-    const attacker: any = { getHitpoints: () => 10, isRegistered: () => true };
+    const attacker: any = { getHitpoints: () => 10, isRegistered: () => true, isPlayer: () => false };
     const retaliationCombat = {
         getTarget: () => null,
         extendAttackDelay: (ticks: number) => retaliationDelay = ticks,
@@ -541,6 +543,34 @@ try {
     retaliationDisabled = true;
     (CombatFactory as any).handleRetaliation(attacker, retaliatingNpc);
     assert.equal(retaliationDelay, -1);
+
+    let busy = true;
+    let retaliationTask: any = null;
+    let playerAttacks = 0;
+    const playerQueue = { size: () => 0, isMovings: () => false };
+    const retaliatingPlayer: any = {
+        getIndex: () => 7,
+        getCombat: () => ({
+            getTarget: () => null,
+            extendAttackDelay: () => undefined,
+            attack: () => playerAttacks++,
+        }),
+        getMovementQueue: () => playerQueue,
+        isPlayer: () => true,
+        isNpc: () => false,
+        getAsPlayer: () => ({ autoRetaliateReturn: () => true }),
+    };
+    (TaskManager as any).hasActiveTask = () => busy;
+    (TaskManager as any).wasTaskActiveThisCycle = () => false;
+    (TaskManager as any).submit = (task: any) => retaliationTask = task;
+    (CombatFactory as any).handleRetaliation(attacker, retaliatingPlayer);
+    assert.equal(retaliationTask, null, "a pending interaction must block auto-retaliation");
+    busy = false;
+    (CombatFactory as any).handleRetaliation(attacker, retaliatingPlayer);
+    assert.ok(retaliationTask, "an idle player may auto-retaliate");
+    busy = true;
+    retaliationTask.execute();
+    assert.equal(playerAttacks, 0, "a new interaction must cancel scheduled auto-retaliation");
 
     let botTarget: any = null;
     let botAttacks = 0;
@@ -638,6 +668,8 @@ try {
     (CombatRange as any).route = originalRoute;
     (TaskManager as any).submit = originalSubmit;
     (TaskManager as any).cancelTasks = originalCancelTasks;
+    (TaskManager as any).hasActiveTask = originalHasActiveTask;
+    (TaskManager as any).wasTaskActiveThisCycle = originalWasTaskActiveThisCycle;
     (Wilderness as any).isIn = originalWildernessIsIn;
     (EquipPacketListener as any).resetWeapon = originalResetWeapon;
     (CacheDefinitions as any).getCounts = originalGetCounts;

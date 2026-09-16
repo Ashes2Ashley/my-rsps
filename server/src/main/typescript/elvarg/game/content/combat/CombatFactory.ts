@@ -985,6 +985,12 @@ export class CombatFactory {
 
     static handleRetaliation(attacker: Mobile, target: Mobile) {
         const currentTarget = target.getCombat().getTarget();
+        const playerIsBusy = () => target.isPlayer() && (
+            target.getMovementQueue().size() > 0 ||
+            target.getMovementQueue().isMovings() ||
+            TaskManager.hasActiveTask(target.getIndex(), "MovementTask") ||
+            TaskManager.wasTaskActiveThisCycle(target.getIndex(), "MovementTask")
+        );
         const hasActiveDifferentTarget =
             currentTarget != null &&
             currentTarget !== attacker &&
@@ -1004,7 +1010,7 @@ export class CombatFactory {
             if (target.isPlayer()) {
                 auto_ret =
                     target.getAsPlayer().autoRetaliateReturn() &&
-                    !target.getMovementQueue().isMovings();
+                    !playerIsBusy();
             } else if (target.isNpc()) {
                 auto_ret = target.hasFlag?.("combat:no-retaliate") !== true
                     && target.getAsNpc().getMovementCoordinator().getCoordinateState() == CoordinateState.HOME;
@@ -1014,7 +1020,7 @@ export class CombatFactory {
                 return;
             }
 
-            if (target.getMovementQueue) {
+            if (target.isNpc()) {
                 target.getMovementQueue().reset();
             }
             // OSRS flinch: whoever was not already mid-fight waits half an attack
@@ -1034,7 +1040,8 @@ export class CombatFactory {
                 target.getCombat().extendAttackDelay(Math.floor(attackSpeed / 2));
             }
             TaskManager.submit(new CombatFactoryTask(1, target, false, () => {
-                if (target.isPlayer() && !target.getAsPlayer().autoRetaliateReturn()) {
+                if (target.isPlayer() &&
+                    (!target.getAsPlayer().autoRetaliateReturn() || playerIsBusy())) {
                     return;
                 }
                 target.getCombat().attack(attacker, true);
