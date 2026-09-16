@@ -33209,7 +33209,8 @@
     },
     {
         "level": 0,
-        "name": "Refugee",
+        "name": "Skully",
+        "wanderRadius": 0,
         "x": 3139,
         "y": 3626,
         "id": 10382

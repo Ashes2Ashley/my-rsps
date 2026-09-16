@@ -36,6 +36,11 @@ async function main() {
     assert(fishingSpots.length > 0);
     assert(fishingSpots.every((spawn) => spawn.getRadius() === 0));
 
+    // Skully hands out loot keys at a fixed spot in Ferox Enclave; he must not wander off it.
+    const skully = NpcSpawnDefinition.all().find((spawn) => spawn.getId() === 10382);
+    assert(skully);
+    assert.equal(skully.getRadius(), 0);
+
     const bird = NpcSpawnDefinition.all().find(
         (spawn) => spawn.getId() === 5241 && spawn.getPosition().getX() === 2696,
     );
