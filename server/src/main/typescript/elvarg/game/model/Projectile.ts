@@ -45,11 +45,22 @@ export class Projectile {
         return (lockon as any).isPlayer() ? -(index + 1) : index + 1;
     }
 
+    /**
+     * A mobile's Location is the south-west tile of its footprint, so anything bigger
+     * than 1x1 (KBD, Jad, Vet'ion...) would fire from - and be shot at - a corner of
+     * its body instead of the middle of it.
+     */
+    public static centreOf(mobile: Mobile): Location {
+        const location = mobile.getLocation();
+        const offset = (Math.max(1, mobile.getSize()) - 1) >> 1;
+        return offset > 0 ? location.transform(offset, offset) : location;
+    }
+
         static createProjectile(source: Mobile, victim: Mobile, projectileId: number, delay: number, speed: number,
                             startHeight: number, endHeight: number) {
         return new Projectile(
-            source.getLocation(),
-            victim.getLocation(),
+            Projectile.centreOf(source),
+            Projectile.centreOf(victim),
             victim,
             projectileId,
             delay,

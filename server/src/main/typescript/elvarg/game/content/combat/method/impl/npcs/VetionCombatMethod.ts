@@ -70,7 +70,7 @@ export class VetionCombatMethod extends CombatMethod {
                 (targetPos.getY() - 1) + Misc.getRandom(3)));
             }
             for (const pos of attackPositions) {
-                new Projectile(character.getLocation(), pos, null, 280, 40, 80, 31, 43, character.getPrivateArea()).sendProjectile();
+                new Projectile(Projectile.centreOf(character), pos, null, 280, 40, 80, 31, 43, character.getPrivateArea()).sendProjectile();
             }
             TaskManager.submit(new VetionCombatMethodTask(()=>{for (const pos of attackPositions) {
                 target.getAsPlayer().getPacketSender().sendGlobalGraphic(VetionCombatMethod.MAGIC_END_GFX, pos);
