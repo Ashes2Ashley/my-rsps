@@ -2,7 +2,6 @@ const fs = require("fs");
 const path = require("path");
 const { GameConstants } = require("../../src/main/typescript/elvarg/game/GameConstants");
 const { ShopDefinition } = require("../../src/main/typescript/elvarg/game/definition/ShopDefinition");
-const { ItemSearchIndex, normalizeSearchTerm } = require("../../src/main/typescript/elvarg/game/cache/ItemSearchIndex");
 const { Wilderness } = require("../../src/main/typescript/elvarg/game/content/wilderness/Wilderness");
 const { ShopManager } = require("../../src/main/typescript/elvarg/game/model/container/shop/ShopManager");
 const { FLAG_OP1, TYPE_GRAPHIC, TYPE_RECTANGLE, TYPE_TEXT, createWidgetGroup } = require("./widgetGroup");
@@ -26,18 +25,34 @@ const uid = (component) => (GROUP_ID << 16) | component;
 const LEFT_ROW_UIDS = Array.from({ length: LEFT_ROW_COUNT }, (_, row) => uid(COMPONENT.LEFT_LABEL_START + row));
 const LIST_CONTENT_HEIGHT = LEFT_ROW_COUNT * LEFT_ROW_HEIGHT;
 const selectedShopIds = new WeakMap();
-const iconIdsByName = new Map();
+const ICON_ITEM_IDS = {
+  "Fire rune": 554,
+  "Manta ray": 391,
+  "Super strength(4)": 2440,
+  "Rune arrow": 892,
+  "Armadyl godsword": 11802,
+  "Rune platebody": 1127,
+  "Staff of fire": 1387,
+  "Mystic robe top": 4091,
+  "Magic shortbow": 861,
+  "Black d'hide body": 2503,
+  "Dragon claws": 13652,
+  "Dharok's helm": 4716,
+  "Amulet of glory": 1704,
+  "Berserker ring": 6737,
+  "Fire cape": 6570,
+  "Dragonfire shield": 11283,
+  "Barrows gloves": 7462,
+  "Dragon boots": 11840,
+  "Rune pickaxe": 1275,
+  "Blue partyhat": 1042,
+};
 
 let CombatFactory;
 
 function iconItemId(icon) {
   if (Number.isInteger(icon)) return icon;
-  if (iconIdsByName.has(icon)) return iconIdsByName.get(icon);
-  const normalizedIcon = normalizeSearchTerm(icon);
-  const itemId = ItemSearchIndex.search(icon, 1).rows
-    .find((item) => item.normalizedName === normalizedIcon)?.itemId ?? -1;
-  iconIdsByName.set(icon, itemId);
-  return itemId;
+  return typeof icon === "string" ? ICON_ITEM_IDS[icon] ?? -1 : -1;
 }
 
 function customShops() {
