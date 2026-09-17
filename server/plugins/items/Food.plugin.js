@@ -89,13 +89,13 @@ module.exports = {
       }
 
       if (!canEat(player, itemId)) {
-        player.getPacketSender().sendMessage("You cannot eat here.");
+        player.sendMessage("You cannot eat here.");
         return true;
       }
 
       const timers = player.getTimers();
       if (timers.has(TimerKey.STUN)) {
-        player.getPacketSender().sendMessage("You're currently stunned!");
+        player.sendMessage("You're currently stunned!");
         return true;
       }
 
@@ -148,7 +148,7 @@ module.exports = {
 
       const verb = food.verb || "eat";
       const itemName = ItemDefinition.forId(itemId).getName().toLowerCase();
-      player.getPacketSender().sendMessage(`You ${verb} the ${itemName}.`);
+      player.sendMessage(`You ${verb} the ${itemName}.`);
       return true;
     });
 

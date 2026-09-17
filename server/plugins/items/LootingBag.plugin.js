@@ -92,11 +92,11 @@ function withdraw(player, slot, amount) {
   const inventory = player.getInventory();
   const stackable = definition.isStackable();
   if (!stackable && inventory.getFreeSlots() < Math.min(item.amount, amount)) {
-    player.getPacketSender().sendMessage("You don't have enough inventory space.");
+    player.sendMessage("You don't have enough inventory space.");
     return true;
   }
   if (stackable && inventory.getFreeSlots() < 1 && !inventory.getValidItems().some((entry) => entry.getId() === item.id)) {
-    player.getPacketSender().sendMessage("You don't have enough inventory space.");
+    player.sendMessage("You don't have enough inventory space.");
     return true;
   }
   const moved = take(bag, slot, amount);
@@ -113,19 +113,19 @@ function itemAction(player, item, option) {
     item.setId(action === "open" ? OPEN_BAG_ID : CLOSED_BAG_ID);
     item.setMetaValue(`${BAG_DATA}:open`, undefined);
     player.getInventory().refreshItems();
-    player.getPacketSender().sendMessage(`Your Looting bag is now ${action === "open" ? "open" : "closed"}.`);
+    player.sendMessage(`Your Looting bag is now ${action === "open" ? "open" : "closed"}.`);
     return true;
   }
   if (action === "check") return sendBag(player);
   if (action === "deposit") {
     if (!canUseBag(player)) {
-      player.getPacketSender().sendMessage(DEPOSIT_RESTRICTION);
+      player.sendMessage(DEPOSIT_RESTRICTION);
       return true;
     }
     return sendBag(player, true);
   }
   if (action === "settings") {
-    player.getPacketSender().sendMessage("Looting bag deposits store as many items as possible.");
+    player.sendMessage("Looting bag deposits store as many items as possible.");
     return true;
   }
   if (action !== "destroy") return false;
@@ -164,7 +164,7 @@ function depositItem(player, bag, key, amount) {
   if (!Number.isSafeInteger(amount) || amount <= 0 ||
     !inventory.getItems().includes(bag)) return;
   if (!canUseBag(player)) {
-    player.getPacketSender().sendMessage(DEPOSIT_RESTRICTION);
+    player.sendMessage(DEPOSIT_RESTRICTION);
     return;
   }
   for (let slot = 0; slot < inventory.capacity() && amount > 0; slot++) {
@@ -185,7 +185,7 @@ function handleItemOnItem(event) {
   if (!bag) return;
   if (!canUseBag(player)) {
     event.handled = true;
-    player.getPacketSender().sendMessage(DEPOSIT_RESTRICTION);
+    player.sendMessage(DEPOSIT_RESTRICTION);
     return;
   }
   if (!canStore(item)) return;
@@ -210,7 +210,7 @@ module.exports = {
       if (!canStore(item) || !store(bag, item)) return;
       ItemOnGroundManager.deregister(event.groundItem);
       event.player.getLastItemPickup().reset();
-      event.player.getPacketSender().sendMessage(`You put the ${item.getDefinition().getName().toLowerCase()} in your Looting bag.`);
+      event.player.sendMessage(`You put the ${item.getDefinition().getName().toLowerCase()} in your Looting bag.`);
       event.handled = true;
     });
     api.onItemOnItem(handleItemOnItem);

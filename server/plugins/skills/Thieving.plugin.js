@@ -126,9 +126,7 @@ function handleStealFromStall(event) {
 
   const player = event.player;
   if (player.getSkillManager().getCurrentLevel(Skill.THIEVING) < stall.level) {
-    player
-      .getPacketSender()
-      .sendMessage(`You need a Thieving level of at least ${stall.level} to do this.`);
+    player.sendMessage(`You need a Thieving level of at least ${stall.level} to do this.`);
     event.handled = true;
     return;
   }
@@ -148,9 +146,7 @@ function handleStealFromStall(event) {
   const reward = randomReward(stall.rewards);
   player.getInventory().addItem(reward);
   player.getSkillManager().addExperiences(Skill.THIEVING, stall.xp);
-  player
-    .getPacketSender()
-    .sendMessage(`You steal ${reward.getAmount()} x ${reward.getDefinition().getName()}.`);
+  player.sendMessage(`You steal ${reward.getAmount()} x ${reward.getDefinition().getName()}.`);
   pluginApi.emitCustomEvent("thieving:success", { player, skill: Skill.THIEVING });
   event.handled = true;
 }
@@ -167,9 +163,7 @@ function pickpocket(event) {
     return;
   }
   if (player.getSkillManager().getCurrentLevel(Skill.THIEVING) < def.level) {
-    player
-      .getPacketSender()
-      .sendMessage(`You need a Thieving level of at least ${def.level} to do this.`);
+    player.sendMessage(`You need a Thieving level of at least ${def.level} to do this.`);
     event.handled = true;
     return;
   }
@@ -178,16 +172,12 @@ function pickpocket(event) {
     return;
   }
   if (CombatFactory.inCombat(player)) {
-    player
-      .getPacketSender()
-      .sendMessage("You must wait a few seconds after being in combat to do this.");
+    player.sendMessage("You must wait a few seconds after being in combat to do this.");
     event.handled = true;
     return;
   }
   if (CombatFactory.inCombat(npc)) {
-    player
-      .getPacketSender()
-      .sendMessage("That npc is currently in combat and cannot be pickpocketed.");
+    player.sendMessage("That npc is currently in combat and cannot be pickpocketed.");
     event.handled = true;
     return;
   }
@@ -200,7 +190,7 @@ function pickpocket(event) {
   player.getMovementQueue().reset();
   player.setPositionToFace(npc.getLocation());
   player.performAnimation(THIEVING_ANIMATION);
-  player.getPacketSender().sendMessage("You attempt to pick the npc's pocket..");
+  player.sendMessage("You attempt to pick the npc's pocket..");
   player.getClickDelay().reset();
   npc.getTimers().registers(TimerKey.ATTACK_IMMUNITY, 10);
 
@@ -215,23 +205,21 @@ function pickpocket(event) {
         if (!player.getInventory().isFull()) {
           player.getInventory().addItem(loot);
         }
-        player
-          .getPacketSender()
-          .sendMessage(`You steal ${loot.getAmount()} x ${loot.getDefinition().getName()}.`);
+        player.sendMessage(`You steal ${loot.getAmount()} x ${loot.getDefinition().getName()}.`);
         player.getSkillManager().addExperiences(Skill.THIEVING, def.xp);
         pluginApi.emitCustomEvent("thieving:success", { player, skill: Skill.THIEVING });
         return;
       }
 
       if (ArceuusSpells.hasShadowVeil(player) && Math.random() < 0.15) {
-        player.getPacketSender().sendMessage("Your shadow veil prevents you from being noticed.");
+        player.sendMessage("Your shadow veil prevents you from being noticed.");
         return;
       }
 
       npc.setPositionToFace(player.getLocation());
       npc.forceChat("What do you think you're doing?");
       npc.performAnimation(NPC_ATTACK_ANIMATION);
-      player.getPacketSender().sendMessage("You fail to pick the pocket.");
+      player.sendMessage("You fail to pick the pocket.");
       Sounds.sendSound(player, Sound.THIEVING_STUNNED);
       CombatFactory.stun(player, def.stunTime, true);
       player

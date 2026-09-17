@@ -53,7 +53,7 @@ function disarmPlayer(player) {
     if (toDisarm.isValid()) {
       player.getEquipment().set(randomSlot, new Item(-1, 0));
       player.getInventory().addItem(toDisarm.clone());
-      player.getPacketSender().sendMessage("You have been disarmed!");
+      player.sendMessage("You have been disarmed!");
       WeaponInterfaceManager.assign(player);
       BonusManager.update(player);
       player.getUpdateFlag().flag(Flag.APPEARANCE);

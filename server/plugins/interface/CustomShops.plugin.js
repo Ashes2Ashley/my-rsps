@@ -78,15 +78,15 @@ function selectedShop(player, shops) {
 
 function canUseShops(player) {
   if (Wilderness.isIn(player)) {
-    player.getPacketSender().sendMessage("You cannot open shops in the Wilderness.");
+    player.sendMessage("You cannot open shops in the Wilderness.");
     return false;
   }
   if (CombatFactory.inCombat(player)) {
-    player.getPacketSender().sendMessage("You cannot open shops while in combat.");
+    player.sendMessage("You cannot open shops while in combat.");
     return false;
   }
   if (player.busy() && player.getInterfaceId() !== ShopManager.MAIN_INTERFACE_ID) {
-    player.getPacketSender().sendMessage("You cannot open shops while busy.");
+    player.sendMessage("You cannot open shops while busy.");
     return false;
   }
   return true;
@@ -160,7 +160,7 @@ function render(player, shops = customShops()) {
 
 function open(player, shop = selectedShop(player, customShops())) {
   if (!shop) {
-    player.getPacketSender().sendMessage("No custom shops are available.");
+    player.sendMessage("No custom shops are available.");
     return;
   }
   selectedShopIds.set(player, shop.definition.getId());

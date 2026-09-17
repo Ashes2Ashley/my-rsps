@@ -1329,9 +1329,7 @@ export class PluginManager {
     }
 
     if (!PluginManager.playerHasCommandRights(event.player, event.base)) {
-      event.player
-        .getPacketSender()
-        .sendMessage("You do not have permission to use this command.");
+      event.player.sendMessage("You do not have permission to use this command.");
       return true;
     }
 

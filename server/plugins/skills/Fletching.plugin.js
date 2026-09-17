@@ -563,16 +563,12 @@ function performFletchingAction(player, recipe) {
   const inventory = player.getInventory();
   const level = getFletchingLevel(player);
   if (level < recipe.level) {
-    player
-      .getPacketSender()
-      .sendMessage(`You need a Fletching level of at least ${recipe.level} to do this.`);
+    player.sendMessage(`You need a Fletching level of at least ${recipe.level} to do this.`);
     return false;
   }
 
   if (!hasRequirements(inventory, recipe)) {
-    player
-      .getPacketSender()
-      .sendMessage("You don't have the required materials to fletch that item.");
+    player.sendMessage("You don't have the required materials to fletch that item.");
     return false;
   }
 
@@ -591,18 +587,14 @@ function startFletchingSession(activeSessions, player, recipe, requestedAmount) 
 
   const level = getFletchingLevel(player);
   if (level < recipe.level) {
-    player
-      .getPacketSender()
-      .sendMessage(`You need a Fletching level of at least ${recipe.level} to do this.`);
+    player.sendMessage(`You need a Fletching level of at least ${recipe.level} to do this.`);
     return false;
   }
 
   const inventory = player.getInventory();
   const available = maxCraftable(inventory, recipe);
   if (available <= 0) {
-    player
-      .getPacketSender()
-      .sendMessage("You don't have the required materials to fletch that item.");
+    player.sendMessage("You don't have the required materials to fletch that item.");
     return false;
   }
 

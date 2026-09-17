@@ -22,7 +22,7 @@ export class MapObjects {
         if (object && !ObjectDefinition.forPlayer(object.getId(), player)) return null;
 
         if (object == null && player.getRights() == PlayerRights.DEVELOPER) {
-            player.getPacketSender().sendMessage("@red@Object with id " + id + " does not exist.");
+            player.sendMessage("@red@Object with id " + id + " does not exist.");
         }
 
         return object;

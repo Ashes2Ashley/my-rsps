@@ -165,13 +165,13 @@ module.exports = {
             }
 
             if (player.busy() || CombatFactory.inCombat(player)) {
-                player.getPacketSender().sendMessage("You cannot do this right now.");
+                player.sendMessage("You cannot do this right now.");
                 return true;
             }
 
             const emote = resolveEmote(player, slot, action);
             if (!emote) {
-                player.getPacketSender().sendMessage(
+                player.sendMessage(
                     "You need to be wearing a skillcape in order to perform that emote.",
                 );
                 return true;

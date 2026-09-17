@@ -63,7 +63,7 @@ module.exports = {
       // WelcomeScreen restores the gameframe first; mount the modal after that root swap.
       queueMicrotask(() => {
         if (openMakeoverInterface(player)) {
-          player.getPacketSender().sendMessage(MAKEOVER_HINT);
+          player.sendMessage(MAKEOVER_HINT);
         }
       });
       return true;
@@ -75,7 +75,7 @@ module.exports = {
     for (const command of MAKEOVER_COMMANDS) {
       api.registerCommand(command, ({ player }) => {
         if (!canOpenMakeover(player, CombatFactory)) {
-          player.getPacketSender().sendMessage("You cannot change your appearance right now.");
+          player.sendMessage("You cannot change your appearance right now.");
           return true;
         }
         return openMakeoverInterface(player);

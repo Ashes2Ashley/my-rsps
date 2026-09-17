@@ -124,11 +124,9 @@ export class EquipPacketListener {
         if (requiredLevel > player.getSkillManager().getMaxLevel(skill)) {
           const skillName = Misc.formatText(skill.getName());
           const vowel = /^[aeiou]/i.test(skillName) ? "an" : "a";
-          player
-            .getPacketSender()
-            .sendMessage(
-              `You need ${vowel} ${skillName} level of at least ${requiredLevel} to wear this.`
-            );
+          player.sendMessage(
+            `You need ${vowel} ${skillName} level of at least ${requiredLevel} to wear this.`
+          );
           return;
         }
       }

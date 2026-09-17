@@ -100,9 +100,7 @@ let TaskManager;
 function drinkFromPool(event) {
   const player = event.player;
   if (isRecentPvpCombat(player)) {
-    player
-      .getPacketSender()
-      .sendMessage("You can't drink from the pool during combat.");
+    player.sendMessage("You can't drink from the pool during combat.");
     event.handled = true;
     return;
   }
@@ -114,9 +112,7 @@ function drinkFromPool(event) {
   nextPoolUseAt.set(player, now + POOL_USE_DELAY_MS);
   restoreFromPool(player);
   Sounds.sendSound(player, Sound.PRAYER_RECHARGE);
-  player
-    .getPacketSender()
-    .sendMessage("You feel fully rejuvenated.");
+  player.sendMessage("You feel fully rejuvenated.");
   event.handled = true;
 }
 

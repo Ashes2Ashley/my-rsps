@@ -103,7 +103,7 @@ export class MorrigansJavelinCombatMethod extends RangedCombatMethod {
         item.decrementAmountBy(amount);
 
         if (item.getAmount() <= 0) {
-            player.getPacketSender().sendMessage("You have run out of ammunition!");
+            player.sendMessage("You have run out of ammunition!");
             player.getEquipment().set(Equipment.WEAPON_SLOT, new Item(-1));
             WeaponInterfaceManager.assign(player);
             player.getUpdateFlag().flag(Flag.APPEARANCE);

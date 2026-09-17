@@ -89,9 +89,7 @@ function stopCooking(activeSessions, player, resetAnimation = true) {
 
 function startCooking(player, object, cookable, activeSessions) {
   if (player.getSkillManager().getCurrentLevel(Skill.COOKING) < cookable.level) {
-    player
-      .getPacketSender()
-      .sendMessage(`You need a Cooking level of at least ${cookable.level} to cook this.`);
+    player.sendMessage(`You need a Cooking level of at least ${cookable.level} to cook this.`);
     return false;
   }
 
@@ -165,7 +163,7 @@ class CookingTask extends Task {
       if (isSuccess(player, session.cookable)) {
         player.getInventory().addItem(new Item(session.cookable.cooked, 1));
         Sounds.sendSound(player, Sound.COOKING_FOOD);
-        player.getPacketSender().sendMessage(`You cook the ${session.cookable.name}.`);
+        player.sendMessage(`You cook the ${session.cookable.name}.`);
         const levelBefore = player
           .getSkillManager()
           .getMaxLevel(Skill.COOKING);
@@ -183,7 +181,7 @@ class CookingTask extends Task {
         const rawName =
           ItemDefinition.forId(session.cookable.raw)?.getName?.()?.toLowerCase?.() ||
           session.cookable.name;
-        player.getPacketSender().sendMessage(`You burn the ${rawName}.`);
+        player.sendMessage(`You burn the ${rawName}.`);
       }
     }
   }

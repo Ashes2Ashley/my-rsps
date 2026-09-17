@@ -101,7 +101,7 @@ class DragonCombatMethod extends CombatMethod {
         closeRange: this.prayerProtects,
       });
       hit.setTotalDamage(dragonfire.damage);
-      player.getPacketSender().sendMessage(dragonfire.message);
+      player.sendMessage(dragonfire.message);
     } else {
       hit.setTotalDamage(0);
     }

@@ -69,7 +69,7 @@ export class Sheep extends NPC implements NPCInteraction  {
      */
     public shear(player: Player, npc: NPC) {
         if (!player.getInventory().contains(ItemIdentifiers.SHEARS)) {
-            player.getPacketSender().sendMessage("You need a set of shears to do this.");
+            player.sendMessage("You need a set of shears to do this.");
             return;
         }
 
@@ -86,7 +86,7 @@ export class Sheep extends NPC implements NPCInteraction  {
                 player.getInventory().addItem(Sheep.ITEM_WOOL);
             } else {
                 ItemOnGroundManager.registers(player, Sheep.ITEM_WOOL);
-                player.getPacketSender().sendMessage("You did not have enough inventory space so the Wool was dropped on the ground.");
+                player.sendMessage("You did not have enough inventory space so the Wool was dropped on the ground.");
             }
         }));
 

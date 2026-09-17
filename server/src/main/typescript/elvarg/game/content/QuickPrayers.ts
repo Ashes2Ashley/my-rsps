@@ -284,7 +284,7 @@ export class QuickPrayers {
 
     private toggleQuickPrayers(): void {
         if (this.player.getSkillManager().getCurrentLevel(Skill.PRAYER) <= 0) {
-            this.player.getPacketSender().sendMessage("You don't have enough Prayer points.");
+            this.player.sendMessage("You don't have enough Prayer points.");
             return;
         }
         if (this.enabled) {
@@ -295,7 +295,7 @@ export class QuickPrayers {
             const selected = this.prayers.filter((prayer): prayer is PrayerData => prayer != null);
             const blocked = selected.find((prayer) => !QuickPrayers.canUse(this.player, prayer, false));
             if (selected.length === 0) {
-                this.player.getPacketSender().sendMessage("You have not setup any quick-prayers yet.");
+                this.player.sendMessage("You have not setup any quick-prayers yet.");
                 this.enabled = false;
             } else if (blocked) {
                 QuickPrayers.canUse(this.player, blocked, true);

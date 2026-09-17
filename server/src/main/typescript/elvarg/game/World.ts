@@ -172,7 +172,7 @@ export class World {
     */
     public static sendMessage(message: string) {
         World.forEachNetworkPlayer((player) =>
-            player.getPacketSender().sendMessage(message)
+            player.sendMessage(message)
         );
     }
 
@@ -185,7 +185,7 @@ export class World {
     public static sendStaffMessage(message: string) {
         World.forEachNetworkPlayer((player) => {
             if (player.isStaff()) {
-                player.getPacketSender().sendMessage(message);
+                player.sendMessage(message);
             }
         });
     }
@@ -954,14 +954,14 @@ export class World {
 
     public sendMessage(message: string) {
         World.forEachNetworkPlayer((player) =>
-            player.getPacketSender().sendMessage(message)
+            player.sendMessage(message)
         );
     }
 
     public sendStaffMessage(message: string): void {
         World.forEachNetworkPlayer((player) => {
             if (player.isStaff()) {
-                player.getPacketSender().sendMessage(message);
+                player.sendMessage(message);
             }
         });
     }

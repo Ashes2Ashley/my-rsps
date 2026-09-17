@@ -391,7 +391,7 @@ function maybeDropBirdNest(player) {
 
   const nestId = rollBirdNestId();
   ItemOnGroundManager.registers(player, new Item(nestId, 1));
-  player.getPacketSender().sendMessage("@red@A bird's nest falls out of the tree.");
+  player.sendMessage("@red@A bird's nest falls out of the tree.");
 }
 
 function rollNestSeed() {
@@ -427,9 +427,7 @@ function searchBirdNest(player, nestId) {
   }
 
   if (player.getInventory().getFreeSlots() <= 0) {
-    player
-      .getPacketSender()
-      .sendMessage("Your inventory is too full to search the bird's nest.");
+    player.sendMessage("Your inventory is too full to search the bird's nest.");
     return true;
   }
 
@@ -439,18 +437,14 @@ function searchBirdNest(player, nestId) {
   if (nestId === BIRD_NESTS.SEED_NEST) {
     const seed = rollNestSeed();
     player.getInventory().adds(seed.id, 1);
-    player
-      .getPacketSender()
-      .sendMessage(`You take a ${seed.name} seed out of the bird's nest.`);
+    player.sendMessage(`You take a ${seed.name} seed out of the bird's nest.`);
     return true;
   }
 
   if (nestId === BIRD_NESTS.RING_NEST) {
     const ring = rollNestRing();
     player.getInventory().adds(ring.id, 1);
-    player
-      .getPacketSender()
-      .sendMessage(`You take a ${ring.name} ring out of the bird's nest.`);
+    player.sendMessage(`You take a ${ring.name} ring out of the bird's nest.`);
     return true;
   }
 
@@ -461,9 +455,7 @@ function searchBirdNest(player, nestId) {
         ? ItemIds.BIRDS_EGG_3
         : ItemIds.BIRDS_EGG_2;
   player.getInventory().adds(eggId, 1);
-  player
-    .getPacketSender()
-    .sendMessage("You take the bird's egg out of the bird's nest.");
+  player.sendMessage("You take the bird's egg out of the bird's nest.");
   return true;
 }
 
@@ -518,19 +510,15 @@ function depleteTree(treeObject, tree) {
 function startWoodcutting(player, treeObject, tree, activeSessions) {
   const axe = findBestUsableAxe(player);
   if (!axe) {
-    player
-      .getPacketSender()
-      .sendMessage("You don't have an axe which you can use.");
+    player.sendMessage("You don't have an axe which you can use.");
     return false;
   }
 
   const woodcuttingLevel = getWoodcuttingLevel(player);
   if (woodcuttingLevel < tree.requiredLevel) {
-    player
-      .getPacketSender()
-      .sendMessage(
-        `You need a Woodcutting level of at least ${tree.requiredLevel} to cut this tree.`
-      );
+    player.sendMessage(
+      `You need a Woodcutting level of at least ${tree.requiredLevel} to cut this tree.`
+    );
     return false;
   }
 
@@ -546,9 +534,7 @@ function startWoodcutting(player, treeObject, tree, activeSessions) {
     treeObject.getPrivateArea()
   );
   if (!existingTree) {
-    player
-      .getPacketSender()
-      .sendMessage("You can't reach that tree right now.");
+    player.sendMessage("You can't reach that tree right now.");
     return false;
   }
 
@@ -567,7 +553,7 @@ function startWoodcutting(player, treeObject, tree, activeSessions) {
     nextAnimationTick: woodcuttingTick + CHOP_ANIMATION_INTERVAL_TICKS,
   });
 
-  player.getPacketSender().sendMessage("You swing your axe at the tree..");
+  player.sendMessage("You swing your axe at the tree..");
   player.performAnimation(new Animation(axe.animationId));
   return true;
 }
@@ -607,30 +593,24 @@ function processWoodcuttingTick(activeSessions, currentTick) {
 
     const axe = findBestUsableAxe(player);
     if (!axe) {
-      player
-        .getPacketSender()
-        .sendMessage("You don't have an axe which you can use.");
+      player.sendMessage("You don't have an axe which you can use.");
       stopWoodcutting(activeSessions, player);
       continue;
     }
 
     const woodcuttingLevel = getWoodcuttingLevel(player);
     if (woodcuttingLevel < axe.requiredLevel) {
-      player
-        .getPacketSender()
-        .sendMessage(
-          "You don't have an axe which you have the required Woodcutting level to use."
-        );
+      player.sendMessage(
+        "You don't have an axe which you have the required Woodcutting level to use."
+      );
       stopWoodcutting(activeSessions, player);
       continue;
     }
 
     if (woodcuttingLevel < state.tree.requiredLevel) {
-      player
-        .getPacketSender()
-        .sendMessage(
-          `You need a Woodcutting level of at least ${state.tree.requiredLevel} to cut this tree.`
-        );
+      player.sendMessage(
+        `You need a Woodcutting level of at least ${state.tree.requiredLevel} to cut this tree.`
+      );
       stopWoodcutting(activeSessions, player);
       continue;
     }
@@ -658,7 +638,7 @@ function processWoodcuttingTick(activeSessions, currentTick) {
     }
 
     player.getInventory().adds(state.tree.logId, 1);
-    player.getPacketSender().sendMessage("You get some logs.");
+    player.sendMessage("You get some logs.");
     player.getSkillManager().addExperiences(Skill.WOODCUTTING, state.tree.xpReward);
     pluginApi.emitCustomEvent("woodcutting:success", { player, skill: Skill.WOODCUTTING });
     maybeDropBirdNest(player);

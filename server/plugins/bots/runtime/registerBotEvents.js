@@ -326,9 +326,7 @@ function registerBotEvents(options) {
     if (!disabled) {
       return;
     }
-    player
-      .getPacketSender()
-      .sendMessage("botme auto-disabled due to manual input.");
+    player.sendMessage("botme auto-disabled due to manual input.");
     botApi.log("botme_auto_disabled_manual_input", { username, objectId });
   });
 

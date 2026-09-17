@@ -9,7 +9,7 @@ module.exports = {
       if (!attacker || !target || attacker === target) return;
       const channel = attacker.getCurrentClanChat?.();
       if (channel == null || channel !== target.getCurrentClanChat?.()) return;
-      attacker.getPacketSender().sendMessage("You cannot attack a player who is in your clan chat.");
+      attacker.sendMessage("You cannot attack a player who is in your clan chat.");
       event.allow = false;
     });
 

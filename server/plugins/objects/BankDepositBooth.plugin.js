@@ -100,7 +100,7 @@ function handleDepositContainerAction(player, interfaceId, itemId, slot, clickTy
     promptAmount(player, (entered) => deposit(player, slot, itemId, entered));
   } else if (clickType === 10) {
     const definition = player.getInventory().forSlot(slot)?.getDefinition?.();
-    player.getPacketSender().sendMessage(
+    player.sendMessage(
       definition?.getExamine?.() || definition?.getName?.() || "Nothing interesting happens."
     );
   } else {

@@ -381,22 +381,22 @@ function createCastleWars(api) {
 
     if (winningTeam == null) {
       player.getInventory().adds(ItemIdentifiers.CASTLE_WARS_TICKET, 1);
-      player.getPacketSender().sendMessage("Tie game! You earn 1 Castle Wars ticket.");
+      player.sendMessage("Tie game! You earn 1 Castle Wars ticket.");
       return;
     }
 
     if (winningTeam === teamId) {
       player.getInventory().adds(ItemIdentifiers.CASTLE_WARS_TICKET, 2);
-      player.getPacketSender().sendMessage("You won the game. You received 2 Castle Wars tickets!");
+      player.sendMessage("You won the game. You received 2 Castle Wars tickets!");
       return;
     }
 
-    player.getPacketSender().sendMessage("You lost the game. You received no tickets.");
+    player.sendMessage("You lost the game. You received no tickets.");
   }
 
   function returnToLobby(player, message = null) {
     if (message) {
-      player.getPacketSender().sendMessage(message);
+      player.sendMessage(message);
     }
     if (player.getAttribute(CASTLE_WARS_BOT_KEY) === true) {
       player.getForcedLogoutTimer().start(0);
@@ -469,9 +469,7 @@ function createCastleWars(api) {
 
   function moveToWaitingRoom(player, teamId) {
     setTeamId(player, teamId);
-    player
-      .getPacketSender()
-      .sendMessage(`You have been added to the ${getTeamData(teamId).name} team.`);
+    player.sendMessage(`You have been added to the ${getTeamData(teamId).name} team.`);
     player.smartMove(getTeamData(teamId).waitingRoom, 8);
   }
 
@@ -504,25 +502,19 @@ function createCastleWars(api) {
       return;
     }
     if (phase === "active" || phase === "ending") {
-      player
-        .getPacketSender()
-        .sendMessage("There's already a Castle Wars game running. Please wait.");
+      player.sendMessage("There's already a Castle Wars game running. Please wait.");
       return;
     }
 
     const headId = player.getEquipment().getSlot(Equipment.HEAD_SLOT);
     const capeId = player.getEquipment().getSlot(Equipment.CAPE_SLOT);
     if (headId > 0 || capeId > 0) {
-      player
-        .getPacketSender()
-        .sendMessage("You can't wear hats, capes, or helms in Castle Wars.");
+      player.sendMessage("You can't wear hats, capes, or helms in Castle Wars.");
       return;
     }
 
     if (FOOD_ITEM_IDS.length > 0 && player.getEquipment().containsAny(FOOD_ITEM_IDS)) {
-      player
-        .getPacketSender()
-        .sendMessage("You may not bring your own consumables inside Castle Wars.");
+      player.sendMessage("You may not bring your own consumables inside Castle Wars.");
       return;
     }
 
@@ -539,7 +531,7 @@ function createCastleWars(api) {
       teamId === TEAM.SARADOMIN &&
       counts[TEAM.SARADOMIN] > counts[TEAM.ZAMORAK]
     ) {
-      player.getPacketSender().sendMessage("The Saradomin team is full, try Zamorak.");
+      player.sendMessage("The Saradomin team is full, try Zamorak.");
       return;
     }
 
@@ -547,7 +539,7 @@ function createCastleWars(api) {
       teamId === TEAM.ZAMORAK &&
       counts[TEAM.ZAMORAK] > counts[TEAM.SARADOMIN]
     ) {
-      player.getPacketSender().sendMessage("The Zamorak team is full, try Saradomin.");
+      player.sendMessage("The Zamorak team is full, try Saradomin.");
       return;
     }
 
@@ -561,7 +553,7 @@ function createCastleWars(api) {
     if (player.getEquipment().getSlot(Equipment.WEAPON_SLOT) <= 0) {
       return true;
     }
-    player.getPacketSender().sendMessage(message);
+    player.sendMessage(message);
     return false;
   }
 
@@ -599,25 +591,19 @@ function createCastleWars(api) {
     if (carriedFlagTeam === teamId) {
       restoreFlagToBase(carriedFlagTeam);
       clearWeaponSlot(player);
-      player
-        .getPacketSender()
-        .sendMessage(`Returned the ${getTeamData(carriedFlagTeam).name.toLowerCase()} flag!`);
+      player.sendMessage(`Returned the ${getTeamData(carriedFlagTeam).name.toLowerCase()} flag!`);
       return;
     }
 
     if (flagStatus[teamId] !== 0) {
-      player
-        .getPacketSender()
-        .sendMessage("You need your own flag safely returned before you can score.");
+      player.sendMessage("You need your own flag safely returned before you can score.");
       return;
     }
 
     restoreFlagToBase(carriedFlagTeam);
     clearWeaponSlot(player);
     score[teamId] += 1;
-    player
-      .getPacketSender()
-      .sendMessage(`The team of ${getTeamData(teamId).name} scores 1 point!`);
+    player.sendMessage(`The team of ${getTeamData(teamId).name} scores 1 point!`);
   }
 
   function pickupDroppedFlag(player, flagTeam, object) {
@@ -696,7 +682,7 @@ function createCastleWars(api) {
 
   function handleEnergyBarrier(player, object, allowedTeam, crossings) {
     if (getTeamId(player) !== allowedTeam) {
-      player.getPacketSender().sendMessage(ENEMY_SPAWN_MESSAGE);
+      player.sendMessage(ENEMY_SPAWN_MESSAGE);
       return true;
     }
 
@@ -742,7 +728,7 @@ function createCastleWars(api) {
     const objectX = object.getLocation().getX();
     const objectY = object.getLocation().getY();
     if (objectX === tile.x && objectY === tile.y) {
-      player.getPacketSender().sendMessage("You are standing on the rock you clicked.");
+      player.sendMessage("You are standing on the rock you clicked.");
       return true;
     }
     if (objectX > tile.x && objectY === tile.y) {
@@ -761,7 +747,7 @@ function createCastleWars(api) {
       player.getMovementQueue().walkStep(0, -1);
       return true;
     }
-    player.getPacketSender().sendMessage("Can't reach that.");
+    player.sendMessage("Can't reach that.");
     return true;
   }
 
@@ -771,7 +757,7 @@ function createCastleWars(api) {
     }
     player.performAnimation(TAKE_SUPPLY_ANIM);
     player.getInventory().adds(itemId, amount);
-    player.getPacketSender().sendMessage(message);
+    player.sendMessage(message);
     player.getTimers().extendOrRegister(TimerKey.CASTLEWARS_TAKE_ITEM, 2);
     return true;
   }
@@ -784,9 +770,7 @@ function createCastleWars(api) {
 
     const location = player.getLocation();
     if (!GAME_BOUNDS.some((boundary) => boundary.inside(location))) {
-      player
-        .getPacketSender()
-        .sendMessage("You can only set up barricades during a Castle Wars game.");
+      player.sendMessage("You can only set up barricades during a Castle Wars game.");
       return true;
     }
 
@@ -795,7 +779,7 @@ function createCastleWars(api) {
       ObjectManager.existsLocation(location) ||
       World.isNpcOccupyingTile(location, null, 1, player.getPrivateArea())
     ) {
-      player.getPacketSender().sendMessage("You can't set up a barricade here.");
+      player.sendMessage("You can't set up a barricade here.");
       return true;
     }
 
@@ -886,7 +870,7 @@ function createCastleWars(api) {
     if (!TEAM_COLOUR_SLOTS.has(slot)) {
       return true;
     }
-    player.getPacketSender().sendMessage(TEAM_COLOUR_MESSAGE);
+    player.sendMessage(TEAM_COLOUR_MESSAGE);
     return false;
   }
 
@@ -896,7 +880,7 @@ function createCastleWars(api) {
       if (clickType === 1) {
         openLobbyBank(player);
       } else {
-        player.getPacketSender().sendMessage("The Grand Exchange is not available here.");
+        player.sendMessage("The Grand Exchange is not available here.");
       }
       return true;
     }
@@ -932,7 +916,7 @@ function createCastleWars(api) {
     const trapdoor = TRAPDOOR_ROUTES[id];
     if (trapdoor) {
       if (getTeamId(player) === trapdoor.blockedTeam) {
-        player.getPacketSender().sendMessage(ENEMY_SPAWN_MESSAGE);
+        player.sendMessage(ENEMY_SPAWN_MESSAGE);
         return true;
       }
       moveTo(player, trapdoor.to);
@@ -978,13 +962,11 @@ function createCastleWars(api) {
       const secondsLeft = startTask?.isRunning?.()
         ? Math.ceil((startTask.getRemainingTicks() | 0) * 0.6)
         : 0;
-      player
-        .getPacketSender()
-        .sendMessage(
-          secondsLeft > 0
-            ? `Next game begins in ${secondsLeft} seconds.`
-            : "Waiting for players to join the other team."
-        );
+      player.sendMessage(
+        secondsLeft > 0
+          ? `Next game begins in ${secondsLeft} seconds.`
+          : "Waiting for players to join the other team."
+      );
     }
 
     postLeave(character, logout) {
@@ -1133,9 +1115,7 @@ function createCastleWars(api) {
           player.castlewarsIdleTime--;
         }
         if (player.castlewarsIdleTime <= 0) {
-          player
-            .getPacketSender()
-            .sendMessage("You idled too long in the respawn room.");
+          player.sendMessage("You idled too long in the respawn room.");
           returnToLobby(player);
         }
       }
@@ -1163,9 +1143,7 @@ function createCastleWars(api) {
       return;
     }
     if (getTeamId(attacker) === getTeamId(target)) {
-      attacker
-        .getPacketSender()
-        .sendMessage("You can't attack your own team in Castle Wars.");
+      attacker.sendMessage("You can't attack your own team in Castle Wars.");
       event.allow = false;
       return;
     }
@@ -1176,7 +1154,7 @@ function createCastleWars(api) {
     if (event.player?.getArea?.() !== gameArea) {
       return;
     }
-    event.player.getPacketSender().sendMessage("You can't leave just like that!");
+    event.player.sendMessage("You can't leave just like that!");
     event.allow = false;
   }
 
@@ -1248,9 +1226,7 @@ function createCastleWars(api) {
     }
 
     if (getTeamId(player) !== getTeamId(target)) {
-      player
-        .getPacketSender()
-        .sendMessage("You don't want to be healing your enemies!");
+      player.sendMessage("You don't want to be healing your enemies!");
       event.handled = true;
       return;
     }

@@ -118,21 +118,17 @@ function depleteRock(rockObject, rock) {
 function startMining(player, rockObject, rock, activeSessions) {
   const pickaxe = findBestPickaxe(player);
   if (!pickaxe) {
-    player.getPacketSender().sendMessage("You don't have a pickaxe which you can use.");
+    player.sendMessage("You don't have a pickaxe which you can use.");
     return false;
   }
 
   const miningLevel = getMiningLevel(player);
   if (miningLevel < pickaxe.requiredLevel) {
-    player
-      .getPacketSender()
-      .sendMessage("You don't have a pickaxe which you have the required Mining level to use.");
+    player.sendMessage("You don't have a pickaxe which you have the required Mining level to use.");
     return false;
   }
   if (miningLevel < rock.level) {
-    player
-      .getPacketSender()
-      .sendMessage(`You need a Mining level of at least ${rock.level} to mine this rock.`);
+    player.sendMessage(`You need a Mining level of at least ${rock.level} to mine this rock.`);
     return false;
   }
   if (player.getInventory().isFull()) {
@@ -154,7 +150,7 @@ function startMining(player, rockObject, rock, activeSessions) {
   });
   ACTIVE_MINERS.add(player);
 
-  player.getPacketSender().sendMessage("You swing your pickaxe at the rock..");
+  player.sendMessage("You swing your pickaxe at the rock..");
   Sounds.sendSound(player, Sound.MINING_MINE);
   player.performAnimation(pickaxe.animation);
   return true;
@@ -227,7 +223,7 @@ class MiningTask extends Task {
       }
 
       player.getInventory().adds(state.rock.oreId, 1);
-      player.getPacketSender().sendMessage("You get some ores.");
+      player.sendMessage("You get some ores.");
       player.getSkillManager().addExperiences(Skill.MINING, state.rock.xp);
       pluginApi.emitCustomEvent("mining:success", { player, skill: Skill.MINING });
       Sounds.sendSound(player, Sound.MINING_ROCK_GONE);

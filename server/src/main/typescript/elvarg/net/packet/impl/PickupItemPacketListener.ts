@@ -71,9 +71,7 @@ export class PickupItemPacketListener {
     ) {
       const playerCanHold = Number.MAX_SAFE_INTEGER - inventoryAmount;
       if (playerCanHold <= 0) {
-        player
-          .getPacketSender()
-          .sendMessage("You cannot hold more of that item.");
+        player.sendMessage("You cannot hold more of that item.");
         return;
       }
 

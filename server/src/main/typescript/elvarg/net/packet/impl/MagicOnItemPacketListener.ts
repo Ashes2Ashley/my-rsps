@@ -104,15 +104,13 @@ export class MagicOnItemPacketListener {
       return;
     }
     if (player.getSkillManager().getCurrentLevel(Skill.MAGIC) < MagicOnItemPacketListener.TELEKINETIC_GRAB_LEVEL) {
-      player
-        .getPacketSender()
-        .sendMessage(
-          `You need a Magic level of ${MagicOnItemPacketListener.TELEKINETIC_GRAB_LEVEL} to cast this spell.`
-        );
+      player.sendMessage(
+        `You need a Magic level of ${MagicOnItemPacketListener.TELEKINETIC_GRAB_LEVEL} to cast this spell.`
+      );
       return;
     }
     if (!this.hasTelegrabRunes(player)) {
-      player.getPacketSender().sendMessage("You do not have the required items to cast this spell.");
+      player.sendMessage("You do not have the required items to cast this spell.");
       return;
     }
 
@@ -131,7 +129,7 @@ export class MagicOnItemPacketListener {
 
     const groundItem = this.findVisibleGroundItem(player, groundItemId, position);
     if (!groundItem) {
-      player.getPacketSender().sendMessage("Nothing interesting happens.");
+      player.sendMessage("Nothing interesting happens.");
       return;
     }
     if (!this.canReceiveGroundItem(player, groundItemId)) {
@@ -186,9 +184,7 @@ export class MagicOnItemPacketListener {
     const definition = item?.getDefinition?.();
 
     if (player.getSkillManager().getCurrentLevel(Skill.MAGIC) < requiredLevel) {
-      player
-        .getPacketSender()
-        .sendMessage(`You need a Magic level of ${requiredLevel} to cast this spell.`);
+      player.sendMessage(`You need a Magic level of ${requiredLevel} to cast this spell.`);
       return;
     }
     if (
@@ -198,15 +194,15 @@ export class MagicOnItemPacketListener {
       definition.getHighAlchValue() <= 0 ||
       definition.getLowAlchValue() <= 0
     ) {
-      player.getPacketSender().sendMessage("This spell can not be cast on this item.");
+      player.sendMessage("This spell can not be cast on this item.");
       return;
     }
     if (!inventory.contains(ItemIdentifiers.NATURE_RUNE)) {
-      player.getPacketSender().sendMessage("You do not have the required items to cast this spell.");
+      player.sendMessage("You do not have the required items to cast this spell.");
       return;
     }
     if (!this.hasInfiniteFireRune(player) && inventory.getAmount(ItemIdentifiers.FIRE_RUNE) < fireRunesRequired) {
-      player.getPacketSender().sendMessage("You do not have the required items to cast this spell.");
+      player.sendMessage("You do not have the required items to cast this spell.");
       return;
     }
     if (player.getSpellbook()?.getInterfaceId?.() !== MagicSpellbook.NORMAL.getInterfaceId()) {

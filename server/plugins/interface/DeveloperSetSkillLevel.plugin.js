@@ -35,7 +35,6 @@ function handleSkillClick(player, buttonId) {
       const level = Number(amount);
       if (!isValidLevel(level)) {
         player
-          .getPacketSender()
           .sendMessage(`Invalid level. Please enter a level from ${MIN_LEVEL} to ${MAX_LEVEL}.`);
         return;
       }

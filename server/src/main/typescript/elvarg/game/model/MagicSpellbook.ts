@@ -41,7 +41,7 @@ export class MagicSpellbook {
         }
         if (!bypassRequirements && book === MagicSpellbook.LUNAR) {
             if (player.getSkillManager().getMaxLevel(Skill.DEFENCE) < 40) {
-                player.getPacketSender().sendMessage("You need at least level 40 Defence to use the Lunar spellbook.");
+                player.sendMessage("You need at least level 40 Defence to use the Lunar spellbook.");
                 return;
             }
         }
@@ -53,10 +53,10 @@ export class MagicSpellbook {
         getAutocasting().setAutocast(player, null);
 
         //Send notification message
-        player.getPacketSender().sendMessage("You have changed your magic spellbook.")
+        player.sendMessage("You have changed your magic spellbook.");
 
-            //Send the new spellbook interface to the client side tabs
-            .sendTabInterface(6, player.getSpellbook().getInterfaceId());
+        //Send the new spellbook interface to the client side tabs
+        player.getPacketSender().sendTabInterface(6, player.getSpellbook().getInterfaceId());
     }
 
     /**

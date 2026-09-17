@@ -522,14 +522,10 @@ function onCanTeleport(state, event) {
     player.getRights() !== PlayerRights.DEVELOPER &&
     !(player.isPlayerBot?.() && hasGlobalWorldTag("pvp"))
   ) {
-    player
-      .getPacketSender()
-      .sendMessage("Teleport spells are blocked in this level of Wilderness.");
-    player
-      .getPacketSender()
-      .sendMessage(
-        `You must be below level ${levelLimit} of Wilderness to use teleportation spells.`
-      );
+    player.sendMessage("Teleport spells are blocked in this level of Wilderness.");
+    player.sendMessage(
+      `You must be below level ${levelLimit} of Wilderness to use teleportation spells.`
+    );
     event.allow = false;
   }
 }
@@ -568,18 +564,18 @@ function slashWeb(api, event, usedItem) {
     ...player.getInventory().getItems().map(webCutChance),
   );
   if (!chance) {
-    player.getPacketSender().sendMessage("You need a knife or a weapon with a slash bonus to cut this web.");
+    player.sendMessage("You need a knife or a weapon with a slash bonus to cut this web.");
     return;
   }
   player.performAnimation(new Animation(911));
   if (Math.random() >= chance) {
-    player.getPacketSender().sendMessage("You fail to cut through the web.");
+    player.sendMessage("You fail to cut through the web.");
     return;
   }
   const slashed = new GameObject(734, object.getLocation().clone(), object.getType(), object.getFace(), object.getPrivateArea());
   api.getObjectManager().deregister(object, true);
   api.getObjectManager().register(slashed, true);
-  player.getPacketSender().sendMessage("You slash through the web.");
+  player.sendMessage("You slash through the web.");
 }
 
 function pullLever(api, event) {

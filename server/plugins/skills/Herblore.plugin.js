@@ -67,18 +67,16 @@ module.exports = {
       }
 
       if (player.getSkillManager().getCurrentLevel(Skill.HERBLORE) < herb.level) {
-        player
-          .getPacketSender()
-          .sendMessage(
-            `You need a Herblore level of at least ${herb.level} to clean this leaf.`
-          );
+        player.sendMessage(
+          `You need a Herblore level of at least ${herb.level} to clean this leaf.`
+        );
         return true;
       }
 
       player.getInventory().deleteAtSlot(slot, 1);
       player.getInventory().addItem(new Item(herb.clean, 1));
       player.getSkillManager().addExperiences(Skill.HERBLORE, herb.xp);
-      player.getPacketSender().sendMessage("You clean the dirt off the leaf.");
+      player.sendMessage("You clean the dirt off the leaf.");
       player.getClickDelay().reset();
       return true;
     });
@@ -100,11 +98,9 @@ module.exports = {
           player.getSkillManager().getCurrentLevel(Skill.HERBLORE) <
           unfinished.level
         ) {
-          player
-            .getPacketSender()
-            .sendMessage(
-              `You need a Herblore level of at least ${unfinished.level} to do this.`
-            );
+          player.sendMessage(
+            `You need a Herblore level of at least ${unfinished.level} to do this.`
+          );
           event.handled = true;
           return;
         }
@@ -127,11 +123,9 @@ module.exports = {
       }
 
       if (player.getSkillManager().getCurrentLevel(Skill.HERBLORE) < finished.level) {
-        player
-          .getPacketSender()
-          .sendMessage(
-            `You need a Herblore level of at least ${finished.level} to do this.`
-          );
+        player.sendMessage(
+          `You need a Herblore level of at least ${finished.level} to do this.`
+        );
         event.handled = true;
         return;
       }

@@ -12,13 +12,11 @@ export class ChatPacketListener {
       PlayerPunishment.muted(player.getUsername()) ||
       PlayerPunishment.IPMuted(player.getHostAddress())
     ) {
-      player.getPacketSender().sendMessage("You are muted and cannot chat.");
+      player.sendMessage("You are muted and cannot chat.");
       return false;
     }
     if (Misc.blockedWord(text)) {
-      player
-        .getPacketSender()
-        .sendMessage("Your message did not make it past the filter.");
+      player.sendMessage("Your message did not make it past the filter.");
       return false;
     }
     return true;

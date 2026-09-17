@@ -26,6 +26,7 @@ function playerWithAttributes(attributes = new Map()) {
     setAttribute: (key, value) => attributes.set(key, value),
     getInterfaceId: () => GROUP_ID,
     getPacketSender: () => sender,
+    sendMessage: (message) => sender.sendMessage(message),
     getCurrentPreset: () => currentPreset,
     setCurrentPreset: (preset) => { currentPreset = preset; },
     setEnteredSyntaxAction: (action) => { syntaxAction = action; },

@@ -96,7 +96,7 @@ function ensurePouchArray(player) {
 
 function storePouch(player, container) {
   if (container.runeEssenceAmt + container.pureEssenceAmt >= container.pouch.capacity) {
-    player.getPacketSender().sendMessage("Your pouch is already full.");
+    player.sendMessage("Your pouch is already full.");
     return true;
   }
 
@@ -104,11 +104,9 @@ function storePouch(player, container) {
     player.getSkillManager().getMaxLevel(Skill.RUNECRAFTING) <
     container.pouch.requiredLevel
   ) {
-    player
-      .getPacketSender()
-      .sendMessage(
-        `You need a Runecrafting level of at least ${container.pouch.requiredLevel} to use this.`
-      );
+    player.sendMessage(
+      `You need a Runecrafting level of at least ${container.pouch.requiredLevel} to use this.`
+    );
     return true;
   }
 
@@ -124,9 +122,7 @@ function storePouch(player, container) {
       player.getInventory().deleteNumber(ItemIds.RUNE_ESSENCE, 1);
       container.runeEssenceAmt++;
     } else {
-      player
-        .getPacketSender()
-        .sendMessage("You don't have any more essence to store.");
+      player.sendMessage("You don't have any more essence to store.");
       break;
     }
   }
@@ -142,18 +138,16 @@ function checkPouch(player, container) {
         : container.pouch.itemId === ItemIds.LARGE_POUCH
           ? "large pouch"
           : "giant pouch";
-  player
-    .getPacketSender()
-    .sendMessage(
-      `Your ${label} contains ${container.runeEssenceAmt} Rune essence and ${container.pureEssenceAmt} Pure essence.`
-    );
+  player.sendMessage(
+    `Your ${label} contains ${container.runeEssenceAmt} Rune essence and ${container.pureEssenceAmt} Pure essence.`
+  );
   return true;
 }
 
 function withdrawPouch(player, container) {
   const total = container.runeEssenceAmt + container.pureEssenceAmt;
   if (total <= 0) {
-    player.getPacketSender().sendMessage("Your pouch is already empty.");
+    player.sendMessage("Your pouch is already empty.");
     return true;
   }
 
@@ -207,11 +201,9 @@ function handleCraftRunes(event) {
   const player = event.player;
   const level = player.getSkillManager().getCurrentLevel(Skill.RUNECRAFTING);
   if (level < runeData.level) {
-    player
-      .getPacketSender()
-      .sendMessage(
-        `You need a Runecrafting level of at least ${runeData.level} to craft this.`
-      );
+    player.sendMessage(
+      `You need a Runecrafting level of at least ${runeData.level} to craft this.`
+    );
     event.handled = true;
     return;
   }
@@ -225,13 +217,11 @@ function handleCraftRunes(event) {
         : -1;
 
   if (essenceId === -1) {
-    player
-      .getPacketSender()
-      .sendMessage(
-        runeData.pureOnly
-          ? "You need Pure essence to craft runes using this altar."
-          : "You don't have any essence in your inventory."
-      );
+    player.sendMessage(
+      runeData.pureOnly
+        ? "You need Pure essence to craft runes using this altar."
+        : "You don't have any essence in your inventory."
+    );
     event.handled = true;
     return;
   }
@@ -284,11 +274,9 @@ module.exports = {
 
       const level = player.getSkillManager().getMaxLevel(Skill.RUNECRAFTING);
       if (level < talisman.level) {
-        player
-          .getPacketSender()
-          .sendMessage(
-            `You need a Runecrafting level of at least ${talisman.level} to use this Talisman's teleport function.`
-          );
+        player.sendMessage(
+          `You need a Runecrafting level of at least ${talisman.level} to use this Talisman's teleport function.`
+        );
         event.handled = true;
         return;
       }

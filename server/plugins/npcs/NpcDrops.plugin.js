@@ -370,12 +370,12 @@ module.exports = {
     api.registerCommand("reloaddrops", ({ player }) => {
       try {
         const reloaded = loadDrops();
-        player.getPacketSender().sendMessage(
+        player.sendMessage(
           `Reloaded drops: ${reloaded.npcs} npcs, ${reloaded.tables} tables.`
         );
       } catch (error) {
         console.error("[NpcDrops] reload failed", error);
-        player.getPacketSender().sendMessage("Error reloading npc drops.");
+        player.sendMessage("Error reloading npc drops.");
       }
       return true;
     }, PlayerRights.OWNER);

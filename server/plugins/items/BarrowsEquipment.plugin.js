@@ -73,7 +73,7 @@ function degradeEquipment(player) {
     const remaining = Math.max(0, Math.min(MAX_DURABILITY, Math.floor(Number(amulet.getMetaValue?.(META_KEY)?.remaining) || MAX_DURABILITY))) - 1;
     if (remaining <= 0) {
       player.getEquipment().set(Equipment.AMULET_SLOT, new Item(-1));
-      player.getPacketSender().sendMessage("Your amulet of the damned crumbles to dust.");
+      player.sendMessage("Your amulet of the damned crumbles to dust.");
     } else {
       amulet.setId(Barrows.AMULET_OF_THE_DAMNED);
       amulet.setMetaValue(META_KEY, { remaining });
@@ -121,11 +121,11 @@ function repairAll(player) {
   const items = barrowsItems(player);
   const cost = items.reduce((total, item) => total + repairCost(item), 0);
   if (cost <= 0) {
-    player.getPacketSender().sendMessage("You have no damaged Barrows equipment to repair.");
+    player.sendMessage("You have no damaged Barrows equipment to repair.");
     return;
   }
   if (player.getInventory().getAmount(995) < cost) {
-    player.getPacketSender().sendMessage(`You need ${cost.toLocaleString("en-US")} coins to repair your Barrows equipment.`);
+    player.sendMessage(`You need ${cost.toLocaleString("en-US")} coins to repair your Barrows equipment.`);
     return;
   }
   player.getInventory().deleteNumber(995, cost);
@@ -136,7 +136,7 @@ function repairAll(player) {
     item.setId(base).setMetaValue(META_KEY, undefined);
   }
   refresh(player, weaponChanged);
-  player.getPacketSender().sendMessage(`Your Barrows equipment has been repaired for ${cost.toLocaleString("en-US")} coins.`);
+  player.sendMessage(`Your Barrows equipment has been repaired for ${cost.toLocaleString("en-US")} coins.`);
 }
 
 function toragDefence(entity, effectiveDefence) {
@@ -167,7 +167,7 @@ function repairEquipment(event) {
   const { player } = event;
   const cost = barrowsItems(player).reduce((total, item) => total + repairCost(item), 0);
   if (cost <= 0) {
-    player.getPacketSender().sendMessage("You have no damaged Barrows equipment to repair.");
+    player.sendMessage("You have no damaged Barrows equipment to repair.");
     event.handled = true;
     return true;
   }
@@ -252,7 +252,7 @@ module.exports = {
     api.onCanEquip((event) => {
       if (Barrows.isBroken(event.item?.getId?.())) {
         event.allow = false;
-        event.player.getPacketSender().sendMessage("This Barrows item is broken and must be repaired before you can wear it.");
+        event.player.sendMessage("This Barrows item is broken and must be repaired before you can wear it.");
       }
     });
     api.onItemDropPolicy((event) => {

@@ -25,9 +25,7 @@ export class Inventory extends ItemContainer {
   }
 
   public full(itemId?: number): ItemContainer {
-    this.getPlayer()
-      .getPacketSender()
-      .sendMessage("Not enough space in your inventory.");
+    this.getPlayer().sendMessage("Not enough space in your inventory.");
     return this;
   }
 }

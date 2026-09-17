@@ -48,7 +48,7 @@ export class CommandPacketListener {
     //         // do something if player can't use command
     //     }
     // } else {
-    player.getPacketSender().sendMessage("This command does not exist. Try ::players.");
+    player.sendMessage("This command does not exist. Try ::players.");
     // }
   }
 }
