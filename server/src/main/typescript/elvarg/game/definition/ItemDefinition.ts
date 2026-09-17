@@ -2,6 +2,7 @@ import { WeaponInterfaces } from "../content/combat/WeaponInterfaces";
 import { EquipmentType } from "../model/EquipmentType";
 import { CacheDefinitions } from "../cache/CacheDefinitions";
 import { ObjStackability } from "../cache/codec/rs/config/objtype/ObjStackability";
+import { ItemIdentifiers } from "../../util/ItemIdentifiers";
 
 const EQUIPMENT_SLOTS = new Set([0, 1, 2, 3, 4, 5, 7, 9, 10, 12, 13]);
 
@@ -59,7 +60,7 @@ export class ItemDefinition {
         this.name = cached.name;
         this.examine = cached.examine ?? this.examine;
         this.stackable = cached.stackability === ObjStackability.ALWAYS;
-        this.tradeable = cached.isTradable;
+        this.tradeable = cached.isTradable || id === ItemIdentifiers.COINS;
         this.dropable = cached.inventoryActions[4]?.toLowerCase() === "drop";
         this.noted = cached.noteTemplate !== -1;
         this.noteId = cached.note;

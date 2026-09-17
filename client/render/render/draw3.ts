@@ -234,9 +234,8 @@ export function updateGroundItemMeshes(host: WebGLOsrsRendererHost, stacks: Clie
                     host.groundItemStackHashes.delete(key);
                 }
 
-                const mapX = key >> 16;
-                let mapY = key & 0xffff;
-                if (mapY & 0x8000) mapY = mapY - 0x10000;
+                const mapX = key >> 8;
+                const mapY = key & 0xff;
                 const map = host.mapManager.getMap(mapX, mapY) as WebGLMapSquare | undefined;
                 if (map) {
                     if (host.rebuildGroundItemsForMap(map, next)) {
