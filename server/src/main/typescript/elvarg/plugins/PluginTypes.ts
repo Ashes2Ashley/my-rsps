@@ -421,8 +421,8 @@ export interface PluginItemDropEvent {
   handled: boolean;
 }
 
-/** Rights allowed to run a command, as PlayerRights constants. Empty means everyone. */
-export type PluginCommandRights = PlayerRights[];
+/** The lowest PlayerRights that may run a command; everyone at or above it passes. */
+export type PluginCommandRights = PlayerRights;
 
 export interface PluginCommandEvent {
   player: any;
@@ -677,20 +677,20 @@ export interface PluginApi {
   ): void;
   onCommand(handler: (event: PluginCommandEvent) => void): void;
   /**
-   * Registers a command handler. `rights` limits who may run it - the core denies
-   * everyone else before the handler is called, so handlers never check rights
-   * themselves. Omitted or empty means any player may run it.
+   * Registers a command handler. `minimumRights` is the lowest rank that may run it -
+   * the core denies everyone below before the handler is called, so handlers never
+   * check rights themselves. Omitted means any player may run it.
    */
   registerCommand(
     command: string,
     handler: (event: PluginCommandEvent) => void | boolean,
-    rights?: PluginCommandRights
+    minimumRights?: PluginCommandRights
   ): void;
   /**
-   * Overrides the rights a command requires, whoever registered it. An empty array
+   * Overrides the rank a command requires, whoever registered it. `PlayerRights.NONE`
    * opens the command to every player - e.g. a spawn-mode plugin granting ::items.
    */
-  setCommandRights(command: string, rights: PluginCommandRights): void;
+  setCommandRights(command: string, minimumRights: PluginCommandRights): void;
   /**
    * Serves a read-only JSON resource at /api/<name> on the game port, for interface data
    * that is request/response shaped (searches, lists, lookups) rather than a game event.

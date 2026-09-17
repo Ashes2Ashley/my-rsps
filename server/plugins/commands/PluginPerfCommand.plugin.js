@@ -30,12 +30,6 @@ function parseIntArg(value) {
   return Number.isNaN(parsed) ? null : parsed;
 }
 
-const ADMIN_RIGHTS = [
-  PlayerRights.ADMINISTRATOR,
-  PlayerRights.OWNER,
-  PlayerRights.DEVELOPER,
-];
-
 function stopPluginPerfStream(username) {
   const existing = pluginPerfStreams.get(username);
   if (existing) {
@@ -213,13 +207,13 @@ module.exports = {
         .getPacketSender()
         .sendMessage("Usage: ::pluginperf [once|on|off|reset] [limit] [intervalMs]");
       return true;
-    }, ADMIN_RIGHTS);
+    }, PlayerRights.ADMINISTRATOR);
 
     api.registerCommand("serverperf", ({ player, parts }) => {
       const ticksArg = parseIntArg(parts[1]);
       const ticks = ticksArg && ticksArg > 0 ? Math.min(ticksArg, 300) : 60;
       streamServerPerfToPlayer(player, ticks);
       return true;
-    }, ADMIN_RIGHTS);
+    }, PlayerRights.ADMINISTRATOR);
   },
 };

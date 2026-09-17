@@ -97,20 +97,19 @@ from `IdEnums` / the generated identifier files, never a bare number.
 
 ### Command Rights
 
-Commands are rights-checked by the core, never by the handler. Pass the rights allowed to
-run the command as the third argument to `registerCommand`; omit it and any player may run
-it. A handler that opens with "am I an admin?" is a bug.
+Commands are rights-checked by the core, never by the handler. Pass the lowest rank that
+may run the command as the third argument to `registerCommand`; rights ids are ordered
+(none < moderator < administrator < owner < developer) so everyone above it passes too.
+Omit it and any player may run it. A handler that opens with "am I an admin?" is a bug.
 
 ```js
-const OWNER_RIGHTS = [PlayerRights.OWNER, PlayerRights.DEVELOPER];
-
-api.registerCommand("npc", spawnNpc, OWNER_RIGHTS);
-api.registerCommand("players", listPlayers); // anyone
+api.registerCommand("npc", spawnNpc, PlayerRights.OWNER); // owner and developer
+api.registerCommand("players", listPlayers);              // anyone
 ```
 
-`api.setCommandRights(command, rights)` overrides whatever a command registered with, so a
-plugin can widen or narrow someone else's command - a spawn mode opening `::items` to
-everyone passes an empty array.
+`api.setCommandRights(command, minimumRights)` overrides whatever a command registered
+with, so a plugin can widen or narrow someone else's command - a spawn mode opening
+`::items` to everyone passes `PlayerRights.NONE`.
 
 ## Cache Lookup Tooling
 

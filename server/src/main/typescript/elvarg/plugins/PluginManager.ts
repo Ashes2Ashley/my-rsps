@@ -203,10 +203,10 @@ export class PluginManager {
     string,
     PluginHook<PluginCommandEvent>[]
   >();
-  /** Rights each command was registered with. A null value means anyone may run it. */
-  private static commandRights = new Map<string, Set<number> | null>();
-  /** Rights a plugin has overridden a command to, taking priority over registration. */
-  private static commandRightsOverrides = new Map<string, Set<number> | null>();
+  /** Lowest rights id each command was registered with. Null means anyone may run it. */
+  private static commandRights = new Map<string, number | null>();
+  /** Lowest rights id a plugin has overridden a command to, taking priority over registration. */
+  private static commandRightsOverrides = new Map<string, number | null>();
   private static slayerAssignHooks: Array<{
     pluginName: string;
     handler: (player: any) => boolean;
@@ -1274,38 +1274,33 @@ export class PluginManager {
     return event.handled === true;
   }
 
-  /** Null means "no restriction"; a set holds the rights ids allowed to run the command. */
+  /** Null means "no restriction"; otherwise the lowest rights id that may run the command. */
   private static normalizeCommandRights(
-    rights: PluginCommandRights | undefined
-  ): Set<number> | null {
-    if (!Array.isArray(rights)) {
-      return null;
-    }
-    const ids = new Set<number>();
-    for (const entry of rights) {
-      const id = (entry as any)?.getId?.();
-      if (Number.isInteger(id)) {
-        ids.add(id);
-      }
-    }
-    return ids.size ? ids : null;
+    minimumRights: PluginCommandRights | undefined
+  ): number | null {
+    const id = (minimumRights as any)?.getId?.();
+    return Number.isInteger(id) ? id : null;
   }
 
+  /**
+   * Rights ids are sequential and ordered (none < moderator < administrator < owner <
+   * developer), so a command's requirement is a floor everyone above also clears.
+   */
   private static playerHasCommandRights(player: any, base: string): boolean {
     const required = PluginManager.commandRightsOverrides.has(base)
       ? PluginManager.commandRightsOverrides.get(base)
       : PluginManager.commandRights.get(base);
-    if (!required) {
+    if (required === null || required === undefined) {
       return true;
     }
     const rightsId = player?.getRights?.()?.getId?.();
-    return Number.isInteger(rightsId) && required.has(rightsId);
+    return Number.isInteger(rightsId) && rightsId >= required;
   }
 
-  /** Overrides the rights a command requires. An empty array opens it to every player. */
+  /** Overrides the rank a command requires. PlayerRights.NONE opens it to every player. */
   public static setCommandRights(
     command: string,
-    rights: PluginCommandRights
+    minimumRights: PluginCommandRights
   ): void {
     if (typeof command !== "string") {
       return;
@@ -1316,7 +1311,7 @@ export class PluginManager {
     }
     PluginManager.commandRightsOverrides.set(
       normalized,
-      PluginManager.normalizeCommandRights(rights)
+      PluginManager.normalizeCommandRights(minimumRights)
     );
   }
 
@@ -2896,7 +2891,7 @@ export class PluginManager {
           console.error(`[plugins] ${pluginName} custom interface rejected`, error);
         }
       },
-      registerCommand: (command, handler, rights) => {
+      registerCommand: (command, handler, minimumRights) => {
         if (typeof command !== "string" || typeof handler !== "function") {
           return;
         }
@@ -2906,7 +2901,7 @@ export class PluginManager {
         }
         PluginManager.commandRights.set(
           normalized,
-          PluginManager.normalizeCommandRights(rights)
+          PluginManager.normalizeCommandRights(minimumRights)
         );
 
         const wrapper: PluginHook<PluginCommandEvent> = {
@@ -2927,8 +2922,8 @@ export class PluginManager {
         existing.push(wrapper);
         PluginManager.commandHandlersByBase.set(normalized, existing);
       },
-      setCommandRights: (command, rights) => {
-        PluginManager.setCommandRights(command, rights);
+      setCommandRights: (command, minimumRights) => {
+        PluginManager.setCommandRights(command, minimumRights);
       },
       onObjectClick: (objectIds, clickType, handler) => {
         if (!Number.isInteger(clickType) || clickType < 1 || clickType > 5) {

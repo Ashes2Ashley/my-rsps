@@ -294,6 +294,6 @@ module.exports = {
       ItemOnGroundManager.registers(player, new Item(995, 10000));
       player.getPacketSender().sendMessage("Spawned ground item..");
       return true;
-    }, [PlayerRights.OWNER]);
+    }, PlayerRights.OWNER);
   },
 };

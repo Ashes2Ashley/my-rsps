@@ -38,8 +38,6 @@ const playerProceduralRegionOverrides = new Map();
 const playerProceduralRegionPayloads = new Map();
 const regionProceduralClipOverrides = new Map();
 
-const OWNER_RIGHTS = [PlayerRights.OWNER, PlayerRights.DEVELOPER];
-
 function parseIntArg(value) {
   const parsed = Number.parseInt(value, 10);
   return Number.isNaN(parsed) ? null : parsed;
@@ -1646,7 +1644,7 @@ module.exports = {
       }
 
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("procregionhere", ({ player, parts }) => {
       const location = player.getLocation();
@@ -1663,7 +1661,7 @@ module.exports = {
       }
 
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("cleargen", ({ player }) => {
       const restoredCacheObjects = clearProceduralClippingForPlayer(player);
@@ -1674,7 +1672,7 @@ module.exports = {
           `[proc-region] cleargen requested: client procedural overrides cleared and region reload forced (cache object clips restored=${restoredCacheObjects}).`
         );
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("procregscan", ({ player, parts }) => {
       const radius = parseIntArg(parts[1] ?? "1");
@@ -1687,7 +1685,7 @@ module.exports = {
         player.getPacketSender().sendMessage(`[proc-region] structure scan failed: ${reason}`);
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("procreglearn", ({ player, parts }) => {
       const radius = parseIntArg(parts[1] ?? "2");
@@ -1711,7 +1709,7 @@ module.exports = {
         player.getPacketSender().sendMessage(`[proc-region] learn failed: ${reason}`);
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("dumphouse", ({ player, parts }) => {
       if (parts.length < 2 || parts.length > 3) {
@@ -1739,7 +1737,7 @@ module.exports = {
         player.getPacketSender().sendMessage(`[proc-region] dumphouse failed: ${reason}`);
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("dumpterrain", ({ player, parts }) => {
       if (parts.length !== 2) {
@@ -1771,7 +1769,7 @@ module.exports = {
         player.getPacketSender().sendMessage(`[proc-region] dumpterrain failed: ${reason}`);
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("genterrain", ({ player, parts }) => {
       if (parts.length < 2 || parts.length > 3) {
@@ -1805,7 +1803,7 @@ module.exports = {
         player.getPacketSender().sendMessage(`[proc-region] genterrain failed: ${reason}`);
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("buildhouse", ({ player, parts }) => {
       if (parts.length < 2 || parts.length > 3) {
@@ -1838,7 +1836,7 @@ module.exports = {
         player.getPacketSender().sendMessage(`[proc-region] buildhouse failed: ${reason}`);
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("genhouse", ({ player, parts }) => {
       if (parts.length < 2 || parts.length > 4) {
@@ -1884,7 +1882,7 @@ module.exports = {
         player.getPacketSender().sendMessage(`[proc-region] genhouse failed: ${reason}`);
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("genstreet", ({ player, parts }) => {
       if (parts.length > 4) {
@@ -1938,7 +1936,7 @@ module.exports = {
         player.getPacketSender().sendMessage(`[proc-region] genstreet failed: ${reason}`);
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("checkhouse", ({ player }) => {
       try {
@@ -1953,6 +1951,6 @@ module.exports = {
         player.getPacketSender().sendMessage(`[proc-region] checkhouse failed: ${reason}`);
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
   },
 };

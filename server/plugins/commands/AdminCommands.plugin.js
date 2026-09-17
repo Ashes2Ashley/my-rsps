@@ -270,14 +270,6 @@ function resolvePlayerByCommandTail(raw, parts) {
   return prefixCount === 1 ? prefixMatch : null;
 }
 
-const ADMIN_RIGHTS = [
-  PlayerRights.ADMINISTRATOR,
-  PlayerRights.OWNER,
-  PlayerRights.DEVELOPER,
-];
-const OWNER_RIGHTS = [PlayerRights.OWNER, PlayerRights.DEVELOPER];
-const DEVELOPER_RIGHTS = [PlayerRights.DEVELOPER];
-
 function ownerOrDev(player) {
   const rights = player?.getRights?.();
   return rights === PlayerRights.OWNER || rights === PlayerRights.DEVELOPER;
@@ -694,7 +686,7 @@ module.exports = {
       }
       player.moveTo(new Location(x, y, z));
       return true;
-    }, ADMIN_RIGHTS);
+    }, PlayerRights.ADMINISTRATOR);
 
     api.registerCommand("coords", ({ player }) => {
       const location = player.getLocation();
@@ -702,7 +694,7 @@ module.exports = {
         .getPacketSender()
         .sendMessage(`Coords: ${location.getX()}, ${location.getY()}, ${location.getZ()}`);
       return true;
-    }, ADMIN_RIGHTS);
+    }, PlayerRights.ADMINISTRATOR);
 
     api.registerCommand("glow", ({ player, raw, parts }) => {
       const presetToken = String(parts[1] ?? "").trim().toLowerCase();
@@ -775,7 +767,7 @@ module.exports = {
           }.`
         );
       return true;
-    }, ADMIN_RIGHTS);
+    }, PlayerRights.ADMINISTRATOR);
 
     api.registerCommand("teleto", ({ player, raw, parts }) => {
       const target = resolvePlayerByCommandTail(raw, parts);
@@ -785,7 +777,7 @@ module.exports = {
       }
       player.moveTo(target.getLocation().clone());
       return true;
-    }, ADMIN_RIGHTS);
+    }, PlayerRights.ADMINISTRATOR);
 
     api.registerCommand("teletome", ({ player, raw, parts }) => {
       const target = resolvePlayerByCommandTail(raw, parts);
@@ -795,7 +787,7 @@ module.exports = {
       }
       target.moveTo(player.getLocation().clone());
       return true;
-    }, ADMIN_RIGHTS);
+    }, PlayerRights.ADMINISTRATOR);
 
     api.registerCommand("kick", ({ player, raw, parts }) => {
       const target = World.getPlayerByName(commandTail(raw, parts));
@@ -803,7 +795,7 @@ module.exports = {
         target.requestLogout();
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("exit", ({ player, raw, parts }) => {
       const targetName = commandTail(raw, parts);
@@ -819,7 +811,7 @@ module.exports = {
       target.getPacketSender().sendExit();
       player.getPacketSender().sendMessage("Closed other player's client.");
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("copybank", ({ player, raw, parts }) => {
       const target = World.getPlayerByName(commandTail(raw, parts));
@@ -835,12 +827,12 @@ module.exports = {
         }
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("bank", ({ player }) => {
       player.getBank(player.getCurrentBankTab()).open();
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("runes", ({ player }) => {
       const inventory = player.getInventory();
@@ -863,13 +855,13 @@ module.exports = {
             : `Spawned ${given}/${RUNE_IDS.length} rune types - free up inventory space for the rest.`
         );
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     function registerSpellbookCommand(command, spellbook) {
       api.registerCommand(command, ({ player }) => {
         MagicSpellbook.changeSpellbook(player, spellbook, true);
         return true;
-      }, DEVELOPER_RIGHTS);
+      }, PlayerRights.DEVELOPER);
     }
 
     registerSpellbookCommand("normal", MagicSpellbook.NORMAL);
@@ -889,7 +881,7 @@ module.exports = {
       WeaponInterfaceManager.assign(player);
       player.getUpdateFlag().flag(Flag.APPEARANCE);
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("reset", ({ player }) => {
       for (const skill of Skill.values()) {
@@ -902,7 +894,7 @@ module.exports = {
       }
       WeaponInterfaceManager.assign(player);
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("pnpc", ({ player, parts }) => {
       const id = parseIntArg(parts[1]);
@@ -913,10 +905,10 @@ module.exports = {
       player.performAnimation(Animation.DEFAULT_RESET_ANIMATION);
       player.setNpcTransformationId(id);
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
-    api.registerCommand("items", itemSearchCommand, ADMIN_RIGHTS);
-    api.registerCommand("npcs", npcSearchCommand, OWNER_RIGHTS);
+    api.registerCommand("items", itemSearchCommand, PlayerRights.ADMINISTRATOR);
+    api.registerCommand("npcs", npcSearchCommand, PlayerRights.OWNER);
     api.onPlayerProcess(closeSpawnSearchOnMove);
 
     api.registerCommand("npc", ({ player, parts }) => {
@@ -931,7 +923,7 @@ module.exports = {
         `Queued ${spawned} NPC${spawned === 1 ? "" : "s"} (id=${id}).`
       );
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     const npcAnimationCommand = ({ player, parts }) => {
       const id = parseIntArg(parts[1]);
@@ -961,8 +953,8 @@ module.exports = {
       }
       return true;
     };
-    api.registerCommand("npcanim", npcAnimationCommand, OWNER_RIGHTS);
-    api.registerCommand("npcanims", npcAnimationCommand, OWNER_RIGHTS);
+    api.registerCommand("npcanim", npcAnimationCommand, PlayerRights.OWNER);
+    api.registerCommand("npcanims", npcAnimationCommand, PlayerRights.OWNER);
 
     api.registerCommand("npcanimscan", ({ player, parts }) => {
       const id = parseIntArg(parts[1]);
@@ -997,7 +989,7 @@ module.exports = {
         player.getPacketSender().sendMessage("Unable to scan cache animation data.");
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("npcperm", ({ player, parts }) => {
       const id = parseIntArg(parts[1]);
@@ -1056,7 +1048,7 @@ module.exports = {
           `Spawned ${spawned} NPC (id=${id}) and appended to ${file} at ${location.getX()},${location.getY()},${location.getZ()} (radius=${spawnEntry.wanderRadius}, facing=${facing?.label ?? "default"}).`
         );
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("object", ({ player, parts }) => {
       const id = parseIntArg(parts[1]);
@@ -1068,12 +1060,12 @@ module.exports = {
       const gameObject = new GameObject(id, player.getLocation().clone(), type, face, player.getPrivateArea());
       ObjectManager.register(gameObject, true);
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("mypos", ({ player }) => {
       player.getPacketSender().sendMessage(player.getLocation().toString());
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("config", ({ player, parts }) => {
       const id = parseIntArg(parts[1]);
@@ -1084,14 +1076,14 @@ module.exports = {
       player.getPacketSender().sendConfig(id, state);
       player.getPacketSender().sendMessage("Sent config");
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("spec", ({ player, parts }) => {
       const amount = parts.length > 1 ? parseIntArg(parts[1]) : 100;
       player.setSpecialPercentage(amount ?? 100);
       CombatSpecial.updateBar(player);
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("gfx", ({ player, parts }) => {
       const id = parseIntArg(parts[1]);
@@ -1099,7 +1091,7 @@ module.exports = {
         player.performGraphic(new Graphic(id, 0));
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("sound", ({ player, parts }) => {
       const input = parts[1];
@@ -1138,7 +1130,7 @@ module.exports = {
         player.getPacketSender().sendMessage(`Played ${soundName} (${id}).`);
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("anim", ({ player, parts }) => {
       const id = parseIntArg(parts[1]);
@@ -1146,7 +1138,7 @@ module.exports = {
         player.performAnimation(new Animation(id));
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("interface", ({ player, parts }) => {
       const id = parseIntArg(parts[1]);
@@ -1154,7 +1146,7 @@ module.exports = {
         player.getPacketSender().sendInterface(id);
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("chatboxinterface", ({ player, parts }) => {
       const id = parseIntArg(parts[1]);
@@ -1162,7 +1154,7 @@ module.exports = {
         player.getPacketSender().sendChatboxInterface(id);
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("update", ({ player, parts }) => {
       const ticks = parseIntArg(parts[1]);
@@ -1186,7 +1178,7 @@ module.exports = {
         })
       );
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("area", ({ player }) => {
       if (player.getArea()) {
@@ -1196,13 +1188,13 @@ module.exports = {
         player.getPacketSender().sendMessage("No area found for your coordinates.");
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("infhp", ({ player }) => {
       player.setInfiniteHealth(!player.hasInfiniteHealth());
       player.getPacketSender().sendMessage(`Invulnerable: ${player.hasInfiniteHealth()}`);
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("poisonme", ({ player, parts }) => {
       const typeToken = String(parts?.[1] ?? "super").trim().toLowerCase();
@@ -1223,23 +1215,23 @@ module.exports = {
       CombatFactory.poisonEntity(player, poisonSeverity, typeToken === "venom" || typeToken === "v" ? 2 : 1);
       player.getPacketSender().sendMessage(`Poison test applied: ${typeToken}.`);
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("taskdebug", ({ player }) => {
       player.getPacketSender().sendMessage(`Active tasks :${TaskManager.getTaskAmount()}.`);
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("noclip", ({ player }) => {
       player.getPacketSender().sendEnableNoclip();
       player.getPacketSender().sendMessage("Noclip enabled.");
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("up", ({ player }) => {
       player.moveTo(player.getLocation().clone().setZ(player.getLocation().getZ() + 1));
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("down", ({ player }) => {
       const next = player.getLocation().clone().setZ(player.getLocation().getZ() - 1);
@@ -1249,13 +1241,13 @@ module.exports = {
       }
       player.moveTo(next);
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("save", ({ player }) => {
       GameConstants.PLAYER_PERSISTENCE.save(player);
       player.getPacketSender().sendMessage("Queued player save.");
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("reprocorruptsave", ({ player, raw, parts }) => {
       const requested = commandTail(raw, parts);
@@ -1341,13 +1333,13 @@ module.exports = {
 
       corruptTargetSave();
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("saveall", ({ player }) => {
       World.savePlayers();
       player.getPacketSender().sendMessage("Queued save for all players.");
       return true;
-    }, ADMIN_RIGHTS);
+    }, PlayerRights.ADMINISTRATOR);
 
     api.registerCommand("cwar", ({ player, parts }) => {
       const x = parseIntArg(parts[1]);
@@ -1359,7 +1351,7 @@ module.exports = {
       player.getPacketSender().sendInterfaceComponentMoval(x, y, 11332);
       player.getPacketSender().sendMessage(`Sending RedX to X=${x}, Y=${y}`);
       return true;
-    }, DEVELOPER_RIGHTS);
+    }, PlayerRights.DEVELOPER);
 
     api.registerCommand("listsizes", ({ player }) => {
       player
@@ -1368,7 +1360,7 @@ module.exports = {
           `Players: ${Array.from(World.getPlayers()).length}, NPCs: ${World.getNpcs().sizeReturn()}, Objects: ${World.getObjects().length}, GroundItems: ${World.getItems().length}.`
         );
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     const attackRangeFn = ({ player, parts }) => {
       const distance = parts.length === 2 ? parseIntArg(parts[1]) : CombatFactory.getMethod(player).attackDistance(player);
@@ -1398,8 +1390,8 @@ module.exports = {
       return true;
     };
 
-    api.registerCommand("atkrange", attackRangeFn, OWNER_RIGHTS);
-    api.registerCommand("attackrange", attackRangeFn, OWNER_RIGHTS);
+    api.registerCommand("atkrange", attackRangeFn, PlayerRights.OWNER);
+    api.registerCommand("attackrange", attackRangeFn, PlayerRights.OWNER);
 
     api.registerCommand("item", ({ player, parts }) => {
       const id = parseIntArg(parts[1]);
@@ -1414,7 +1406,7 @@ module.exports = {
         .getPacketSender()
         .sendMessage(`Spawned item ${id} x${cappedAmount}.`);
       return true;
-    }, ADMIN_RIGHTS);
+    }, PlayerRights.ADMINISTRATOR);
 
     api.registerCommand("unlockprayers", ({ player, parts }) => {
       const type = parseIntArg(parts[1]);
@@ -1429,7 +1421,7 @@ module.exports = {
       player.getPacketSender().sendConfig(711, player.isRigourUnlocked() ? 1 : 0);
       player.getPacketSender().sendConfig(713, player.getAuguryUnlocked() ? 1 : 0);
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("gesell", ({ player, parts }) => {
       const id = parseIntArg(parts[1]);
@@ -1443,7 +1435,7 @@ module.exports = {
         .sendString(def.getName(), 24769)
         .sendString(def.getExamine(), 24770);
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("flood", ({ player, parts }) => {
       const amount = parseIntArg(parts[1]);
@@ -1451,13 +1443,13 @@ module.exports = {
         Server.getFlooder().login(amount);
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("reloadpunishments", ({ player }) => {
       PlayerPunishment.init();
       player.getPacketSender().sendMessage("Reloaded");
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("reloadshops", ({ player }) => {
       try {
@@ -1474,7 +1466,7 @@ module.exports = {
         player.getPacketSender().sendMessage("Error reloading shops.");
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("shop", ({ player, parts }) => {
       const shopId = parseIntArg(parts[1]);
@@ -1486,7 +1478,7 @@ module.exports = {
         player.getPacketSender().sendMessage(`Shop ${shopId} does not exist.`);
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("reloadnpcspawns", ({ player }) => {
       try {
@@ -1508,12 +1500,12 @@ module.exports = {
         player.getPacketSender().sendMessage("Error reloading npc spawns.");
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("reloadnpcdefs", ({ player }) => {
       player.getPacketSender().sendMessage("Reloaded npc defs.");
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("logstatus", ({ player }) => {
       const levels = ServerLogger.getEnabledLevels().join(",") || "(none)";
@@ -1523,7 +1515,7 @@ module.exports = {
       player.getPacketSender().sendMessage(`Enabled types: ${enabledTypes}`);
       player.getPacketSender().sendMessage(`Disabled types: ${disabledTypes}`);
       return true;
-    }, DEVELOPER_RIGHTS);
+    }, PlayerRights.DEVELOPER);
 
     api.registerCommand("loglevels", ({ player, parts }) => {
       const values = parseCsvArgs(parts, 1);
@@ -1537,7 +1529,7 @@ module.exports = {
       ServerLogger.setEnabledLevels(valid);
       player.getPacketSender().sendMessage(`Updated log levels: ${valid.join(",") || "(none)"}`);
       return true;
-    }, DEVELOPER_RIGHTS);
+    }, PlayerRights.DEVELOPER);
 
     api.registerCommand("logtypeon", ({ player, parts }) => {
       const values = parseCsvArgs(parts, 1);
@@ -1549,7 +1541,7 @@ module.exports = {
       ServerLogger.setEnabledTypes(Array.from(merged));
       player.getPacketSender().sendMessage(`Enabled log types: ${Array.from(merged).join(",")}`);
       return true;
-    }, DEVELOPER_RIGHTS);
+    }, PlayerRights.DEVELOPER);
 
     api.registerCommand("logtypeoff", ({ player, parts }) => {
       const values = parseCsvArgs(parts, 1);
@@ -1561,7 +1553,7 @@ module.exports = {
       ServerLogger.setDisabledTypes(Array.from(merged));
       player.getPacketSender().sendMessage(`Disabled log types: ${Array.from(merged).join(",")}`);
       return true;
-    }, DEVELOPER_RIGHTS);
+    }, PlayerRights.DEVELOPER);
 
     api.registerCommand("logtypeclear", ({ player, parts }) => {
       const mode = String(parts[1] || "all").toLowerCase();
@@ -1575,12 +1567,12 @@ module.exports = {
         `Cleared log type filters (${mode}). Enabled: ${ServerLogger.getEnabledTypes().join(",") || "(none)"} Disabled: ${ServerLogger.getDisabledTypes().join(",") || "(none)"}`
       );
       return true;
-    }, DEVELOPER_RIGHTS);
+    }, PlayerRights.DEVELOPER);
 
     api.registerCommand("reloaditems", ({ player }) => {
       player.getPacketSender().sendMessage("Reloaded item defs");
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("mute", ({ player, raw, parts }) => {
       const targetName = commandTail(raw, parts);
@@ -1589,7 +1581,7 @@ module.exports = {
         player.getPacketSender().sendMessage(`Player ${targetName} does not exist.`);
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("unmute", ({ player, raw, parts }) => {
       const targetName = commandTail(raw, parts);
@@ -1602,7 +1594,7 @@ module.exports = {
         player.getPacketSender().sendMessage(`Player ${targetName} does not have an active mute.`);
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("ipmute", ({ player, raw, parts }) => {
       const targetName = commandTail(raw, parts);
@@ -1611,7 +1603,7 @@ module.exports = {
         player.getPacketSender().sendMessage(`Player ${targetName} is not online.`);
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("unipmute", ({ player, raw, parts }) => {
       const targetName = commandTail(raw, parts);
@@ -1624,7 +1616,7 @@ module.exports = {
         player.getPacketSender().sendMessage(`Player ${targetName} is in combat!`);
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("ban", ({ player, raw, parts }) => {
       const targetName = commandTail(raw, parts);
@@ -1640,7 +1632,7 @@ module.exports = {
         }
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("unban", ({ player, raw, parts }) => {
       const targetName = commandTail(raw, parts);
@@ -1652,7 +1644,7 @@ module.exports = {
         player.getPacketSender().sendMessage(`Player ${targetName} is not banned!`);
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("ipban", ({ player, raw, parts }) => {
       const targetName = commandTail(raw, parts);
@@ -1661,23 +1653,23 @@ module.exports = {
         player.getPacketSender().sendMessage(`Player ${targetName} is not online.`);
       }
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     if (!Server.PRODUCTION) {
       api.registerCommand("t", ({ player }) => {
         console.log(RegionManager.wallsExist(player.getLocation().clone(), player.getPrivateArea()));
         return true;
-      }, DEVELOPER_RIGHTS);
+      }, PlayerRights.DEVELOPER);
     }
 
     // Legacy no-op command stubs from previous command package.
     api.registerCommand("barrage", ({ player }) => {
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
 
     api.registerCommand("dialogue", ({ player }) => {
       return true;
-    }, OWNER_RIGHTS);
+    }, PlayerRights.OWNER);
   },
   _test: {
     itemSearchCommand,

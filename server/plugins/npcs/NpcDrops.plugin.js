@@ -378,7 +378,7 @@ module.exports = {
         player.getPacketSender().sendMessage("Error reloading npc drops.");
       }
       return true;
-    }, [PlayerRights.OWNER, PlayerRights.DEVELOPER]);
+    }, PlayerRights.OWNER);
 
     api.log("registered", stats);
   },

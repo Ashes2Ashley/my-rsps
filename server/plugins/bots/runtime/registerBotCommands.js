@@ -5,13 +5,6 @@ const { callModeHook } = require("../behaviours/hooks/ModeHookContract");
 const { isPvpOnlyBotState } = require("../behaviours/state/PlayerBotState");
 const { ATTR_RECRUIT_OWNER_USERNAME } = require("./BotRecruitConstants");
 
-const ADMIN_RIGHTS = [
-  PlayerRights.ADMINISTRATOR,
-  PlayerRights.OWNER,
-  PlayerRights.DEVELOPER,
-];
-const DEVELOPER_RIGHTS = [PlayerRights.DEVELOPER];
-
 function registerBotCommands(options) {
   const {
     api,
@@ -55,7 +48,7 @@ function registerBotCommands(options) {
     // The factory queues a world login. Clan membership needs the assigned player index.
     pendingRecruits.set(bot, player);
     return true;
-  }, DEVELOPER_RIGHTS);
+  }, PlayerRights.DEVELOPER);
   api.onPlayerProcess(({ player: owner }) => {
     if (owner.isPlayerBot?.()) return;
     for (const [bot, pendingOwner] of pendingRecruits) {
@@ -134,7 +127,7 @@ function registerBotCommands(options) {
       .getPacketSender()
       .sendMessage("Usage: ::botme [on|off|toggle|status]");
     return true;
-  }, ADMIN_RIGHTS);
+  }, PlayerRights.ADMINISTRATOR);
 
   api.registerCommand("bh", ({ player, parts }) => {
     const usernameArg = parts[1];
@@ -244,7 +237,7 @@ function registerBotCommands(options) {
       behavior: normalizedBehavior,
     });
     return true;
-  }, ADMIN_RIGHTS);
+  }, PlayerRights.ADMINISTRATOR);
 
   api.registerCommand("bothotspots", ({ player }) => {
     const countsByHotspot = new Map();
@@ -280,7 +273,7 @@ function registerBotCommands(options) {
       `profiles ${formatCounts(countsByProfile) || "none"}`
     );
     return true;
-  }, ADMIN_RIGHTS);
+  }, PlayerRights.ADMINISTRATOR);
 }
 
 module.exports = {
