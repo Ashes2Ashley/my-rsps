@@ -172,7 +172,7 @@ function showCompleted(player, slot) {
 
 function chooseItem(player, offer) {
   if (offer.sell) {
-    player.getPacketSender().sendMessage("Choose an item from your inventory to sell.");
+    player.sendMessage("Choose an item from your inventory to sell.");
     return;
   }
   player.setEnteredSyntaxAction({ execute: (input) => {
@@ -192,7 +192,7 @@ function start(player, sell, slot = 0, itemId = -1) {
   if (Object.hasOwn(completedOffers(player), slot)) {
     const free = Array.from({ length: 8 }, (_, i) => i).find((i) => !Object.hasOwn(completedOffers(player), i));
     if (free == null) {
-      player.getPacketSender().sendMessage("Collect an offer before creating another one.");
+      player.sendMessage("Collect an offer before creating another one.");
       return;
     }
     slot = free;
@@ -259,12 +259,12 @@ function collect(player, action, slot = viewing.get(player)) {
   result.setItems(destination.getCopiedItems());
   const before = result.getAmount(outputId);
   if (before + outputAmount > MAX) {
-    player.getPacketSender().sendMessage(`You do not have enough ${action === 3 ? "bank" : "inventory"} space to collect that offer.`);
+    player.sendMessage(`You do not have enough ${action === 3 ? "bank" : "inventory"} space to collect that offer.`);
     return;
   }
   result.add(new Item(outputId, outputAmount), false);
   if (result.getAmount(outputId) !== before + outputAmount) {
-    player.getPacketSender().sendMessage(`You do not have enough ${action === 3 ? "bank" : "inventory"} space to collect that offer.`);
+    player.sendMessage(`You do not have enough ${action === 3 ? "bank" : "inventory"} space to collect that offer.`);
     return;
   }
   destination.setItems(result.getItems());
@@ -282,7 +282,7 @@ function collect(player, action, slot = viewing.get(player)) {
 function openGrandExchange({ player }) {
   if ([GE, GE_COLLECT].includes(player.getInterfaceId())) player.getPacketSender().sendInterfaceRemoval();
   if (player.busy()) {
-    player.getPacketSender().sendMessage("Finish what you are doing before opening the Grand Exchange.");
+    player.sendMessage("Finish what you are doing before opening the Grand Exchange.");
     return true;
   }
   player.getMovementQueue().reset();
@@ -397,7 +397,7 @@ function handleExchangeButton({ player, buttonId, slot, action }) {
     } });
     player.getPacketSender().sendEnterAmountPrompt("How many would you like to trade?");
   } else if (slot >= 8 && slot <= 16) {
-    player.getPacketSender().sendMessage("This exchange uses fixed guide prices.");
+    player.sendMessage("This exchange uses fixed guide prices.");
   }
   refresh(player, offer);
   return true;

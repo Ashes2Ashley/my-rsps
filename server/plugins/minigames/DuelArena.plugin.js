@@ -185,7 +185,7 @@ function handleStake(event) {
   const item = removing ? offer.get(inventorySlot) : player.getInventory().getItems()[slot];
   if (!item?.isValid() || item.getId() !== itemId) return;
   if (item.getId() !== COINS && !item.getDefinition().isTradeable()) {
-    player.getPacketSender().sendMessage("You cannot stake that item.");
+    player.sendMessage("You cannot stake that item.");
     return;
   }
   const action = event.opId ?? event.action;
@@ -344,7 +344,7 @@ function end(session, loser) {
         if (fits) inventory.add(item.clone(), false);
         else {
           ItemOnGroundManager.registerNonGlobal(player, item.clone());
-          player.getPacketSender().sendMessage("Your inventory is full. Your duel stake is on the ground beneath you.");
+          player.sendMessage("Your inventory is full. Your duel stake is on the ground beneath you.");
         }
         }
         if (!winnings.handled) player.getInventory().refreshItems();
@@ -352,7 +352,7 @@ function end(session, loser) {
     }
     player.setStatus(PlayerStatus.NONE);
     player.getPacketSender().sendEntityHintRemoval(true);
-    player.getPacketSender().sendMessage(loser ? player === loser ? "You lost the duel!" : "You won the duel!" : "Duel declined.");
+    player.sendMessage(loser ? player === loser ? "You lost the duel!" : "You won the duel!" : "Duel declined.");
     menuState.delete(player);
     updateMenu({ player });
   }
@@ -402,7 +402,7 @@ function showOptions(session, info = "") {
     player.getPacketSender()
       .sendString(`Dueling with: ${session.players.find(p => p !== player).getUsername()}`, uid(OPTIONS, UI.TITLE));
     player.setStatus(PlayerStatus.DUELING);
-    if (info) player.getPacketSender().sendMessage(info);
+    if (info) player.sendMessage(info);
     renderStakes(player, session);
     renderEquipment(player);
     renderRules(player, session.mask);
@@ -415,7 +415,7 @@ function request({ player, target }) {
   if (!target || player === target || !inZone(player) || !inZone(target) || !nearby(player, target) || player.getPrivateArea() != null) return;
   if (sessions.has(player) || sessions.has(target) || player.busy() || target.busy() || player.isTeleportingReturn() || target.isTeleportingReturn()
       || player.getHitpoints() <= 0 || target.getHitpoints() <= 0 || inCombat(player) || inCombat(target)) {
-    player.getPacketSender().sendMessage("That player is currently busy.");
+    player.sendMessage("That player is currently busy.");
     return;
   }
   const reciprocal = requests.get(target) === player;
@@ -434,8 +434,8 @@ function request({ player, target }) {
     }
     showOptions(session);
   } else {
-    player.getPacketSender().sendMessage(`You've sent a duel challenge to ${target.getUsername()}.`);
-    target.getPacketSender().sendMessage(`${player.getUsername()} challenges you to a duel. Right-click them and choose Challenge to accept.`);
+    player.sendMessage(`You've sent a duel challenge to ${target.getUsername()}.`);
+    target.sendMessage(`${player.getUsername()} challenges you to a duel. Right-click them and choose Challenge to accept.`);
     if (!target.isPlayerBot()) return;
     const event = { player: target, challenger: player, accept: false };
     pluginApi.emitCustomEvent("duelarena:request", event);
@@ -455,7 +455,7 @@ function isFunWeapon(item) {
 }
 function reportBlockedAcceptance(player, message, botMessage) {
   if (!player.isPlayerBot()) {
-    player.getPacketSender().sendMessage(message);
+    player.sendMessage(message);
     return;
   }
   player.forceChat(botMessage);
@@ -618,7 +618,7 @@ function accept(player, session, botEvent = "duelarena:accept") {
   if (confirm) confirmText(other, player, "Your opponent has accepted.");
   else {
     renderAccept(player, true);
-    other.getPacketSender().sendMessage(`${player.getUsername()} has accepted.`);
+    other.sendMessage(`${player.getUsername()} has accepted.`);
   }
   if (session.accepted.size === 2) {
     if (confirm) start(session); else showConfirm(session);

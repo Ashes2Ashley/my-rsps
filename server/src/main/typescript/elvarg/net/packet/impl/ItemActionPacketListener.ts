@@ -100,16 +100,14 @@ export class ItemActionPacketListener {
 
     switch (itemId) {
       case 9520:
-        player
-          .getPacketSender()
-          .sendMessage("You cannot use this in the Wilderness!");
+        player.sendMessage("You cannot use this in the Wilderness!");
         break;
 
       case 2542:
       case 2543:
       case 2544:
         if (player.busy()) {
-          player.getPacketSender().sendMessage("You cannot do that right now.");
+          player.sendMessage("You cannot do that right now.");
           return true;
         }
         if (
@@ -117,22 +115,18 @@ export class ItemActionPacketListener {
           (itemId == 2543 && player.isRigourUnlocked()) ||
           (itemId == 2544 && player.getAuguryUnlocked())
         ) {
-          player
-            .getPacketSender()
-            .sendMessage("You have already unlocked that prayer.");
+          player.sendMessage("You have already unlocked that prayer.");
           return true;
         }
 
         break;
       case 2545:
         if (player.busy()) {
-          player.getPacketSender().sendMessage("You cannot do that right now.");
+          player.sendMessage("You cannot do that right now.");
           return true;
         }
         if (player.isTargetTeleportUnlocked()) {
-          player
-            .getPacketSender()
-            .sendMessage("You have already unlocked that teleport.");
+          player.sendMessage("You have already unlocked that teleport.");
           return true;
         }
         break;

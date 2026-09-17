@@ -32,7 +32,7 @@ export class EffectSpells extends Spell {
                     return true;
                 }
                 if (!player.getInventory().contains(526)) {
-                    player.getPacketSender().sendMessage("You do not have any bones in your inventory.");
+                    player.sendMessage("You do not have any bones in your inventory.");
                     return true;
                 }
                 player.getInventory().deleteItemSet(spell.itemsToConsume(player));
@@ -55,19 +55,19 @@ export class EffectSpells extends Spell {
                 break;
             case EffectSpells.VENGEANCE:
                 if (player.getDueling().inDuel()) {
-                    player.getPacketSender().sendMessage("You cannot cast Vengeance during a duel!");
+                    player.sendMessage("You cannot cast Vengeance during a duel!");
                     return true;
                 }
                 if (player.getSkillManager().getMaxLevel(Skill.DEFENCE) < 40) {
-                    player.getPacketSender().sendMessage("You need at least level 40 Defence to cast this spell.");
+                    player.sendMessage("You need at least level 40 Defence to cast this spell.");
                     return true;
                 }
                 if (player.hasVengeanceReturn()) {
-                    player.getPacketSender().sendMessage("You already have Vengeance's effect.");
+                    player.sendMessage("You already have Vengeance's effect.");
                     return true;
                 }
                 if (!player.getVengeanceTimer().finished()) {
-                    player.getPacketSender().sendMessage("You must wait another " + player.getVengeanceTimer().secondsRemaining() + " seconds before you can cast that again.");
+                    player.sendMessage("You must wait another " + player.getVengeanceTimer().secondsRemaining() + " seconds before you can cast that again.");
                     return true;
                 }
 

@@ -95,6 +95,22 @@ Fall back to raw ids only when the name is genuinely ambiguous or the behaviour 
 id-specific (a single transformed variant, for example). When you do, use a named constant
 from `IdEnums` / the generated identifier files, never a bare number.
 
+### Command Rights
+
+Commands are rights-checked by the core, never by the handler. Pass the lowest rank that
+may run the command as the third argument to `registerCommand`; rights ids are ordered
+(none < moderator < administrator < owner < developer) so everyone above it passes too.
+Omit it and any player may run it. A handler that opens with "am I an admin?" is a bug.
+
+```js
+api.registerCommand("npc", spawnNpc, PlayerRights.OWNER); // owner and developer
+api.registerCommand("players", listPlayers);              // anyone
+```
+
+`api.setCommandRights(command, minimumRights)` overrides whatever a command registered
+with, so a plugin can widen or narrow someone else's command - a spawn mode opening
+`::items` to everyone passes `PlayerRights.NONE`.
+
 ## Cache Lookup Tooling
 
 Interface, sprite, enum and clientscript ids come from the cache in `server/caches`, never

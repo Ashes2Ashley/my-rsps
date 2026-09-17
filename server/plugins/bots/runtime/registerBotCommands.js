@@ -9,7 +9,6 @@ function registerBotCommands(options) {
   const {
     api,
     botApi,
-    hasAdminRights,
     runtime,
     behaviorMode,
     assignableBehaviors,
@@ -41,19 +40,15 @@ function registerBotCommands(options) {
 
   const pendingRecruits = new Map();
   api.registerCommand("bot", ({ player }) => {
-    if (player.getRights() !== PlayerRights.DEVELOPER) {
-      player.getPacketSender().sendMessage("You do not have permission to use this command.");
-      return true;
-    }
     const bot = runtime.spawnPvpBot(player.getLocation());
     if (!bot) {
-      player.getPacketSender().sendMessage("Unable to spawn a PvP bot right now.");
+      player.sendMessage("Unable to spawn a PvP bot right now.");
       return true;
     }
     // The factory queues a world login. Clan membership needs the assigned player index.
     pendingRecruits.set(bot, player);
     return true;
-  });
+  }, PlayerRights.DEVELOPER);
   api.onPlayerProcess(({ player: owner }) => {
     if (owner.isPlayerBot?.()) return;
     for (const [bot, pendingOwner] of pendingRecruits) {
@@ -73,26 +68,17 @@ function registerBotCommands(options) {
       }
       bot.setArea(owner.getArea());
       bot.moveTo(owner.getLocation().clone());
-      owner.getPacketSender().sendMessage(recruited
+      owner.sendMessage(recruited
         ? `${bot.getUsername()} is geared, in your clan chat, and ready beside you.`
         : `${bot.getUsername()} is geared and beside you, but could not join your clan chat.`);
     }
   });
 
   api.registerCommand("botme", ({ player, parts }) => {
-    if (!hasAdminRights(player)) {
-      player
-        .getPacketSender()
-        .sendMessage("You do not have permission to use this command.");
-      return true;
-    }
-
     const mode = (parts[1] ?? "toggle").toLowerCase();
     if (mode === "status") {
       const enabled = runtime.hasControllerForPlayer(player);
-      player
-        .getPacketSender()
-        .sendMessage(`botme: ${enabled ? "enabled" : "disabled"}`);
+      player.sendMessage(`botme: ${enabled ? "enabled" : "disabled"}`);
       return true;
     }
 
@@ -110,14 +96,12 @@ function registerBotCommands(options) {
             : enabled.reason === "not_registered"
             ? "player is not active"
             : "unable to enable";
-        player.getPacketSender().sendMessage(`botme: ${reason}.`);
+        player.sendMessage(`botme: ${reason}.`);
         return true;
       }
-      player
-        .getPacketSender()
-        .sendMessage(
-          "botme enabled: your character is running PlayerBots behavior."
-        );
+      player.sendMessage(
+        "botme enabled: your character is running PlayerBots behavior."
+      );
       botApi.log("botme_enabled", { username: player.getUsername() });
       return true;
     }
@@ -125,36 +109,23 @@ function registerBotCommands(options) {
     if (mode === "off" || mode === "stop" || mode === "toggle") {
       const disabled = runtime.disableControllerForPlayer(player);
       if (!disabled) {
-        player.getPacketSender().sendMessage("botme: already disabled.");
+        player.sendMessage("botme: already disabled.");
         return true;
       }
-      player
-        .getPacketSender()
-        .sendMessage("botme disabled: your character is no longer bot-driven.");
+      player.sendMessage("botme disabled: your character is no longer bot-driven.");
       botApi.log("botme_disabled", { username: player.getUsername() });
       return true;
     }
 
-    player
-      .getPacketSender()
-      .sendMessage("Usage: ::botme [on|off|toggle|status]");
+    player.sendMessage("Usage: ::botme [on|off|toggle|status]");
     return true;
-  });
+  }, PlayerRights.ADMINISTRATOR);
 
   api.registerCommand("bh", ({ player, parts }) => {
-    if (!hasAdminRights(player)) {
-      player
-        .getPacketSender()
-        .sendMessage("You do not have permission to use this command.");
-      return true;
-    }
-
     const usernameArg = parts[1];
     const behaviorArg = parts[2]?.toLowerCase();
     if (!usernameArg || !behaviorArg) {
-      player
-        .getPacketSender()
-        .sendMessage(`Usage: ::bh <username> <${supportedBehaviorList}>`);
+      player.sendMessage(`Usage: ::bh <username> <${supportedBehaviorList}>`);
       return true;
     }
 
@@ -163,33 +134,25 @@ function registerBotCommands(options) {
       assignableBehaviors[behaviorArg] ??
       (behaviorArg === "sparring" ? assignableBehaviors.pvp : null);
     if (!normalizedBehavior && !wantsAuto) {
-      player
-        .getPacketSender()
-        .sendMessage(`Unknown behaviour. Supported: ${supportedBehaviorList}`);
+      player.sendMessage(`Unknown behaviour. Supported: ${supportedBehaviorList}`);
       return true;
     }
 
     const target = runtime.resolveControlledPlayer(usernameArg);
     if (!target || !target.isRegistered()) {
-      player
-        .getPacketSender()
-        .sendMessage(`bh: player not found: ${usernameArg}`);
+      player.sendMessage(`bh: player not found: ${usernameArg}`);
       return true;
     }
 
     const targetUsername = target.getUsername?.();
     if (!targetUsername || !runtime.hasControllerForUsername(targetUsername)) {
-      player
-        .getPacketSender()
-        .sendMessage(`bh: target is not bot-controlled: ${usernameArg}`);
+      player.sendMessage(`bh: target is not bot-controlled: ${usernameArg}`);
       return true;
     }
 
     const state = runtime.botStatesByName.get(targetUsername);
     if (!state) {
-      player
-        .getPacketSender()
-        .sendMessage(`bh: missing state for: ${targetUsername}`);
+      player.sendMessage(`bh: missing state for: ${targetUsername}`);
       return true;
     }
 
@@ -201,15 +164,13 @@ function registerBotCommands(options) {
       state.autonomy.modeEndsAt = 0;
       state.autonomy.nextDecisionAt = 0;
       if (!activateMode(target, state, behaviorMode.ROAMING, "manual_override_auto")) {
-        player
-          .getPacketSender()
-          .sendMessage(`bh: failed to switch ${targetUsername} to auto`);
+        player.sendMessage(`bh: failed to switch ${targetUsername} to auto`);
         return true;
       }
       resetMovementState(target);
       taskManager.submit(flashHintArrowTaskFactory(player, target));
 
-      player.getPacketSender().sendMessage(`bh: ${targetUsername} -> auto`);
+      player.sendMessage(`bh: ${targetUsername} -> auto`);
       botApi.log("bot_behavior_assigned", {
         assignedBy: player.getUsername(),
         target: targetUsername,
@@ -225,9 +186,7 @@ function registerBotCommands(options) {
       "manual_override_assign"
     );
     if (!activated) {
-      player
-        .getPacketSender()
-        .sendMessage(`bh: failed to activate mode for ${targetUsername}`);
+      player.sendMessage(`bh: failed to activate mode for ${targetUsername}`);
       return true;
     }
     const currentLoc = target.getLocation?.();
@@ -247,25 +206,16 @@ function registerBotCommands(options) {
     resetMovementState(target);
     taskManager.submit(flashHintArrowTaskFactory(player, target));
 
-    player
-      .getPacketSender()
-      .sendMessage(`bh: ${targetUsername} -> ${normalizedBehavior}`);
+    player.sendMessage(`bh: ${targetUsername} -> ${normalizedBehavior}`);
     botApi.log("bot_behavior_assigned", {
       assignedBy: player.getUsername(),
       target: targetUsername,
       behavior: normalizedBehavior,
     });
     return true;
-  });
+  }, PlayerRights.ADMINISTRATOR);
 
   api.registerCommand("bothotspots", ({ player }) => {
-    if (!hasAdminRights(player)) {
-      player
-        .getPacketSender()
-        .sendMessage("You do not have permission to use this command.");
-      return true;
-    }
-
     const countsByHotspot = new Map();
     const countsByLoadout = new Map();
     const countsByProfile = new Map();
@@ -289,17 +239,17 @@ function registerBotCommands(options) {
         .map(([key, count]) => `${key}:${count}`)
         .join(", ");
 
-    player.getPacketSender().sendMessage(
+    player.sendMessage(
       `hotspots ${formatCounts(countsByHotspot) || "none"}`
     );
-    player.getPacketSender().sendMessage(
+    player.sendMessage(
       `loadouts ${formatCounts(countsByLoadout) || "none"}`
     );
-    player.getPacketSender().sendMessage(
+    player.sendMessage(
       `profiles ${formatCounts(countsByProfile) || "none"}`
     );
     return true;
-  });
+  }, PlayerRights.ADMINISTRATOR);
 }
 
 module.exports = {

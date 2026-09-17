@@ -24,7 +24,7 @@ function startDialogue(api, event, steps, branches = {}) {
   const close = () => player.getPacketSender().sendInterfaceRemoval();
   const unavailable = () => {
     close();
-    player.getPacketSender().sendMessage("That conversation isn't available right now.");
+    player.sendMessage("That conversation isn't available right now.");
   };
 
   function choices(step, rest, offset = 0) {

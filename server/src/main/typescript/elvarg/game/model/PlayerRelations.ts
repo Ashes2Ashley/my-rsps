@@ -263,15 +263,15 @@ export class PlayerRelations {
             return;
         }
         if (this.friendList.length >= PlayerRelations.MAX_FRIENDS) {
-            this.player.getPacketSender().sendMessage("Your friend list is full!");
+            this.player.sendMessage("Your friend list is full!");
             return;
         }
         if (this.ignoreList.indexOf(username) !== -1) {
-            this.player.getPacketSender().sendMessage("Please remove " + name + " from your ignore list first.");
+            this.player.sendMessage("Please remove " + name + " from your ignore list first.");
             return;
         }
         if (this.friendList.indexOf(username) !== -1) {
-            this.player.getPacketSender().sendMessage(name + " is already on your friends list!");
+            this.player.sendMessage(name + " is already on your friends list!");
         } else {
             this.friendList.push(username);
             this.friendSet.add(username);
@@ -306,7 +306,7 @@ export class PlayerRelations {
                 unfriend.getRelations().updateLists(false);
             }
         } else {
-            this.player.getPacketSender().sendMessage("This player is not on your friends list!");
+            this.player.sendMessage("This player is not on your friends list!");
         }
     }
 
@@ -316,15 +316,15 @@ export class PlayerRelations {
             return;
         }
         if (this.ignoreList.length >= PlayerRelations.MAX_IGNORES) {
-            this.player.getPacketSender().sendMessage("Your ignore list is full!");
+            this.player.sendMessage("Your ignore list is full!");
             return;
         }
         if (this.friendList.indexOf(username) !== -1) {
-            this.player.getPacketSender().sendMessage("Please remove " + name + " from your friend list first.");
+            this.player.sendMessage("Please remove " + name + " from your friend list first.");
             return;
         }
         if (this.ignoreList.indexOf(username) !== -1) {
-            this.player.getPacketSender().sendMessage(name + " is already on your ignore list!");
+            this.player.sendMessage(name + " is already on your ignore list!");
         } else {
             this.ignoreList.push(username);
             this.ignoreSet.add(username);
@@ -355,13 +355,13 @@ export class PlayerRelations {
                 }
             }
         } else {
-            this.player.getPacketSender().sendMessage("This player is not on your ignore list!");
+            this.player.sendMessage("This player is not on your ignore list!");
         }
     }
 
     public message(friend: Player, message: Uint8Array, size: number): void {
         if (!friend.getRelations().canReceivePrivateMessageFrom(this.player)) {
-            this.player.getPacketSender().sendMessage("This player is currently offline.");
+            this.player.sendMessage("This player is currently offline.");
             return;
         }
         if (this.status === PrivateChatStatus.OFF) {

@@ -16,12 +16,12 @@ export class Gambling {
         }
         for (let npc of player.getLocalNpcs()) {
             if (npc != null && npc.getLocation().equals(player.getLocation())) {
-                player.getPacketSender().sendMessage("You cannot plant a seed right here.");
+                player.sendMessage("You cannot plant a seed right here.");
                 return;
             }
         }
         if (ObjectManager.existsLocation(player.getLocation())) {
-            player.getPacketSender().sendMessage("You cannot plant a seed right here.");
+            player.sendMessage("You cannot plant a seed right here.");
             return;
         }
         const flowers = FlowersData.generate();
@@ -32,7 +32,7 @@ export class Gambling {
         player.getMovementQueue().reset();
         player.getInventory().deleteNumber(Gambling.MITHRIL_SEEDS, 1);
         player.performAnimation(new Animation(827));
-        player.getPacketSender().sendMessage("You plant the seed and suddenly some flowers appear..");
+        player.sendMessage("You plant the seed and suddenly some flowers appear..");
         MovementQueue.clippedStep(player);
         //Start a task which will spawn and then delete them after a period of time.
         TaskManager.submit(new TimedObjectSpawnTask(flowerObject, 60, null));

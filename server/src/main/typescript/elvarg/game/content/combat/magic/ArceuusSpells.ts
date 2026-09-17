@@ -165,18 +165,18 @@ export class ArceuusSpells {
             key === "sinister offering" && !ArceuusOfferings.hasBones(player) ||
             key === "degrime" && !ArceuusUtilities.hasGrimyHerbs(player) ||
             key === "vile vigour" && (player.getRunEnergy() >= 100 || player.getSkillManager().getCurrentLevel(Skill.PRAYER) <= 0)) {
-            player.getPacketSender().sendMessage("You do not have any suitable remains in your inventory.");
+            player.sendMessage("You do not have any suitable remains in your inventory.");
             return true;
         }
         const thrallPrayerCost = key.includes("lesser") ? 2 : key.includes("superior") ? 4 : key.includes("greater") ? 6 : 0;
         if (thrallPrayerCost > 0 && key.startsWith("resurrect ") &&
             (player.getCombat().getTarget()?.isPlayer() || player.getCombat().getAttacker()?.isPlayer())) {
-            player.getPacketSender().sendMessage("You cannot summon a Thrall during PvP combat.");
+            player.sendMessage("You cannot summon a Thrall during PvP combat.");
             return true;
         }
         if (thrallPrayerCost > 0 && key.startsWith("resurrect ") &&
             (!player.getEquipment().contains(25818) || player.getSkillManager().getCurrentLevel(Skill.PRAYER) < thrallPrayerCost)) {
-            player.getPacketSender().sendMessage("You need the Book of the dead and enough Prayer points to summon that Thrall.");
+            player.sendMessage("You need the Book of the dead and enough Prayer points to summon that Thrall.");
             return true;
         }
         const selfSpell = this.SELF_SPELLS.get(key);

@@ -29,7 +29,7 @@ export class Emotes {
                         const skill: Skill = Object.values(Skill)[cape.getDelay()];
                         const level: number = SkillManager.getMaxAchievingLevel(skill);
                         if (player.getSkillManager().getMaxLevel(skill) < level) {
-                            player.getPacketSender().sendMessage(
+                            player.sendMessage(
                                 `You need ${Misc.anOrA(skill.toString())} ${Misc.formatPlayerName(
                                     skill.toString().toLowerCase()
                                 )} level of at least ${level} to do this emote.`
@@ -43,7 +43,7 @@ export class Emotes {
                           for(Skill skill : Skill.values()) {
                             int level = SkillManager.getMaxAchievingLevel(skill);
                             if (player.getSkillManager().getMaxLevel(skill) < level) {
-                              player.getPacketSender().sendMessage("You need "+Misc.anOrA(skill.getName())+" " + Misc.formatPlayerName(skill.getName().toLowerCase()) + " level of at least "+ level + " to do this emote.");
+                              player.sendMessage("You need "+Misc.anOrA(skill.getName())+" " + Misc.formatPlayerName(skill.getName().toLowerCase()) + " level of at least "+ level + " to do this emote.");
                               return false;
                             }
                           }
@@ -59,7 +59,7 @@ export class Emotes {
 
     private static animation(player: Player, anim: Animation | null, graphic: Graphic | null): void {
         if (CombatFactory.inCombat(player)) {
-            player.getPacketSender().sendMessage("You cannot do this right now.");
+            player.sendMessage("You cannot do this right now.");
             return;
         }
 

@@ -45,7 +45,7 @@ export abstract class Spell {
 
     canCast(player: Player, del: boolean): boolean {
         if (player.getSkillManager().getCurrentLevel(Skill.MAGIC) < this.levelRequired()) {
-            player.getPacketSender().sendMessage(`You need a Magic level of ${this.levelRequired()} to cast this spell.`);
+            player.sendMessage(`You need a Magic level of ${this.levelRequired()} to cast this spell.`);
             player.getCombat().reset();
             return false;
         }
@@ -76,7 +76,7 @@ export abstract class Spell {
             itemsToConsume = this.itemsToConsume(player, items);
 
             if (!player.getInventory().containsAllItem(itemsToConsume)) {
-                player.getPacketSender().sendMessage("You do not have the required items to cast this spell.");
+                player.sendMessage("You do not have the required items to cast this spell.");
                 player.getCombat().setCastSpell(null);
                 player.getCombat().reset();
                 return false;
@@ -84,7 +84,7 @@ export abstract class Spell {
 
             const equipment = this.equipmentRequired(player);
             if (Array.isArray(equipment) && equipment.length > 0 && !player.getEquipment().containsAllItem(equipment)) {
-                player.getPacketSender().sendMessage("You do not have the required equipment to cast this spell.");
+                player.sendMessage("You do not have the required equipment to cast this spell.");
                 player.getCombat().setCastSpell(null);
                 player.getCombat().reset();
                 return false;
@@ -104,7 +104,7 @@ export abstract class Spell {
         }
 
         if (player.getEquipment().getItems()[Equipment.WEAPON_SLOT].getId() == 11791 && Misc.getRandom(7) == 1) {
-            player.getPacketSender().sendMessage("Your Staff of the dead negated your runes for this cast.");
+            player.sendMessage("Your Staff of the dead negated your runes for this cast.");
         } else {
             for (const item of itemsToConsume) {
                 player.getInventory().deletes(item);

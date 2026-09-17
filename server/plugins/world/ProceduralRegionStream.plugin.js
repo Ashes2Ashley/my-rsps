@@ -38,11 +38,6 @@ const playerProceduralRegionOverrides = new Map();
 const playerProceduralRegionPayloads = new Map();
 const regionProceduralClipOverrides = new Map();
 
-function isDev(player) {
-  const rights = player?.getRights?.();
-  return rights === PlayerRights.DEVELOPER || rights === PlayerRights.OWNER;
-}
-
 function parseIntArg(value) {
   const parsed = Number.parseInt(value, 10);
   return Number.isNaN(parsed) ? null : parsed;
@@ -682,7 +677,7 @@ function streamProceduralPayload(player, payload, messagePrefix = "[proc-region]
     trackPlayerRegionPayload(player, payload);
   }
   if (!silent) {
-    player.getPacketSender().sendMessage(
+    player.sendMessage(
       `${messagePrefix} ${regionX},${regionY} seed=${seed} request=${requestId} chunks=${chunks.length}`
     );
   }
@@ -1626,13 +1621,8 @@ module.exports = {
     RegionManager = api.getRegionManager();
     initRegionBuildingAnalysisCoreAccess(api);
     api.registerCommand("procregion", ({ player, parts }) => {
-      if (!isDev(player)) {
-        player.getPacketSender().sendMessage("Developer rights required.");
-        return true;
-      }
-
       if (parts.length < 3 || parts.length > 4) {
-        player.getPacketSender().sendMessage("Usage: ::procregion <regionX> <regionY> [seed]");
+        player.sendMessage("Usage: ::procregion <regionX> <regionY> [seed]");
         return true;
       }
 
@@ -1641,7 +1631,7 @@ module.exports = {
       const seed = normalizeSeed(parts[3]);
 
       if (regionX === null || regionY === null) {
-        player.getPacketSender().sendMessage("Usage: ::procregion <regionX> <regionY> [seed]");
+        player.sendMessage("Usage: ::procregion <regionX> <regionY> [seed]");
         return true;
       }
 
@@ -1650,18 +1640,13 @@ module.exports = {
       } catch (error) {
         const reason = error?.message ?? String(error);
         sendProceduralPacket(player, REGION_PACKET_TYPE.ERROR, 0, 0, 0, 0, reason);
-        player.getPacketSender().sendMessage(`[proc-region] failed: ${reason}`);
+        player.sendMessage(`[proc-region] failed: ${reason}`);
       }
 
       return true;
-    });
+    }, PlayerRights.OWNER);
 
     api.registerCommand("procregionhere", ({ player, parts }) => {
-      if (!isDev(player)) {
-        player.getPacketSender().sendMessage("Developer rights required.");
-        return true;
-      }
-
       const location = player.getLocation();
       const regionX = (location.getX() / REGION_SIZE) | 0;
       const regionY = (location.getY() / REGION_SIZE) | 0;
@@ -1672,165 +1657,123 @@ module.exports = {
       } catch (error) {
         const reason = error?.message ?? String(error);
         sendProceduralPacket(player, REGION_PACKET_TYPE.ERROR, 0, 0, 0, 0, reason);
-        player.getPacketSender().sendMessage(`[proc-region] failed: ${reason}`);
+        player.sendMessage(`[proc-region] failed: ${reason}`);
       }
 
       return true;
-    });
+    }, PlayerRights.OWNER);
 
     api.registerCommand("cleargen", ({ player }) => {
-      if (!isDev(player)) {
-        player.getPacketSender().sendMessage("Developer rights required.");
-        return true;
-      }
-
       const restoredCacheObjects = clearProceduralClippingForPlayer(player);
       sendProceduralClear(player);
-      player
-        .getPacketSender()
-        .sendMessage(
-          `[proc-region] cleargen requested: client procedural overrides cleared and region reload forced (cache object clips restored=${restoredCacheObjects}).`
-        );
+      player.sendMessage(
+        `[proc-region] cleargen requested: client procedural overrides cleared and region reload forced (cache object clips restored=${restoredCacheObjects}).`
+      );
       return true;
-    });
+    }, PlayerRights.OWNER);
 
     api.registerCommand("procregscan", ({ player, parts }) => {
-      if (!isDev(player)) {
-        player.getPacketSender().sendMessage("Developer rights required.");
-        return true;
-      }
-
       const radius = parseIntArg(parts[1] ?? "1");
       const scanRadius = radius === null ? 1 : radius;
       try {
         const outputPath = writeAnalysisReport(player, scanRadius);
-        player.getPacketSender().sendMessage(`[proc-region] structure scan saved: ${outputPath}`);
+        player.sendMessage(`[proc-region] structure scan saved: ${outputPath}`);
       } catch (error) {
         const reason = error?.message ?? String(error);
-        player.getPacketSender().sendMessage(`[proc-region] structure scan failed: ${reason}`);
+        player.sendMessage(`[proc-region] structure scan failed: ${reason}`);
       }
       return true;
-    });
+    }, PlayerRights.OWNER);
 
     api.registerCommand("procreglearn", ({ player, parts }) => {
-      if (!isDev(player)) {
-        player.getPacketSender().sendMessage("Developer rights required.");
-        return true;
-      }
-
       const radius = parseIntArg(parts[1] ?? "2");
       const learnRadius = radius === null ? 2 : radius;
       try {
         const result = writeLearnedPresetFile(player, learnRadius);
-        player
-          .getPacketSender()
-          .sendMessage(
-            `[proc-region] learned styles=${result.styleCount} layouts=${result.layoutCount} interior=${result.interiorCount} radius=${learnRadius} saved: ${result.outputPath}`
-          );
+        player.sendMessage(
+          `[proc-region] learned styles=${result.styleCount} layouts=${result.layoutCount} interior=${result.interiorCount} radius=${learnRadius} saved: ${result.outputPath}`
+        );
         if (result.scanStats) {
-          player
-            .getPacketSender()
-            .sendMessage(
-              `[proc-region] scan regions=${result.scanStats.scannedRegions} objects=${result.scanStats.scannedObjects} structures=${result.scanStats.scannedStructures} buildingClusters=${result.scanStats.matchedBuildingClusters}`
-            );
+          player.sendMessage(
+            `[proc-region] scan regions=${result.scanStats.scannedRegions} objects=${result.scanStats.scannedObjects} structures=${result.scanStats.scannedStructures} buildingClusters=${result.scanStats.matchedBuildingClusters}`
+          );
         }
       } catch (error) {
         const reason = error?.message ?? String(error);
-        player.getPacketSender().sendMessage(`[proc-region] learn failed: ${reason}`);
+        player.sendMessage(`[proc-region] learn failed: ${reason}`);
       }
       return true;
-    });
+    }, PlayerRights.OWNER);
 
     api.registerCommand("dumphouse", ({ player, parts }) => {
-      if (!isDev(player)) {
-        player.getPacketSender().sendMessage("Developer rights required.");
-        return true;
-      }
-
       if (parts.length < 2 || parts.length > 3) {
-        player.getPacketSender().sendMessage("Usage: ::dumphouse <tag> [type]");
+        player.sendMessage("Usage: ::dumphouse <tag> [type]");
         return true;
       }
 
       const tag = String(parts[1] ?? "").trim();
       if (!tag) {
-        player.getPacketSender().sendMessage("Usage: ::dumphouse <tag> [type]");
+        player.sendMessage("Usage: ::dumphouse <tag> [type]");
         return true;
       }
       const houseType = parts.length >= 3 ? normalizeHouseType(parts[2]) : null;
 
       try {
         const result = writeHouseExample(player, tag, houseType);
-        player
-          .getPacketSender()
-          .sendMessage(
-            `[proc-region] dumped house ${result.label}${result.type ? ` type=${result.type}` : ""} #${result.exampleCount} ${result.width}x${result.height} floors=${result.floors} objects=${result.objectCount} terrainDiff=${result.terrainAvailable ? result.terrainDifferential : "n/a"}`
-          );
-        player.getPacketSender().sendMessage(`[proc-region] saved: ${result.outputPath}`);
+        player.sendMessage(
+          `[proc-region] dumped house ${result.label}${result.type ? ` type=${result.type}` : ""} #${result.exampleCount} ${result.width}x${result.height} floors=${result.floors} objects=${result.objectCount} terrainDiff=${result.terrainAvailable ? result.terrainDifferential : "n/a"}`
+        );
+        player.sendMessage(`[proc-region] saved: ${result.outputPath}`);
       } catch (error) {
         const reason = error?.message ?? String(error);
-        player.getPacketSender().sendMessage(`[proc-region] dumphouse failed: ${reason}`);
+        player.sendMessage(`[proc-region] dumphouse failed: ${reason}`);
       }
       return true;
-    });
+    }, PlayerRights.OWNER);
 
     api.registerCommand("dumpterrain", ({ player, parts }) => {
-      if (!isDev(player)) {
-        player.getPacketSender().sendMessage("Developer rights required.");
-        return true;
-      }
-
       if (parts.length !== 2) {
-        player.getPacketSender().sendMessage("Usage: ::dumpterrain <biome>");
+        player.sendMessage("Usage: ::dumpterrain <biome>");
         return true;
       }
 
       const biome = String(parts[1] ?? "").trim();
       if (!biome) {
-        player.getPacketSender().sendMessage("Usage: ::dumpterrain <biome>");
+        player.sendMessage("Usage: ::dumpterrain <biome>");
         return true;
       }
 
       try {
         const result = dumpTerrainBiome(player, biome);
         const sample = result.sample;
-        player
-          .getPacketSender()
-          .sendMessage(
-            `[proc-region] dumpterrain biome=${result.biome} region=${sample.regionX},${sample.regionY} landTiles=${sample.landTileCount} waterTilesSkipped=${sample.waterTileCount} treeDensity=${sample.treeDensity}`
-          );
-        player
-          .getPacketSender()
-          .sendMessage(
-            `[proc-region] ids trees=${result.totalTreeIds} underlays=${result.totalUnderlayIds} groundDecor=${result.totalGroundDecorationIds} samples=${result.sampleCount} saved: ${result.outputPath}`
-          );
+        player.sendMessage(
+          `[proc-region] dumpterrain biome=${result.biome} region=${sample.regionX},${sample.regionY} landTiles=${sample.landTileCount} waterTilesSkipped=${sample.waterTileCount} treeDensity=${sample.treeDensity}`
+        );
+        player.sendMessage(
+          `[proc-region] ids trees=${result.totalTreeIds} underlays=${result.totalUnderlayIds} groundDecor=${result.totalGroundDecorationIds} samples=${result.sampleCount} saved: ${result.outputPath}`
+        );
       } catch (error) {
         const reason = error?.message ?? String(error);
-        player.getPacketSender().sendMessage(`[proc-region] dumpterrain failed: ${reason}`);
+        player.sendMessage(`[proc-region] dumpterrain failed: ${reason}`);
       }
       return true;
-    });
+    }, PlayerRights.OWNER);
 
     api.registerCommand("genterrain", ({ player, parts }) => {
-      if (!isDev(player)) {
-        player.getPacketSender().sendMessage("Developer rights required.");
-        return true;
-      }
-
       if (parts.length < 2 || parts.length > 3) {
-        player.getPacketSender().sendMessage("Usage: ::genterrain <biome> [seed]");
+        player.sendMessage("Usage: ::genterrain <biome> [seed]");
         return true;
       }
 
       const biome = String(parts[1] ?? "").trim();
       if (!biome) {
-        player.getPacketSender().sendMessage("Usage: ::genterrain <biome> [seed]");
+        player.sendMessage("Usage: ::genterrain <biome> [seed]");
         return true;
       }
 
       const explicitSeed = parts.length === 3 ? parseIntArg(parts[2]) : null;
       if (parts.length === 3 && explicitSeed === null) {
-        player.getPacketSender().sendMessage("Usage: ::genterrain <biome> [seed]");
+        player.sendMessage("Usage: ::genterrain <biome> [seed]");
         return true;
       }
       const seed = explicitSeed === null ? normalizeSeed(undefined) : explicitSeed >>> 0;
@@ -1838,70 +1781,56 @@ module.exports = {
       try {
         const result = buildGeneratedTerrainPayloadAtPlayer(player, biome, seed);
         streamProceduralPayload(player, result.payload, "[proc-region] generated terrain region");
-        player
-          .getPacketSender()
-          .sendMessage(
-            `[proc-region] genterrain biome=${result.biome} trees=${result.treeCount} groundDecor=${result.groundDecorationCount} treeIds=${result.treeIds} underlays=${result.underlayIds} groundDecorIds=${result.groundDecorationIds} samples=${result.sampleCount} seed=${result.seed}`
-          );
+        player.sendMessage(
+          `[proc-region] genterrain biome=${result.biome} trees=${result.treeCount} groundDecor=${result.groundDecorationCount} treeIds=${result.treeIds} underlays=${result.underlayIds} groundDecorIds=${result.groundDecorationIds} samples=${result.sampleCount} seed=${result.seed}`
+        );
       } catch (error) {
         const reason = error?.message ?? String(error);
-        player.getPacketSender().sendMessage(`[proc-region] genterrain failed: ${reason}`);
+        player.sendMessage(`[proc-region] genterrain failed: ${reason}`);
       }
       return true;
-    });
+    }, PlayerRights.OWNER);
 
     api.registerCommand("buildhouse", ({ player, parts }) => {
-      if (!isDev(player)) {
-        player.getPacketSender().sendMessage("Developer rights required.");
-        return true;
-      }
-
       if (parts.length < 2 || parts.length > 3) {
-        player.getPacketSender().sendMessage("Usage: ::buildhouse <style> [index]");
+        player.sendMessage("Usage: ::buildhouse <style> [index]");
         return true;
       }
 
       const styleTag = String(parts[1] ?? "").trim();
       if (!styleTag) {
-        player.getPacketSender().sendMessage("Usage: ::buildhouse <style> [index]");
+        player.sendMessage("Usage: ::buildhouse <style> [index]");
         return true;
       }
 
       const explicitIndex = parts.length >= 3 ? parseIntArg(parts[2]) : null;
       if (parts.length >= 3 && explicitIndex === null) {
-        player.getPacketSender().sendMessage("Usage: ::buildhouse <style> [index]");
+        player.sendMessage("Usage: ::buildhouse <style> [index]");
         return true;
       }
 
       try {
         const result = buildHousePayloadAtPlayer(player, styleTag, explicitIndex);
         streamProceduralPayload(player, result.payload, "[proc-region] built house region");
-        player
-          .getPacketSender()
-          .sendMessage(
-            `[proc-region] buildhouse style=${result.styleTag} index=${result.index}/${result.examplesAvailable - 1} size=${result.width}x${result.height} objects=${result.objectCount}`
-          );
+        player.sendMessage(
+          `[proc-region] buildhouse style=${result.styleTag} index=${result.index}/${result.examplesAvailable - 1} size=${result.width}x${result.height} objects=${result.objectCount}`
+        );
       } catch (error) {
         const reason = error?.message ?? String(error);
-        player.getPacketSender().sendMessage(`[proc-region] buildhouse failed: ${reason}`);
+        player.sendMessage(`[proc-region] buildhouse failed: ${reason}`);
       }
       return true;
-    });
+    }, PlayerRights.OWNER);
 
     api.registerCommand("genhouse", ({ player, parts }) => {
-      if (!isDev(player)) {
-        player.getPacketSender().sendMessage("Developer rights required.");
-        return true;
-      }
-
       if (parts.length < 2 || parts.length > 4) {
-        player.getPacketSender().sendMessage("Usage: ::genhouse <style> [type] [seed]");
+        player.sendMessage("Usage: ::genhouse <style> [type] [seed]");
         return true;
       }
 
       const styleTag = String(parts[1] ?? "").trim();
       if (!styleTag) {
-        player.getPacketSender().sendMessage("Usage: ::genhouse <style> [type] [seed]");
+        player.sendMessage("Usage: ::genhouse <style> [type] [seed]");
         return true;
       }
 
@@ -1918,7 +1847,7 @@ module.exports = {
         houseType = normalizeHouseType(parts[2]);
         explicitSeed = parseIntArg(parts[3]);
         if (explicitSeed === null) {
-          player.getPacketSender().sendMessage("Usage: ::genhouse <style> [type] [seed]");
+          player.sendMessage("Usage: ::genhouse <style> [type] [seed]");
           return true;
         }
       }
@@ -1927,32 +1856,25 @@ module.exports = {
       try {
         const result = buildGeneratedHousePayloadAtPlayer(player, styleTag, seed, houseType);
         streamProceduralPayload(player, result.payload, "[proc-region] generated house region");
-        player
-          .getPacketSender()
-          .sendMessage(
-            `[proc-region] genhouse style=${result.styleKey}${result.type ? ` type=${result.type}` : ""} size=${result.width}x${result.height} floors=${result.floors} objects=${result.objectCount} seed=${result.seed}`
-          );
+        player.sendMessage(
+          `[proc-region] genhouse style=${result.styleKey}${result.type ? ` type=${result.type}` : ""} size=${result.width}x${result.height} floors=${result.floors} objects=${result.objectCount} seed=${result.seed}`
+        );
       } catch (error) {
         const reason = error?.message ?? String(error);
-        player.getPacketSender().sendMessage(`[proc-region] genhouse failed: ${reason}`);
+        player.sendMessage(`[proc-region] genhouse failed: ${reason}`);
       }
       return true;
-    });
+    }, PlayerRights.OWNER);
 
     api.registerCommand("genstreet", ({ player, parts }) => {
-      if (!isDev(player)) {
-        player.getPacketSender().sendMessage("Developer rights required.");
-        return true;
-      }
-
       if (parts.length > 4) {
-        player.getPacketSender().sendMessage("Usage: ::genstreet [style] [type] [seed]");
+        player.sendMessage("Usage: ::genstreet [style] [type] [seed]");
         return true;
       }
 
       const styleTag = parts.length >= 2 ? String(parts[1] ?? "").trim() : "varrock";
       if (!styleTag) {
-        player.getPacketSender().sendMessage("Usage: ::genstreet [style] [type] [seed]");
+        player.sendMessage("Usage: ::genstreet [style] [type] [seed]");
         return true;
       }
 
@@ -1976,7 +1898,7 @@ module.exports = {
         }
         const parsedSeed = parseIntArg(parts[3]);
         if (parsedSeed === null) {
-          player.getPacketSender().sendMessage("Usage: ::genstreet [style] [type] [seed]");
+          player.sendMessage("Usage: ::genstreet [style] [type] [seed]");
           return true;
         }
         explicitSeed = parsedSeed >>> 0;
@@ -1986,36 +1908,27 @@ module.exports = {
       try {
         const result = buildStreetPayloadAtPlayer(player, styleTag, seed, houseType);
         streamProceduralPayload(player, result.payload, "[proc-region] generated street region");
-        player
-          .getPacketSender()
-          .sendMessage(
-            `[proc-region] genstreet style=${result.styleTag} type=${result.type} houses=${result.houseCount} streetWidth=${result.streetWidth} y=${result.streetStartY}..${result.streetEndY} seed=${result.seed}`
-          );
+        player.sendMessage(
+          `[proc-region] genstreet style=${result.styleTag} type=${result.type} houses=${result.houseCount} streetWidth=${result.streetWidth} y=${result.streetStartY}..${result.streetEndY} seed=${result.seed}`
+        );
       } catch (error) {
         const reason = error?.message ?? String(error);
-        player.getPacketSender().sendMessage(`[proc-region] genstreet failed: ${reason}`);
+        player.sendMessage(`[proc-region] genstreet failed: ${reason}`);
       }
       return true;
-    });
+    }, PlayerRights.OWNER);
 
     api.registerCommand("checkhouse", ({ player }) => {
-      if (!isDev(player)) {
-        player.getPacketSender().sendMessage("Developer rights required.");
-        return true;
-      }
-
       try {
         const result = checkHouseBoundary(player);
-        player
-          .getPacketSender()
-          .sendMessage(
-            `[proc-region] checkhouse ${result.width}x${result.height} bounds=(${result.minX},${result.minY})..(${result.maxX},${result.maxY}) z=${result.playerZ}`
-          );
+        player.sendMessage(
+          `[proc-region] checkhouse ${result.width}x${result.height} bounds=(${result.minX},${result.minY})..(${result.maxX},${result.maxY}) z=${result.playerZ}`
+        );
       } catch (error) {
         const reason = error?.message ?? String(error);
-        player.getPacketSender().sendMessage(`[proc-region] checkhouse failed: ${reason}`);
+        player.sendMessage(`[proc-region] checkhouse failed: ${reason}`);
       }
       return true;
-    });
+    }, PlayerRights.OWNER);
   },
 };

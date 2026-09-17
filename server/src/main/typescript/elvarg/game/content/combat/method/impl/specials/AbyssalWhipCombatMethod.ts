@@ -38,7 +38,7 @@ export class AbyssalWhipCombatMethod extends MeleeCombatMethod {
 
             player.setRunEnergy(Math.max(0, player.getRunEnergy() - transferAmount));
             player.getPacketSender().sendRunEnergy();
-            player.getPacketSender().sendMessage("You feel drained!");
+            player.sendMessage("You feel drained!");
 
             if (player.getRunEnergy() === 0) {
                 player.setRunning(false);

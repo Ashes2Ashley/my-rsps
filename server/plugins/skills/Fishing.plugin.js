@@ -113,19 +113,17 @@ function getFishingLevel(player) {
 function hasToolRequirements(player, tool) {
   const level = getFishingLevel(player);
   if (level < tool.level) {
-    player
-      .getPacketSender()
-      .sendMessage(`You need a Fishing level of at least ${tool.level} to do this.`);
+    player.sendMessage(`You need a Fishing level of at least ${tool.level} to do this.`);
     return false;
   }
 
   if (!player.getInventory().contains(tool.id)) {
-    player.getPacketSender().sendMessage("You don't have the right tool to fish there.");
+    player.sendMessage("You don't have the right tool to fish there.");
     return false;
   }
 
   if (tool.needed > 0 && !player.getInventory().contains(tool.needed)) {
-    player.getPacketSender().sendMessage("You do not have the required bait.");
+    player.sendMessage("You do not have the required bait.");
     return false;
   }
 
@@ -189,7 +187,7 @@ function startFishing(player, npc, clickType, activeSessions) {
     nextCatchTick: fishingTick + FISHING_ACTION_INTERVAL_TICKS,
   });
 
-  player.getPacketSender().sendMessage("You begin to fish..");
+  player.sendMessage("You begin to fish..");
   Sounds.sendSound(player, Sound.FISHING_FISH);
   player.performAnimation(new Animation(tool.animationId));
   return true;
@@ -257,7 +255,7 @@ class FishingTask extends Task {
       const fish = determineFish(player, session.tool);
       if (fish) {
         player.getInventory().addItem(new Item(fish.id, 1));
-        player.getPacketSender().sendMessage(`You catch a ${fish.name}.`);
+        player.sendMessage(`You catch a ${fish.name}.`);
         player.getSkillManager().addExperiences(Skill.FISHING, fish.experience);
         pluginApi.emitCustomEvent("fishing:success", { player, skill: Skill.FISHING });
       }

@@ -612,7 +612,7 @@ class PestControlMatch {
     if (!state || this.ended) return;
     player.setAttribute("pest-control:match", this);
     player.getPacketSender().sendSubInterface(OVERLAY_HUD_UID, GAME_OVERLAY, 1);
-    player.getPacketSender().sendMessage("You must defend the Void Knight and destroy the four portals!");
+    player.sendMessage("You must defend the Void Knight and destroy the four portals!");
     this.updatePlayerOverlay(player, true);
   }
 
@@ -660,7 +660,7 @@ class PestControlMatch {
     portal.npc.setNpcTransformationId(this.boat.unshieldedIds[portal.index]);
     applyPortalCombatStats(portal.npc, portal.key);
     for (const player of this.players.keys()) {
-      player.getPacketSender().sendMessage(
+      player.sendMessage(
         `The <col=${portal.colour}>${portal.name}</col> portal shield has dropped!`
       );
     }
@@ -874,11 +874,11 @@ class PestControlMatch {
     if (clickType === 3 && state.damage > 0) {
       const inventory = player.getInventory();
       if (!inventory.contains(ItemIdentifiers.HAMMER)) {
-        player.getPacketSender().sendMessage("You need a hammer to repair this.");
+        player.sendMessage("You need a hammer to repair this.");
         return true;
       }
       if (!inventory.contains(ItemIdentifiers.LOGS)) {
-        player.getPacketSender().sendMessage("You need some logs to repair this.");
+        player.sendMessage("You need some logs to repair this.");
         return true;
       }
       inventory.delete(ItemIdentifiers.LOGS, 1);
@@ -925,13 +925,13 @@ class PestControlMatch {
         player.pcPoints = Math.min(MAX_COMMENDATIONS, oldPoints + this.boat.points);
         const coins = player.getSkillManager().getCombatLevel() * 10;
         player.getInventory().adds(ItemIdentifiers.COINS, coins);
-        player.getPacketSender().sendMessage(
+        player.sendMessage(
           `Congratulations! You receive ${this.boat.points} Void Knight commendation points and ${coins} coins.`
         );
       } else if (won) {
-        player.getPacketSender().sendMessage("The Void Knights noticed your lack of activity, so you receive no reward.");
+        player.sendMessage("The Void Knights noticed your lack of activity, so you receive no reward.");
       } else {
-        player.getPacketSender().sendMessage(reason);
+        player.sendMessage(reason);
       }
       restorePlayer(player);
       closeOverlay(player);
@@ -968,8 +968,8 @@ class PestControlWaitingArea extends Area {
       return;
     }
     player.getPacketSender().sendSubInterface(OVERLAY_HUD_UID, LANDER_OVERLAY, 1);
-    player.getPacketSender().sendMessage(`You have joined the ${this.state.boat.name.toLowerCase()} Pest Control lander.`);
-    player.getPacketSender().sendMessage(`You currently have ${Number.isFinite(player.pcPoints) ? player.pcPoints : 0} commendation points.`);
+    player.sendMessage(`You have joined the ${this.state.boat.name.toLowerCase()} Pest Control lander.`);
+    player.sendMessage(`You currently have ${Number.isFinite(player.pcPoints) ? player.pcPoints : 0} commendation points.`);
     this.updateOverlay(player);
   }
 
@@ -1094,11 +1094,11 @@ function createPestControl(api) {
   function joinBoat(player, boat) {
     const combatLevel = player.getSkillManager().getCombatLevel();
     if (combatLevel < boat.level) {
-      player.getPacketSender().sendMessage(`You need a combat level of ${boat.level} to board this lander.`);
+      player.sendMessage(`You need a combat level of ${boat.level} to board this lander.`);
       return;
     }
     if (player.getCurrentPet?.()) {
-      player.getPacketSender().sendMessage("You cannot bring a follower onto the lander.");
+      player.sendMessage("You cannot bring a follower onto the lander.");
       return;
     }
     const state = stateByBoat.get(boat.key);
@@ -1143,13 +1143,13 @@ function createPestControl(api) {
     const target = event.target?.getAsNpc?.();
     if (!target || target.getPrivateArea?.() !== match.area) return;
     if (target === match.knight || target === match.squire) {
-      player.getPacketSender().sendMessage("You cannot attack the Void Knights.");
+      player.sendMessage("You cannot attack the Void Knights.");
       event.allow = false;
       return;
     }
     const portal = match.portalByNpc.get(target);
     if (portal?.shielded) {
-      player.getPacketSender().sendMessage("The portal is protected by a magical shield.");
+      player.sendMessage("The portal is protected by a magical shield.");
       event.allow = false;
     }
   });
@@ -1178,14 +1178,14 @@ function createPestControl(api) {
 
   api.onCanTeleport((event) => {
     if (!(event.player.getAttribute?.("pest-control:match") instanceof PestControlMatch)) return;
-    event.player.getPacketSender().sendMessage("You cannot teleport out of Pest Control.");
+    event.player.sendMessage("You cannot teleport out of Pest Control.");
     event.allow = false;
   });
 
   api.onSpellDisabled((event) => {
     if (!(event.player.getAttribute?.("pest-control:match") instanceof PestControlMatch)) return;
     if (event.spellId === 1162 || event.spellId === 1178) {
-      event.player.getPacketSender().sendMessage("You cannot use alchemy in Pest Control.");
+      event.player.sendMessage("You cannot use alchemy in Pest Control.");
       event.disabled = true;
     }
   });
@@ -1199,13 +1199,13 @@ function exchangeRewards({ player }) {
 function talkToMatchSquire({ player, npc }) {
   const match = player.getAttribute?.("pest-control:match");
   if (!(match instanceof PestControlMatch) || npc !== match.squire) return false;
-  player.getPacketSender().sendMessage("Destroy the portals while keeping the Void Knight alive.");
+  player.sendMessage("Destroy the portals while keeping the Void Knight alive.");
 }
 
 function leaveMatch({ player, npc }) {
   const match = player.getAttribute?.("pest-control:match");
   if (!(match instanceof PestControlMatch) || npc !== match.squire) return false;
-  player.getPacketSender().sendMessage("You leave the island before the battle is over.");
+  player.sendMessage("You leave the island before the battle is over.");
   match.area.leave(player, false);
   player.moveTo(OUTPOST_RETURN.clone());
 }

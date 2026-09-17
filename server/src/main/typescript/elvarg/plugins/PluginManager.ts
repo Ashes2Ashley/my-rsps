@@ -44,6 +44,7 @@ import {
   PluginCustomEventName,
   PluginPlayerPathBlockedEvent,
   PluginCommandEvent,
+  PluginCommandRights,
   PluginActiveRegionsEvent,
   PluginPlayerDisconnectEvent,
   PluginPlayerLoginEvent,
@@ -202,6 +203,10 @@ export class PluginManager {
     string,
     PluginHook<PluginCommandEvent>[]
   >();
+  /** Lowest rights id each command was registered with. Null means anyone may run it. */
+  private static commandRights = new Map<string, number | null>();
+  /** Lowest rights id a plugin has overridden a command to, taking priority over registration. */
+  private static commandRightsOverrides = new Map<string, number | null>();
   private static slayerAssignHooks: Array<{
     pluginName: string;
     handler: (player: any) => boolean;
@@ -1269,6 +1274,46 @@ export class PluginManager {
     return event.handled === true;
   }
 
+  /** Null means "no restriction"; otherwise the lowest rights id that may run the command. */
+  private static normalizeCommandRights(
+    minimumRights: PluginCommandRights | undefined
+  ): number | null {
+    const id = (minimumRights as any)?.getId?.();
+    return Number.isInteger(id) ? id : null;
+  }
+
+  /**
+   * Rights ids are sequential and ordered (none < moderator < administrator < owner <
+   * developer), so a command's requirement is a floor everyone above also clears.
+   */
+  private static playerHasCommandRights(player: any, base: string): boolean {
+    const required = PluginManager.commandRightsOverrides.has(base)
+      ? PluginManager.commandRightsOverrides.get(base)
+      : PluginManager.commandRights.get(base);
+    if (required === null || required === undefined) {
+      return true;
+    }
+    return player.getRights().getId() >= required;
+  }
+
+  /** Overrides the rank a command requires. PlayerRights.NONE opens it to every player. */
+  public static setCommandRights(
+    command: string,
+    minimumRights: PluginCommandRights
+  ): void {
+    if (typeof command !== "string") {
+      return;
+    }
+    const normalized = command.trim().toLowerCase();
+    if (!normalized.length) {
+      return;
+    }
+    PluginManager.commandRightsOverrides.set(
+      normalized,
+      PluginManager.normalizeCommandRights(minimumRights)
+    );
+  }
+
   public static emitCommand(event: PluginCommandEvent): boolean {
     for (const hook of PluginManager.commandHooks) {
       PluginManager.executeHook(hook, event, "command", "command_any");
@@ -1281,6 +1326,11 @@ export class PluginManager {
     const baseHandlers = PluginManager.commandHandlersByBase.get(event.base);
     if (!baseHandlers) {
       return event.handled;
+    }
+
+    if (!PluginManager.playerHasCommandRights(event.player, event.base)) {
+      event.player.sendMessage("You do not have permission to use this command.");
+      return true;
     }
 
     for (const hook of baseHandlers) {
@@ -2838,7 +2888,7 @@ export class PluginManager {
           console.error(`[plugins] ${pluginName} custom interface rejected`, error);
         }
       },
-      registerCommand: (command, handler) => {
+      registerCommand: (command, handler, minimumRights) => {
         if (typeof command !== "string" || typeof handler !== "function") {
           return;
         }
@@ -2846,6 +2896,10 @@ export class PluginManager {
         if (!normalized.length) {
           return;
         }
+        PluginManager.commandRights.set(
+          normalized,
+          PluginManager.normalizeCommandRights(minimumRights)
+        );
 
         const wrapper: PluginHook<PluginCommandEvent> = {
           pluginName,
@@ -2864,6 +2918,9 @@ export class PluginManager {
           PluginManager.commandHandlersByBase.get(normalized) ?? [];
         existing.push(wrapper);
         PluginManager.commandHandlersByBase.set(normalized, existing);
+      },
+      setCommandRights: (command, minimumRights) => {
+        PluginManager.setCommandRights(command, minimumRights);
       },
       onObjectClick: (objectIds, clickType, handler) => {
         if (!Number.isInteger(clickType) || clickType < 1 || clickType > 5) {

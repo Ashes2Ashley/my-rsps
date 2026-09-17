@@ -137,7 +137,7 @@ function applyChaosElementalSpecial(attackType, character, target) {
       return;
     }
     player.moveTo(destination);
-    player.getPacketSender().sendMessage("The Chaos elemental has teleported you.");
+    player.sendMessage("The Chaos elemental has teleported you.");
   }
 }
 
@@ -171,7 +171,7 @@ function disarmChaosElemental(player) {
   WeaponInterfaceManager.assign(player);
   BonusManager.update(player);
   player.getUpdateFlag().flag(Flag.APPEARANCE);
-  player.getPacketSender().sendMessage("The Chaos elemental disarms you.");
+  player.sendMessage("The Chaos elemental disarms you.");
 }
 
 function getChaosDisarmSlots(player) {

@@ -36,7 +36,7 @@ function handlePrayerAltar(player) {
   const currentPrayer = skillManager.getCurrentLevel(Skill.PRAYER);
   const maxPrayer = skillManager.getMaxLevel(Skill.PRAYER);
   if (currentPrayer >= maxPrayer) {
-    player.getPacketSender().sendMessage("You already have full Prayer points.");
+    player.sendMessage("You already have full Prayer points.");
     return true;
   }
 
@@ -44,7 +44,7 @@ function handlePrayerAltar(player) {
   Sounds.sendSound(player, Sound.PRAYER_RECHARGE);
   skillManager.setCurrentLevels(Skill.PRAYER, maxPrayer);
   skillManager.updateSkill(Skill.PRAYER);
-  player.getPacketSender().sendMessage("You recharge your Prayer points.");
+  player.sendMessage("You recharge your Prayer points.");
   return true;
 }
 

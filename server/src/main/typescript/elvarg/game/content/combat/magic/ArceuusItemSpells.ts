@@ -64,7 +64,7 @@ export class ArceuusItemSpells {
         const npcId = match ? this.NPC_BY_HEAD.get(match[1]) : undefined;
         const spell = npcId ? this.reanimation(spellId, npcId) : null;
         if (!spell) {
-            player.getPacketSender().sendMessage("That head cannot be reanimated by this spell.");
+            player.sendMessage("That head cannot be reanimated by this spell.");
             return true;
         }
         if (!spell.canCast(player, false) || !spell.canCast(player, true)) return true;

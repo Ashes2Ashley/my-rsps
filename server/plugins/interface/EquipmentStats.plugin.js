@@ -150,7 +150,7 @@ function handleItemAction({ player, buttonId, action }) {
     EquipPacketListener.unequip(player, equipmentSlot);
   } else if (action === 10) {
     const definition = item.getDefinition();
-    player.getPacketSender().sendMessage(definition.getExamine() || definition.getName());
+    player.sendMessage(definition.getExamine() || definition.getName());
   }
   return true;
 }

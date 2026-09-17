@@ -305,7 +305,7 @@ export class Combat {
             if (movement.size() > 0) return;
             if (this.character.isPlayer() && (state.routeRequested || movement.wasRouteEvaluated())) {
                 if (this.character.getAsPlayer().isPlayerBot?.() !== true) {
-                    this.character.getAsPlayer().getPacketSender().sendMessage("I can't reach that!");
+                    this.character.getAsPlayer().sendMessage("I can't reach that!");
                 }
                 this.cancelIfCurrent(target, generation);
             }
@@ -594,28 +594,28 @@ export class Combat {
                 // Once per interaction: this is re-checked twice a cycle while pursuing.
                 if (this.deniedNoticeGeneration !== generation) {
                     this.deniedNoticeGeneration = generation;
-                    player?.getPacketSender().sendMessage("You are already under attack!");
+                    player?.sendMessage("You are already under attack!");
                 }
                 return;
             case CanAttackResponse.LEVEL_DIFFERENCE_TOO_GREAT:
-                player?.getPacketSender().sendMessage("Your level difference is too great.");
-                player?.getPacketSender().sendMessage("You need to move deeper into the Wilderness.");
+                player?.sendMessage("Your level difference is too great.");
+                player?.sendMessage("You need to move deeper into the Wilderness.");
                 break;
             case CanAttackResponse.NOT_ENOUGH_SPECIAL_ENERGY:
                 if (player) {
-                    player.getPacketSender().sendMessage("You do not have enough special attack energy left!");
+                    player.sendMessage("You do not have enough special attack energy left!");
                     player.setSpecialActivated(false);
                     CombatSpecial.updateBar(player);
                 }
                 break;
             case CanAttackResponse.STUNNED:
-                player?.getPacketSender().sendMessage("You're currently stunned and cannot attack.");
+                player?.sendMessage("You're currently stunned and cannot attack.");
                 break;
             case CanAttackResponse.DUEL_NOT_STARTED_YET:
-                player?.getPacketSender().sendMessage("The duel has not started yet!");
+                player?.sendMessage("The duel has not started yet!");
                 break;
             case CanAttackResponse.DUEL_WRONG_OPPONENT:
-                player?.getPacketSender().sendMessage("This is not your opponent!");
+                player?.sendMessage("This is not your opponent!");
                 break;
             case CanAttackResponse.DUEL_MELEE_DISABLED:
                 if (player) StatementDialogue.send(player, "Melee has been disabled in this duel!");
@@ -627,7 +627,7 @@ export class Combat {
                 if (player) StatementDialogue.send(player, "Magic has been disabled in this duel!");
                 break;
             case CanAttackResponse.TARGET_IS_IMMUNE:
-                player?.getPacketSender().sendMessage("This npc is currently immune to attacks.");
+                player?.sendMessage("This npc is currently immune to attacks.");
                 break;
         }
         this.cancelIfCurrent(target, generation);

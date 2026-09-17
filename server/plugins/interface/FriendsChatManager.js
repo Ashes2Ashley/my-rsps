@@ -645,7 +645,7 @@ class FriendsChatManager {
         }
     }
     static gameMessage(player, text) {
-        player.getPacketSender().sendMessage(text);
+        player.sendMessage(text);
     }
     static notification(player, text) {
         player.getSession().sendClientPacket(encodeChatMessage("game", text, "", "", -1, FRIENDS_CHAT_NOTIFICATION_TYPE));

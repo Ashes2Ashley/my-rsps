@@ -50,7 +50,7 @@ export class Obelisks {
                         if (player == null || !Wilderness.isIn(player))
                             continue;
                         if (player.getLocation().isWithinDistance(obeliskLocation, 1) && !player.getCombat().getTeleblockTimer().finished())
-                            player.getPacketSender().sendMessage("A magical spell is blocking you from teleporting.");
+                            player.sendMessage("A magical spell is blocking you from teleporting.");
 
                         if (player.getLocation().isWithinDistance(obeliskLocation, 1) && player.getCombat().getTeleblockTimer().finished()) {
                             player.performGraphic(new Graphic(661));

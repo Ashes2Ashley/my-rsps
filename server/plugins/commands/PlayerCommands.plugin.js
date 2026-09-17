@@ -4,6 +4,7 @@ const { PasswordUtil } = require("../../src/main/typescript/elvarg/util/Password
 const { Item } = require("../../src/main/typescript/elvarg/game/model/Item");
 const { SkullType } = require("../../src/main/typescript/elvarg/game/model/SkullType");
 const { DonatorRights } = require("../../src/main/typescript/elvarg/game/model/rights/DonatorRights");
+const { PlayerRights } = require("../../src/main/typescript/elvarg/game/model/rights/PlayerRights");
 
 const INAPPROPRIATE_TITLES = ["nigger", "ass", "boobs"];
 
@@ -25,9 +26,9 @@ function sendOnlinePlayers(player) {
     connectedNames.push(worldPlayer.getUsername());
   }
   connectedNames.sort((a, b) => a.localeCompare(b));
-  player.getPacketSender().sendMessage(`Online players (${connectedNames.length}):`);
+  player.sendMessage(`Online players (${connectedNames.length}):`);
   if (connectedNames.length === 0) {
-    player.getPacketSender().sendMessage("none");
+    player.sendMessage("none");
     return;
   }
 
@@ -35,14 +36,14 @@ function sendOnlinePlayers(player) {
   for (const name of connectedNames) {
     const next = line.length === 0 ? name : `${line}, ${name}`;
     if (next.length > 180) {
-      player.getPacketSender().sendMessage(line);
+      player.sendMessage(line);
       line = name;
     } else {
       line = next;
     }
   }
   if (line.length > 0) {
-    player.getPacketSender().sendMessage(line);
+    player.sendMessage(line);
   }
 }
 
@@ -66,7 +67,7 @@ function canChangeSkull(player) {
   if (!CombatFactory.inCombat(player)) {
     return true;
   }
-  player.getPacketSender().sendMessage("You cannot change that during combat!");
+  player.sendMessage("You cannot change that during combat!");
   return false;
 }
 
@@ -116,9 +117,7 @@ module.exports = {
     });
 
     api.registerCommand("claim", ({ player }) => {
-      player
-        .getPacketSender()
-        .sendMessage("To claim purchased items, please talk to the Financial Advisor at home.");
+      player.sendMessage("To claim purchased items, please talk to the Financial Advisor at home.");
       return true;
     });
 
@@ -170,34 +169,34 @@ module.exports = {
       }
       const pass = commandTail(raw, parts);
       if (pass.length <= 3 || pass.length >= 20) {
-        player.getPacketSender().sendMessage("Invalid password input.");
+        player.sendMessage("Invalid password input.");
         return true;
       }
       try {
         const passwordHash = await PasswordUtil.generatePasswordHashWithSalt(pass);
         player.setPasswordHashWithSalt(passwordHash);
-        player.getPacketSender().sendMessage(`Your password is now: ${pass}`);
+        player.sendMessage(`Your password is now: ${pass}`);
       } catch (err) {
         console.error(err);
-        player.getPacketSender().sendMessage("An error occurred while changing your password.");
+        player.sendMessage("An error occurred while changing your password.");
       }
       return true;
     });
 
     api.registerCommand("lockxp", ({ player }) => {
       player.setExperienceLocked(!player.experienceLockedReturn());
-      player.getPacketSender().sendMessage(`Lock: ${player.experienceLockedReturn()}`);
+      player.sendMessage(`Lock: ${player.experienceLockedReturn()}`);
       return true;
     });
 
     api.registerCommand("thread", async ({ player, parts }) => {
       if (parts.length !== 2) {
-        player.getPacketSender().sendMessage("Please enter a valid command.");
+        player.sendMessage("Please enter a valid command.");
         return true;
       }
       const id = parseIntArg(parts[1]);
       if (id === null) {
-        player.getPacketSender().sendMessage("Please enter a valid command.");
+        player.sendMessage("Please enter a valid command.");
         return true;
       }
       try {
@@ -215,12 +214,12 @@ module.exports = {
 
     api.registerCommand("title", ({ player, parts }) => {
       if (parts.length < 2) {
-        player.getPacketSender().sendMessage("Usage: ::title text");
+        player.sendMessage("Usage: ::title text");
         return true;
       }
       const nextTitle = parts.slice(1).join(" ");
       if (INAPPROPRIATE_TITLES.some((bad) => nextTitle.toLowerCase().includes(bad))) {
-        player.getPacketSender().sendMessage("You're not allowed to have that in your title.");
+        player.sendMessage("You're not allowed to have that in your title.");
         return true;
       }
       player.setLoyaltyTitle(`@blu@${nextTitle}`);
@@ -249,18 +248,18 @@ module.exports = {
       return true;
     });
 
+    // Stays inline: donator is a separate rights ladder, so no PlayerRights array covers it.
     api.registerCommand("yell", ({ player, raw }) => {
       if (!player.isStaff() && !player.isDonator()) {
-        player.getPacketSender().sendMessage("You do not have permission to use this command.");
+        player.sendMessage("You do not have permission to use this command.");
         return true;
       }
       if (PlayerPunishment.muted(player.getUsername()) || PlayerPunishment.IPMuted(player.getHostAddress())) {
-        player.getPacketSender().sendMessage("You are muted and cannot yell.");
+        player.sendMessage("You are muted and cannot yell.");
         return true;
       }
       if (!player.getYellDelay().finished()) {
         player
-          .getPacketSender()
           .sendMessage(`You must wait another ${player.getYellDelay().secondsRemaining()} seconds to do that.`);
         return true;
       }
@@ -278,7 +277,7 @@ module.exports = {
         .join("");
       const prefix = yellPrefix(player);
       const yell = `<col=7f0000>${prefix} ${sprite} ${player.getUsername()}: ${yellMessage}</col>`.trim();
-      World.getPlayers().forEach((p) => p?.getPacketSender()?.sendMessage(yell));
+      World.getPlayers().forEach((p) => p?.sendMessage(yell));
 
       const delaySeconds = yellDelaySeconds(player);
       if (delaySeconds > 0) {
@@ -289,14 +288,9 @@ module.exports = {
 
     // Legacy owner-only test command from the TS command package.
     api.registerCommand("ground", ({ player }) => {
-      const isOwner = player.getRights() && player.getRights().getId() === 3;
-      if (!isOwner) {
-        player.getPacketSender().sendMessage("You do not have permission to use this command.");
-        return true;
-      }
       ItemOnGroundManager.registers(player, new Item(995, 10000));
-      player.getPacketSender().sendMessage("Spawned ground item..");
+      player.sendMessage("Spawned ground item..");
       return true;
-    });
+    }, PlayerRights.OWNER);
   },
 };

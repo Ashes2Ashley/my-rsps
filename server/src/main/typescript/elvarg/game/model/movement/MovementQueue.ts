@@ -1161,7 +1161,7 @@ export class MovementQueue {
             }
             queue.reset();
             task.stop();
-            this.player.getPacketSender().sendMessage("I can't reach that!");
+            this.player.sendMessage("I can't reach that!");
         }));
     }
 
@@ -1299,7 +1299,7 @@ export class MovementQueue {
                 routeInvalidated: this.wasRouteInvalidated(),
                 blockedByEntity: this.wasBlockedByDynamicOccupancy(),
             });
-            this.player.getPacketSender().sendMessage("You can't reach that!");
+            this.player.sendMessage("You can't reach that!");
             task.stop();
             TaskManager.cancelTasks(this.player.getIndex());
         }));
@@ -1359,7 +1359,7 @@ export class MovementQueue {
                 return;
         }
 
-        player.getPacketSender().sendMessage(message);
+        player.sendMessage(message);
     }
 }
 
@@ -1412,7 +1412,7 @@ class Mobility {
                 return;
         }
 
-        player.getPacketSender().sendMessage(message);
+        player.sendMessage(message);
     }
 }
 

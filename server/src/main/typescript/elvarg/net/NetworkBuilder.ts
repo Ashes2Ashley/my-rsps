@@ -635,13 +635,13 @@ class ClientConnection {
         case "examine_npc":
           if (this.player) {
             const definition = NpcDefinition.forId(packet.id);
-            this.player.getPacketSender().sendMessage(definition.getExamine());
+            this.player.sendMessage(definition.getExamine());
           }
           continue;
         case "examine_object":
           if (this.player) {
             const definition = ObjectDefinition.forId(packet.id);
-            this.player.getPacketSender().sendMessage(definition?.getExamine() ?? "It's nothing special.");
+            this.player.sendMessage(definition?.getExamine() ?? "It's nothing special.");
           }
           continue;
         case "appearance":
@@ -882,7 +882,7 @@ class ClientConnection {
       DropItemPacketListener.drop(player, packet.itemId, 3214, packet.slot);
     } else if (option === "examine") {
       const definition = ItemDefinition.forId(packet.itemId);
-      player.getPacketSender().sendMessage(definition.getExamine() || definition.getName());
+      player.sendMessage(definition.getExamine() || definition.getName());
     } else {
       ItemActionPacketListener.handleAction(player, packet.widgetId, packet.itemId, packet.slot, optionIndex ?? 1, packet.option);
     }
@@ -918,7 +918,7 @@ class ClientConnection {
     const option = packet.option?.toLowerCase() ?? "";
     if (option === "examine") {
       const definition = ItemDefinition.forId(packet.itemId);
-      player.getPacketSender().sendMessage(definition.getExamine() || definition.getName());
+      player.sendMessage(definition.getExamine() || definition.getName());
     } else if (option === "take" || packet.optionIndex === 3 || packet.optionIndex == null) {
       PickupItemPacketListener.pickup(player, packet.itemId, packet.x, packet.y);
     } else {

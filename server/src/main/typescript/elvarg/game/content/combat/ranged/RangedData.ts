@@ -91,13 +91,13 @@ export class RangedData {
                     if (t.getSkillManager().getCurrentLevel(Skill.PRAYER) < 0) {
                         t.getSkillManager().setCurrentLevels(Skill.PRAYER, 0);
                     }
-                    t.getPacketSender().sendMessage("Your Prayer level has been leeched.");
+                    t.sendMessage("Your Prayer level has been leeched.");
 
                     p.getSkillManager().setCurrentLevels(Skill.PRAYER, t.getSkillManager().getCurrentLevel(Skill.PRAYER) + 20);
                     if (p.getSkillManager().getCurrentLevel(Skill.PRAYER) > p.getSkillManager().getMaxLevel(Skill.PRAYER)) {
                         p.getSkillManager().setCurrentLevels(Skill.PRAYER, p.getSkillManager().getMaxLevel(Skill.PRAYER));
                     } else {
-                        p.getPacketSender().sendMessage("Your enchanced bolts leech some Prayer points from your opponent..");
+                        p.sendMessage("Your enchanced bolts leech some Prayer points from your opponent..");
                     }
                 }
                 break;
@@ -108,7 +108,7 @@ export class RangedData {
                 if (target.isPlayer()) {
                     const t = target.getAsPlayer();
                     t.getSkillManager().setCurrentLevels(Skill.MAGIC, t.getSkillManager().getCurrentLevel(Skill.MAGIC) - 3);
-                    t.getPacketSender().sendMessage("Your Magic level has been reduced.");
+                    t.sendMessage("Your Magic level has been reduced.");
                 }
 
                 break;

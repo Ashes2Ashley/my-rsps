@@ -52,7 +52,7 @@ class TridentSpell extends CombatNormalSpell {
 
         const charges = Math.max(0, Number(weapon.getMetaValue(TRIDENT_CHARGE_META_KEY)) || 0);
         if (charges <= 0) {
-            player.getPacketSender().sendMessage("Your trident has run out of charges.");
+            player.sendMessage("Your trident has run out of charges.");
             player.getCombat().reset();
             return false;
         }
@@ -86,7 +86,7 @@ class ChargeSpell extends Spell {
         }
         player.getSkillManager().addExperiences(Skill.MAGIC, this.baseExperience());
         player.setAttribute(CombatSpells.CHARGE_UNTIL, Date.now() + 420_000);
-        player.getPacketSender().sendMessage("You feel charged with magical power.");
+        player.sendMessage("You feel charged with magical power.");
         return true;
     }
 }
@@ -128,7 +128,7 @@ class CombatArceuusSpell extends CombatNormalSpell {
 
     private rejectInvalidDemonbaneTarget(cast: Mobile): false {
         if (cast.isPlayer()) {
-            cast.getAsPlayer().getPacketSender().sendMessage("Demonbane spells can only be cast on demons.");
+            cast.getAsPlayer().sendMessage("Demonbane spells can only be cast on demons.");
         }
         return false;
     }
@@ -298,14 +298,14 @@ export class CombatSpells {
                 const player = castOn as Player;
                 if (player.getSkillManager().getCurrentLevel(Skill.ATTACK) < player.getSkillManager().getMaxLevel(Skill.ATTACK)) {
                     if (cast.isPlayer()) {
-                        (cast as Player).getPacketSender().sendMessage("The spell has no effect because the player has already been weakened.");
+                        (cast as Player).sendMessage("The spell has no effect because the player has already been weakened.");
                     }
                     return;
                 }
                 const decrease = Math.floor(0.05 * (player.getSkillManager().getCurrentLevel(Skill.ATTACK)));
                 player.getSkillManager().setCurrentLevelCombat(Skill.ATTACK, player.getSkillManager().getCurrentLevel(Skill.ATTACK) - decrease);
                 player.getSkillManager().updateSkill(Skill.ATTACK);
-                player.getPacketSender().sendMessage("You feel slightly weakened.");
+                player.sendMessage("You feel slightly weakened.");
             }
         },
         endGraphic() {
@@ -409,7 +409,7 @@ export class CombatSpells {
 
                 if (player.getSkillManager().getCurrentLevel(Skill.STRENGTH) < player.getSkillManager().getMaxLevel(Skill.STRENGTH)) {
                     if (cast.isPlayer()) {
-                        (cast as Player).getPacketSender().sendMessage(
+                        (cast as Player).sendMessage(
                             "The spell has no effect because the player has already been weakened."
                         );
                     }
@@ -419,7 +419,7 @@ export class CombatSpells {
                 let decrease = Math.floor(0.05 * player.getSkillManager().getCurrentLevel(Skill.STRENGTH));
                 player.getSkillManager().setCurrentLevelCombat(Skill.STRENGTH, player.getSkillManager().getCurrentLevel(Skill.STRENGTH) - decrease);
                 player.getSkillManager().updateSkill(Skill.STRENGTH);
-                player.getPacketSender().sendMessage(
+                player.sendMessage(
                     "You feel slightly weakened."
                 );
             } /*else if (castOn.isNpc()) {
@@ -427,7 +427,7 @@ export class CombatSpells {
         
                     if (npc.getDefenceWeakened()[1] || npc.getStrengthWeakened()[1]) {
                         if (cast.isPlayer()) {
-                            (cast as Player).getPacketSender().sendMessage(
+                            (cast as Player).sendMessage(
                                 "The spell has no effect because the NPC has already been weakened."
                             );
                         }
@@ -567,7 +567,7 @@ export class CombatSpells {
 
                 if (player.getSkillManager().getCurrentLevel(Skill.DEFENCE) < player.getSkillManager().getMaxLevel(Skill.DEFENCE)) {
                     if (cast.isPlayer()) {
-                        (cast as Player).getPacketSender().sendMessage("The spell has no effect because the player has already been weakened.");
+                        (cast as Player).sendMessage("The spell has no effect because the player has already been weakened.");
                     }
                     return;
                 }
@@ -576,13 +576,13 @@ export class CombatSpells {
                 player.getSkillManager().setCurrentLevelCombat(Skill.DEFENCE, player.getSkillManager().getCurrentLevel(Skill.DEFENCE) - decrease);
                 player.getSkillManager().updateSkill(Skill.DEFENCE);
 
-                player.getPacketSender().sendMessage("You feel slightly weakened.");
+                player.sendMessage("You feel slightly weakened.");
             }/* else if (castOn.isNpc()) {
                 const npc = castOn as NPC;
         
                 if (npc.getDefenceWeakened()[2] || npc.getStrengthWeakened()[2]) {
                     if (cast.isPlayer()) {
-                        (cast as Player).getPacketSender().sendMessage("The spell has no effect because the NPC has already been weakened.");
+                        (cast as Player).sendMessage("The spell has no effect because the NPC has already been weakened.");
                     }
                     return;
                 }
@@ -1205,7 +1205,7 @@ export class CombatSpells {
 
                 if (player.getSkillManager().getCurrentLevel(Skill.DEFENCE) < player.getSkillManager().getMaxLevel(Skill.DEFENCE)) {
                     if (cast.isPlayer()) {
-                        (cast as Player).getPacketSender().sendMessage("The spell has no effect because the player is already weakened.");
+                        (cast as Player).sendMessage("The spell has no effect because the player is already weakened.");
                     }
                     return;
                 }
@@ -1213,13 +1213,13 @@ export class CombatSpells {
                 let decrease = Math.floor(0.10 * player.getSkillManager().getCurrentLevel(Skill.DEFENCE));
                 player.getSkillManager().setCurrentLevelCombat(Skill.DEFENCE, player.getSkillManager().getCurrentLevel(Skill.DEFENCE) - decrease);
                 player.getSkillManager().updateSkill(Skill.DEFENCE);
-                player.getPacketSender().sendMessage("You feel slightly weakened.");
+                player.sendMessage("You feel slightly weakened.");
             }/* else if (castOn.isNpc()) {
                 let npc = castOn as NPC;
         
                 if (npc.getDefenceWeakened()[2] || npc.getStrengthWeakened()[2]) {
                     if (cast.isPlayer()) {
-                        (cast as Player).getPacketSender().sendMessage("The spell has no effect because the NPC is already weakened.");
+                        (cast as Player).sendMessage("The spell has no effect because the NPC is already weakened.");
                     }
                     return;
                 }
@@ -1292,20 +1292,20 @@ export class CombatSpells {
                 let player = castOn as Player;
                 if (player.getSkillManager().getCurrentLevel(Skill.STRENGTH) < player.getSkillManager().getMaxLevel(Skill.STRENGTH)) {
                     if (cast.isPlayer()) {
-                        (cast as Player).getPacketSender().sendMessage("The spell has no effect because the player is already weakened.");
+                        (cast as Player).sendMessage("The spell has no effect because the player is already weakened.");
                     }
                     return;
                 }
                 let decrease = Math.floor(0.10 * (player.getSkillManager().getCurrentLevel(Skill.STRENGTH)));
                 player.getSkillManager().setCurrentLevelCombat(Skill.STRENGTH, player.getSkillManager().getCurrentLevel(Skill.STRENGTH) - decrease);
                 player.getSkillManager().updateSkill(Skill.STRENGTH);
-                player.getPacketSender().sendMessage("You feel slightly weakened.");
+                player.sendMessage("You feel slightly weakened.");
             }
             /* else if (castOn.isNpc()) {
             let npc = castOn as NPC;
             if (npc.getDefenceWeakened()[1] || npc.getStrengthWeakened()[1]) {
             if (cast.isPlayer()) {
-            (cast as Player).getPacketSender().sendMessage("The spell has no effect because the NPC is already weakened.");
+            (cast as Player).sendMessage("The spell has no effect because the NPC is already weakened.");
             }
             return;
             }
@@ -1608,7 +1608,7 @@ export class CombatSpells {
 
                 if (player.getSkillManager().getCurrentLevel(Skill.ATTACK) < player.getSkillManager().getMaxLevel(Skill.ATTACK)) {
                     if (cast.isPlayer()) {
-                        (cast as Player).getPacketSender().sendMessage(
+                        (cast as Player).sendMessage(
                             "The spell has no effect because the player is already weakened.");
                     }
                     return;
@@ -1617,14 +1617,14 @@ export class CombatSpells {
                 const decrease = Math.floor(0.10 * (player.getSkillManager().getCurrentLevel(Skill.ATTACK)));
                 player.getSkillManager().setCurrentLevelCombat(Skill.ATTACK, player.getSkillManager().getCurrentLevel(Skill.ATTACK) - decrease);
                 player.getSkillManager().updateSkill(Skill.ATTACK);
-                player.getPacketSender().sendMessage(
+                player.sendMessage(
                     "You feel slightly weakened.");
             }/* else if (castOn.isNpc()) {
                     const npc = castOn as NPC;
         
                     if (npc.getDefenceWeakened()[0] || npc.getStrengthWeakened()[0]) {
                         if (cast.isPlayer()) {
-                            (cast as Player).getPacketSender().sendMessage(
+                            (cast as Player).sendMessage(
                                 "The spell has no effect because the NPC is already weakened.");
                         }
                         return;
@@ -1665,7 +1665,7 @@ export class CombatSpells {
                 let player = castOn as Player;
                 if (!player.getCombat().getTeleblockTimer().finished()) {
                     if (cast.isPlayer()) {
-                        (cast as Player).getPacketSender().sendMessage(
+                        (cast as Player).sendMessage(
                             "The spell has no effect because the player is already teleblocked."
                         );
                     }
@@ -1677,7 +1677,7 @@ export class CombatSpells {
                     .sendMessage("You have just been teleblocked!");
             } else if (castOn.isNpc()) {
                 if (cast.isPlayer()) {
-                    (cast as Player).getPacketSender().sendMessage("Your spell has no effect on this target.");
+                    (cast as Player).sendMessage("Your spell has no effect on this target.");
                 }
             }
         },

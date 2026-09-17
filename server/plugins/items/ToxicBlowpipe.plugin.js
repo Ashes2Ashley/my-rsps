@@ -186,14 +186,14 @@ function isReady(player, item, amountRequired = 1, silent = false) {
   const { scales, dartAmount } = BlowpipeState.read(item);
   if (scales <= 0) {
     if (!silent) {
-      player.getPacketSender().sendMessage("You must recharge your Toxic blowpipe using some Zulrah scales.");
+      player.sendMessage("You must recharge your Toxic blowpipe using some Zulrah scales.");
       player.getCombat().reset();
     }
     return false;
   }
   if (dartAmount < amountRequired) {
     if (!silent) {
-      player.getPacketSender().sendMessage("You must load darts into the Toxic blowpipe.");
+      player.sendMessage("You must load darts into the Toxic blowpipe.");
       player.getCombat().reset();
     }
     return false;
@@ -209,7 +209,7 @@ function isCharged(item, amountRequired = 1) {
 function chargeScales(player, blowpipeItem, blowpipeSlot, scaleItem) {
   const { scales: current } = BlowpipeState.read(blowpipeItem);
   if (current >= TOXIC_BLOWPIPE_MAX_SCALES) {
-    player.getPacketSender().sendMessage("Your blowpipe cannot hold any more scales.");
+    player.sendMessage("Your blowpipe cannot hold any more scales.");
     return;
   }
   const add = Math.min(scaleItem.getAmount(), TOXIC_BLOWPIPE_MAX_SCALES - current);
@@ -219,7 +219,7 @@ function chargeScales(player, blowpipeItem, blowpipeSlot, scaleItem) {
   player.getInventory().deleteNumber(ZULRAH_SCALES_ID, add);
   BlowpipeState.addScales(blowpipeItem, add);
   refreshBlowpipeState(player, blowpipeItem, blowpipeSlot);
-  player.getPacketSender().sendMessage(`You add ${add} Zulrah scales to the blowpipe.`);
+  player.sendMessage(`You add ${add} Zulrah scales to the blowpipe.`);
 }
 
 function chargeDarts(player, blowpipeItem, blowpipeSlot, dartItem) {
@@ -227,12 +227,12 @@ function chargeDarts(player, blowpipeItem, blowpipeSlot, dartItem) {
   const { dartId: currentId, dartAmount: currentAmount } = BlowpipeState.read(blowpipeItem);
 
   if (currentAmount >= TOXIC_BLOWPIPE_MAX_DARTS && currentId === dartId) {
-    player.getPacketSender().sendMessage("Your blowpipe cannot hold any more darts.");
+    player.sendMessage("Your blowpipe cannot hold any more darts.");
     return;
   }
 
   if (currentAmount > 0 && currentId !== dartId && !canAddStack(player.getInventory(), currentId)) {
-    player.getPacketSender().sendMessage("You need more inventory space to swap the loaded darts.");
+    player.sendMessage("You need more inventory space to swap the loaded darts.");
     return;
   }
 
@@ -249,14 +249,14 @@ function chargeDarts(player, blowpipeItem, blowpipeSlot, dartItem) {
   player.getInventory().deleteNumber(dartId, add);
   BlowpipeState.addDarts(blowpipeItem, dartId, add);
   refreshBlowpipeState(player, blowpipeItem, blowpipeSlot);
-  player.getPacketSender().sendMessage(`You load ${add} ${getAmmoName(dartId)} into the blowpipe.`);
+  player.sendMessage(`You load ${add} ${getAmmoName(dartId)} into the blowpipe.`);
 }
 
 function unloadBlowpipe(player, blowpipeItem, slot) {
   const { scales, dartId, dartAmount } = BlowpipeState.read(blowpipeItem);
 
   if (scales <= 0 && dartAmount <= 0) {
-    player.getPacketSender().sendMessage("Your blowpipe is already empty.");
+    player.sendMessage("Your blowpipe is already empty.");
     return;
   }
 
@@ -269,7 +269,7 @@ function unloadBlowpipe(player, blowpipeItem, slot) {
     requiredSlots++;
   }
   if (inventory.getFreeSlots() < requiredSlots) {
-    player.getPacketSender().sendMessage("You need more inventory space to unload the blowpipe.");
+    player.sendMessage("You need more inventory space to unload the blowpipe.");
     return;
   }
 
@@ -282,18 +282,18 @@ function unloadBlowpipe(player, blowpipeItem, slot) {
 
   BlowpipeState.clear(blowpipeItem);
   refreshBlowpipeState(player, blowpipeItem, slot);
-  player.getPacketSender().sendMessage("You unload your blowpipe.");
+  player.sendMessage("You unload your blowpipe.");
 }
 
 function sendStatus(player, blowpipeItem) {
   const { scales, dartId, dartAmount } = BlowpipeState.read(blowpipeItem);
   if (dartAmount <= 0 || !isToxicBlowpipeDartId(dartId)) {
-    player.getPacketSender().sendMessage(
+    player.sendMessage(
       `Your Toxic blowpipe has ${scales} Zulrah scales and no darts loaded.`
     );
     return;
   }
-  player.getPacketSender().sendMessage(
+  player.sendMessage(
     `Your Toxic blowpipe has ${scales} Zulrah scales and ${dartAmount} ${getAmmoName(dartId)} loaded.`
   );
 }
@@ -305,7 +305,7 @@ function maybeConsumeLoadedDart(player, blowpipeItem) {
     }
   }
   if (BlowpipeState.consumeDart(blowpipeItem) <= 0) {
-    player.getPacketSender().sendMessage("Your Toxic blowpipe has run out of darts!");
+    player.sendMessage("Your Toxic blowpipe has run out of darts!");
     player.getCombat().reset();
     return true;
   }
@@ -315,7 +315,7 @@ function maybeConsumeLoadedDart(player, blowpipeItem) {
 function maybeConsumeScale(player, blowpipeItem) {
   if (Misc.getRandom(2) !== 0) {
     if (BlowpipeState.consumeScale(blowpipeItem) <= 0) {
-      player.getPacketSender().sendMessage("Your Toxic blowpipe has run out of scales!");
+      player.sendMessage("Your Toxic blowpipe has run out of scales!");
       player.getCombat().reset();
       return true;
     }
@@ -361,7 +361,7 @@ class ToxicBlowpipeCombatMethod extends RangedCombatMethod {
     }
     const ammo = getAmmo(player);
     if (!ammo) {
-      player.getPacketSender().sendMessage("You must load darts into the Toxic blowpipe.");
+      player.sendMessage("You must load darts into the Toxic blowpipe.");
       player.getCombat().reset();
       return;
     }
@@ -468,7 +468,7 @@ module.exports = {
         }
         if (depleted) {
           refreshBlowpipeState(player, blowpipeItem);
-          player.getPacketSender().sendMessage("Your Toxic blowpipe has run out of scales!");
+          player.sendMessage("Your Toxic blowpipe has run out of scales!");
           player.getCombat().reset();
         }
         return true;

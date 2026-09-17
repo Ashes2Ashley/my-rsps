@@ -48,7 +48,7 @@ export class SecondGroundItemOptionPacketListener {
       });
 
       if (!handled) {
-        player.getPacketSender().sendMessage("Nothing interesting happens.");
+        player.sendMessage("Nothing interesting happens.");
       }
     });
   }

@@ -553,11 +553,11 @@ export class Player extends Mobile {
     */
     canLogout(): boolean {
         if (CombatFactory.isBeingAttacked(this)) {
-            this.getPacketSender().sendMessage("You must wait a few seconds after being out of combat before doing this.");
+            this.sendMessage("You must wait a few seconds after being out of combat before doing this.");
             return false;
         }
         if (this.busy()) {
-            this.getPacketSender().sendMessage("You cannot log out at the moment.");
+            this.sendMessage("You cannot log out at the moment.");
             return false;
         }
         return true;

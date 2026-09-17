@@ -144,7 +144,7 @@ export class PlayerDeathTask extends Task {
                         // Handle defeat..
                         if (this.killer) {
                             if (shouldDropItemsOnDeath && !dropped && !pluginHandledDrop) {
-                                this.killer.getPacketSender().sendMessage(`${this.player.getUsername()} had no valuable items to be dropped.`);
+                                this.killer.sendMessage(`${this.player.getUsername()} had no valuable items to be dropped.`);
                             }
                         }
 
@@ -164,7 +164,7 @@ export class PlayerDeathTask extends Task {
                                 const brokenItem = BrokenItem.get(id);
                                 if (brokenItem != null) {
                                     id = brokenItem.getBrokenItem();
-                                    this.player.getPacketSender().sendMessage(`Your ${ItemDefinition.forId(it.getId()).getName()} has been broken. You can fix it by talking to Perdu.`);
+                                    this.player.sendMessage(`Your ${ItemDefinition.forId(it.getId()).getName()} has been broken. You can fix it by talking to Perdu.`);
                                 }
                                 this.player.getInventory().adds(id, it.getAmount());
                             }
@@ -216,7 +216,7 @@ export class PlayerDeathTask extends Task {
                     this.player.getPacketSender().sendInterfaceRemoval();
 
                     // Send death message..
-                    this.player.getPacketSender().sendMessage("Oh dear, you are dead!");
+                    this.player.sendMessage("Oh dear, you are dead!");
 
                     // Perform death animation..
                     this.player.performAnimation(new Animation(836));

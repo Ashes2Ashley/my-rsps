@@ -78,9 +78,7 @@ class PriceCheckerContainer extends ItemContainer {
   }
 
   full() {
-    this.player
-      .getPacketSender()
-      .sendMessage("The pricechecker cannot hold any more items.");
+    this.player.sendMessage("The pricechecker cannot hold any more items.");
     return this;
   }
 
@@ -116,15 +114,11 @@ class PriceCheckerContainer extends ItemContainer {
       if (this.player.getInventory().getItems()[slot].getId() == id) {
         const item = new Item(id, amount);
         if (!item.getDefinition().isSellable()) {
-          this.player
-            .getPacketSender()
-            .sendMessage("That item cannot be pricechecked because it isn't sellable.");
+          this.player.sendMessage("That item cannot be pricechecked because it isn't sellable.");
           return true;
         }
         if (item.getDefinition().getValue() == 0) {
-          this.player
-            .getPacketSender()
-            .sendMessage("There's no point pricechecking that item. It has no value.");
+          this.player.sendMessage("There's no point pricechecking that item. It has no value.");
           return true;
         }
 

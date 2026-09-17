@@ -102,7 +102,7 @@ function consumeCharge(player, item) {
   item.setId(state.nextId);
   refresh(player);
   if (state.charges === 1) {
-    player.getPacketSender().sendMessage("Your ring of wealth has run out of charges.");
+    player.sendMessage("Your ring of wealth has run out of charges.");
   }
   return true;
 }
@@ -112,7 +112,7 @@ function teleport(player, event, item, destination) {
     return;
   }
   if (!ringState(item.getId())) {
-    player.getPacketSender().sendMessage("Your ring of wealth has no charges left.");
+    player.sendMessage("Your ring of wealth has no charges left.");
     return;
   }
   // Members' dragonstone jewellery works through level 30 Wilderness, unlike spells.
@@ -127,12 +127,12 @@ function recharge(player, item) {
   const chargedId = UNCHARGED_RINGS.get(item.getId())
     ?? (isImbuedRingOfWealth(item.getId()) ? 20786 : 11980);
   if (item.getId() === chargedId || item.getId() === 21456 || item.getId() === 21458) {
-    player.getPacketSender().sendMessage("Your ring of wealth is already fully charged.");
+    player.sendMessage("Your ring of wealth is already fully charged.");
     return;
   }
   item.setId(chargedId);
   refresh(player);
-  player.getPacketSender().sendMessage("You recharge your ring of wealth at the Fountain of Rune.");
+  player.sendMessage("You recharge your ring of wealth at the Fountain of Rune.");
 }
 
 function imbue(player, ring) {
@@ -142,21 +142,21 @@ function imbue(player, ring) {
     return false;
   }
   if (player.getInventory().getAmount(COINS) < IMBUE_COST) {
-    player.getPacketSender().sendMessage("You need 50,000 coins to imbue this ring.");
+    player.sendMessage("You need 50,000 coins to imbue this ring.");
     return false;
   }
   player.getInventory().deleteNumber(RING_OF_WEALTH_SCROLL, 1);
   player.getInventory().deleteNumber(COINS, IMBUE_COST);
   ring.setId(imbuedId);
   refresh(player);
-  player.getPacketSender().sendMessage("You imbue your ring of wealth.");
+  player.sendMessage("You imbue your ring of wealth.");
   return true;
 }
 
 function openTeleportPrompt(api, event) {
   const { player, item } = event;
   if (!ringState(item.getId())) {
-    player.getPacketSender().sendMessage("Your ring of wealth has no charges left.");
+    player.sendMessage("Your ring of wealth has no charges left.");
     return;
   }
   api.sendMultiChatboxPrompt(
@@ -192,7 +192,7 @@ function actionForOption(option) {
 function toggleAutoCollect(player) {
   const enabled = !autoCollectCurrencies(player);
   player.setAttribute?.(AUTO_COLLECT_ATTRIBUTE, enabled);
-  player.getPacketSender().sendMessage(`Your ring of wealth will ${enabled ? "now" : "no longer"} collect currency drops.`);
+  player.sendMessage(`Your ring of wealth will ${enabled ? "now" : "no longer"} collect currency drops.`);
 }
 
 function handleRingAction(event, action) {
@@ -205,7 +205,7 @@ function handleRingAction(event, action) {
   } else if (action.type === "coin-collection") {
     toggleAutoCollect(event.player);
   } else {
-    event.player.getPacketSender().sendMessage("Boss log is not available yet.");
+    event.player.sendMessage("Boss log is not available yet.");
   }
   return true;
 }

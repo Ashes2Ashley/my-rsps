@@ -453,18 +453,14 @@ function performSmeltAction(player, recipe) {
   const inventory = player.getInventory();
   const smithingLevel = getSmithingLevel(player);
   if (smithingLevel < recipe.level) {
-    player
-      .getPacketSender()
-      .sendMessage(
-        `You need a Smithing level of at least ${recipe.level} to smelt this bar.`
-      );
+    player.sendMessage(
+      `You need a Smithing level of at least ${recipe.level} to smelt this bar.`
+    );
     return false;
   }
 
   if (!hasIngredients(inventory, recipe)) {
-    player
-      .getPacketSender()
-      .sendMessage("You don't have the required ores to smelt this bar.");
+    player.sendMessage("You don't have the required ores to smelt this bar.");
     return false;
   }
 
@@ -477,11 +473,9 @@ function performSmeltAction(player, recipe) {
   if (Math.random() <= successChance) {
     inventory.addItem(new Item(recipe.barId, 1));
     player.getSkillManager().addExperiences(Skill.SMITHING, recipe.xp);
-    player.getPacketSender().sendMessage("You retrieve a bar of metal.");
+    player.sendMessage("You retrieve a bar of metal.");
   } else {
-    player
-      .getPacketSender()
-      .sendMessage("The ore is too impure and fails to become a bar.");
+    player.sendMessage("The ore is too impure and fails to become a bar.");
   }
 
   return true;
@@ -490,24 +484,20 @@ function performSmeltAction(player, recipe) {
 function performSmithAction(player, smithable) {
   const inventory = player.getInventory();
   if (!inventory.contains(ItemIds.HAMMER)) {
-    player.getPacketSender().sendMessage("You need a hammer to work metal bars.");
+    player.sendMessage("You need a hammer to work metal bars.");
     return false;
   }
 
   const smithingLevel = getSmithingLevel(player);
   if (smithingLevel < smithable.requiredLevel) {
-    player
-      .getPacketSender()
-      .sendMessage(
-        `You need a Smithing level of at least ${smithable.requiredLevel} to smith this item.`
-      );
+    player.sendMessage(
+      `You need a Smithing level of at least ${smithable.requiredLevel} to smith this item.`
+    );
     return false;
   }
 
   if (inventory.getAmount(smithable.barId) < smithable.barsRequired) {
-    player
-      .getPacketSender()
-      .sendMessage("You don't have enough bars to smith that item.");
+    player.sendMessage("You don't have enough bars to smith that item.");
     return false;
   }
 
@@ -516,7 +506,7 @@ function performSmithAction(player, smithable) {
   player.getSkillManager().addExperiences(Skill.SMITHING, 10);
   player.performAnimation(SMITH_ANIMATION);
   Sounds.sendSound(player, Sound.SMITHING);
-  player.getPacketSender().sendMessage("You hammer the metal and shape an item.");
+  player.sendMessage("You hammer the metal and shape an item.");
   return true;
 }
 
@@ -564,18 +554,14 @@ function startSmeltingSession(activeSessions, player, recipe, amount) {
 
   const smithingLevel = getSmithingLevel(player);
   if (smithingLevel < recipe.level) {
-    player
-      .getPacketSender()
-      .sendMessage(
-        `You need a Smithing level of at least ${recipe.level} to smelt this bar.`
-      );
+    player.sendMessage(
+      `You need a Smithing level of at least ${recipe.level} to smelt this bar.`
+    );
     return false;
   }
 
   if (!hasIngredients(player.getInventory(), recipe)) {
-    player
-      .getPacketSender()
-      .sendMessage("You don't have the required ores to smelt this bar.");
+    player.sendMessage("You don't have the required ores to smelt this bar.");
     return false;
   }
 
@@ -600,24 +586,20 @@ function startSmithingSession(activeSessions, player, smithable, amount) {
 
   const inventory = player.getInventory();
   if (!inventory.contains(ItemIds.HAMMER)) {
-    player.getPacketSender().sendMessage("You need a hammer to work metal bars.");
+    player.sendMessage("You need a hammer to work metal bars.");
     return false;
   }
 
   const smithingLevel = getSmithingLevel(player);
   if (smithingLevel < smithable.requiredLevel) {
-    player
-      .getPacketSender()
-      .sendMessage(
-        `You need a Smithing level of at least ${smithable.requiredLevel} to smith this item.`
-      );
+    player.sendMessage(
+      `You need a Smithing level of at least ${smithable.requiredLevel} to smith this item.`
+    );
     return false;
   }
 
   if (inventory.getAmount(smithable.barId) < smithable.barsRequired) {
-    player
-      .getPacketSender()
-      .sendMessage("You don't have enough bars to smith that item.");
+    player.sendMessage("You don't have enough bars to smith that item.");
     return false;
   }
 
@@ -660,11 +642,9 @@ function openEquipmentCreationInterface(player, preferredBarId = null) {
     );
     if (preferredBar) {
       if (smithingLevel < preferredBar.level) {
-        player
-          .getPacketSender()
-          .sendMessage(
-            `You need a Smithing level of at least ${preferredBar.level} to smith this bar.`
-          );
+        player.sendMessage(
+          `You need a Smithing level of at least ${preferredBar.level} to smith this bar.`
+        );
         return false;
       }
       if (inventory.contains(preferredBar.barId)) {
@@ -688,11 +668,9 @@ function openEquipmentCreationInterface(player, preferredBarId = null) {
   }
 
   if (!selectedBar) {
-    player
-      .getPacketSender()
-      .sendMessage(
-        "You don't have any bars in your inventory which can be used with your Smithing level."
-      );
+    player.sendMessage(
+      "You don't have any bars in your inventory which can be used with your Smithing level."
+    );
     return false;
   }
 
