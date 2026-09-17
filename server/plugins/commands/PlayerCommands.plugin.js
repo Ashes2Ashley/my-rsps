@@ -4,6 +4,7 @@ const { PasswordUtil } = require("../../src/main/typescript/elvarg/util/Password
 const { Item } = require("../../src/main/typescript/elvarg/game/model/Item");
 const { SkullType } = require("../../src/main/typescript/elvarg/game/model/SkullType");
 const { DonatorRights } = require("../../src/main/typescript/elvarg/game/model/rights/DonatorRights");
+const { PlayerRights } = require("../../src/main/typescript/elvarg/game/model/rights/PlayerRights");
 
 const INAPPROPRIATE_TITLES = ["nigger", "ass", "boobs"];
 
@@ -247,6 +248,7 @@ module.exports = {
       return true;
     });
 
+    // Stays inline: donator is a separate rights ladder, so no PlayerRights array covers it.
     api.registerCommand("yell", ({ player, raw }) => {
       if (!player.isStaff() && !player.isDonator()) {
         player.sendMessage("You do not have permission to use this command.");
@@ -286,14 +288,9 @@ module.exports = {
 
     // Legacy owner-only test command from the TS command package.
     api.registerCommand("ground", ({ player }) => {
-      const isOwner = player.getRights() && player.getRights().getId() === 3;
-      if (!isOwner) {
-        player.sendMessage("You do not have permission to use this command.");
-        return true;
-      }
       ItemOnGroundManager.registers(player, new Item(995, 10000));
       player.sendMessage("Spawned ground item..");
       return true;
-    });
+    }, PlayerRights.OWNER);
   },
 };

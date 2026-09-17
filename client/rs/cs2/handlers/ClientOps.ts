@@ -142,7 +142,7 @@ export function registerClientOps(handlers: HandlerMap): void {
                 94: 14, // Equipment (11 slots but indexed 0-13)
                 95: 1410, // Bank (bankmain_build uses 1410 indexed slots)
                 90: 28, // Trade offer
-                516: 40, // Shop
+                516: 300, // Shop
             };
             size = defaultSizes[invId] ?? 0;
         }

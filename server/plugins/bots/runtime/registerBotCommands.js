@@ -9,7 +9,6 @@ function registerBotCommands(options) {
   const {
     api,
     botApi,
-    hasAdminRights,
     runtime,
     behaviorMode,
     assignableBehaviors,
@@ -41,10 +40,6 @@ function registerBotCommands(options) {
 
   const pendingRecruits = new Map();
   api.registerCommand("bot", ({ player }) => {
-    if (player.getRights() !== PlayerRights.DEVELOPER) {
-      player.sendMessage("You do not have permission to use this command.");
-      return true;
-    }
     const bot = runtime.spawnPvpBot(player.getLocation());
     if (!bot) {
       player.sendMessage("Unable to spawn a PvP bot right now.");
@@ -53,7 +48,7 @@ function registerBotCommands(options) {
     // The factory queues a world login. Clan membership needs the assigned player index.
     pendingRecruits.set(bot, player);
     return true;
-  });
+  }, PlayerRights.DEVELOPER);
   api.onPlayerProcess(({ player: owner }) => {
     if (owner.isPlayerBot?.()) return;
     for (const [bot, pendingOwner] of pendingRecruits) {
@@ -80,11 +75,6 @@ function registerBotCommands(options) {
   });
 
   api.registerCommand("botme", ({ player, parts }) => {
-    if (!hasAdminRights(player)) {
-      player.sendMessage("You do not have permission to use this command.");
-      return true;
-    }
-
     const mode = (parts[1] ?? "toggle").toLowerCase();
     if (mode === "status") {
       const enabled = runtime.hasControllerForPlayer(player);
@@ -129,14 +119,9 @@ function registerBotCommands(options) {
 
     player.sendMessage("Usage: ::botme [on|off|toggle|status]");
     return true;
-  });
+  }, PlayerRights.ADMINISTRATOR);
 
   api.registerCommand("bh", ({ player, parts }) => {
-    if (!hasAdminRights(player)) {
-      player.sendMessage("You do not have permission to use this command.");
-      return true;
-    }
-
     const usernameArg = parts[1];
     const behaviorArg = parts[2]?.toLowerCase();
     if (!usernameArg || !behaviorArg) {
@@ -228,14 +213,9 @@ function registerBotCommands(options) {
       behavior: normalizedBehavior,
     });
     return true;
-  });
+  }, PlayerRights.ADMINISTRATOR);
 
   api.registerCommand("bothotspots", ({ player }) => {
-    if (!hasAdminRights(player)) {
-      player.sendMessage("You do not have permission to use this command.");
-      return true;
-    }
-
     const countsByHotspot = new Map();
     const countsByLoadout = new Map();
     const countsByProfile = new Map();
@@ -269,7 +249,7 @@ function registerBotCommands(options) {
       `profiles ${formatCounts(countsByProfile) || "none"}`
     );
     return true;
-  });
+  }, PlayerRights.ADMINISTRATOR);
 }
 
 module.exports = {

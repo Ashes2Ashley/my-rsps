@@ -858,7 +858,7 @@ export class OsrsClient {
     /** Collection log inventory (ID 620) - stores obtained items for CS2 inv_total queries */
     collectionInventory: Inventory = new Inventory(2048);
     /** Shop stock inventory (ID 516) - stores shop items for CS2 inv queries */
-    shopInventory: Inventory = new Inventory(40);
+    shopInventory: Inventory = new Inventory(300);
     /** Your offered trade items (inventory ID 90 in the cache scripts). */
     tradeOfferInventory: Inventory = new Inventory(28);
     /** The other player's offered items use OSRS's inventory-other offset. */
@@ -6617,7 +6617,7 @@ export class OsrsClient {
 
         if (Array.isArray(state.stock)) {
             for (const entry of state.stock) {
-                const slot = Math.max(0, Math.min(39, entry.slot | 0));
+                const slot = Math.max(0, Math.min(299, entry.slot | 0));
                 const itemId = entry.itemId | 0;
                 const quantity = typeof entry.quantity === "number" ? entry.quantity | 0 : 1;
                 if (itemId > 0) {

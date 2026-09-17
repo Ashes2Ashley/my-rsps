@@ -38,11 +38,6 @@ const playerProceduralRegionOverrides = new Map();
 const playerProceduralRegionPayloads = new Map();
 const regionProceduralClipOverrides = new Map();
 
-function isDev(player) {
-  const rights = player?.getRights?.();
-  return rights === PlayerRights.DEVELOPER || rights === PlayerRights.OWNER;
-}
-
 function parseIntArg(value) {
   const parsed = Number.parseInt(value, 10);
   return Number.isNaN(parsed) ? null : parsed;
@@ -1626,11 +1621,6 @@ module.exports = {
     RegionManager = api.getRegionManager();
     initRegionBuildingAnalysisCoreAccess(api);
     api.registerCommand("procregion", ({ player, parts }) => {
-      if (!isDev(player)) {
-        player.sendMessage("Developer rights required.");
-        return true;
-      }
-
       if (parts.length < 3 || parts.length > 4) {
         player.sendMessage("Usage: ::procregion <regionX> <regionY> [seed]");
         return true;
@@ -1654,14 +1644,9 @@ module.exports = {
       }
 
       return true;
-    });
+    }, PlayerRights.OWNER);
 
     api.registerCommand("procregionhere", ({ player, parts }) => {
-      if (!isDev(player)) {
-        player.sendMessage("Developer rights required.");
-        return true;
-      }
-
       const location = player.getLocation();
       const regionX = (location.getX() / REGION_SIZE) | 0;
       const regionY = (location.getY() / REGION_SIZE) | 0;
@@ -1676,28 +1661,18 @@ module.exports = {
       }
 
       return true;
-    });
+    }, PlayerRights.OWNER);
 
     api.registerCommand("cleargen", ({ player }) => {
-      if (!isDev(player)) {
-        player.sendMessage("Developer rights required.");
-        return true;
-      }
-
       const restoredCacheObjects = clearProceduralClippingForPlayer(player);
       sendProceduralClear(player);
       player.sendMessage(
         `[proc-region] cleargen requested: client procedural overrides cleared and region reload forced (cache object clips restored=${restoredCacheObjects}).`
       );
       return true;
-    });
+    }, PlayerRights.OWNER);
 
     api.registerCommand("procregscan", ({ player, parts }) => {
-      if (!isDev(player)) {
-        player.sendMessage("Developer rights required.");
-        return true;
-      }
-
       const radius = parseIntArg(parts[1] ?? "1");
       const scanRadius = radius === null ? 1 : radius;
       try {
@@ -1708,14 +1683,9 @@ module.exports = {
         player.sendMessage(`[proc-region] structure scan failed: ${reason}`);
       }
       return true;
-    });
+    }, PlayerRights.OWNER);
 
     api.registerCommand("procreglearn", ({ player, parts }) => {
-      if (!isDev(player)) {
-        player.sendMessage("Developer rights required.");
-        return true;
-      }
-
       const radius = parseIntArg(parts[1] ?? "2");
       const learnRadius = radius === null ? 2 : radius;
       try {
@@ -1733,14 +1703,9 @@ module.exports = {
         player.sendMessage(`[proc-region] learn failed: ${reason}`);
       }
       return true;
-    });
+    }, PlayerRights.OWNER);
 
     api.registerCommand("dumphouse", ({ player, parts }) => {
-      if (!isDev(player)) {
-        player.sendMessage("Developer rights required.");
-        return true;
-      }
-
       if (parts.length < 2 || parts.length > 3) {
         player.sendMessage("Usage: ::dumphouse <tag> [type]");
         return true;
@@ -1764,14 +1729,9 @@ module.exports = {
         player.sendMessage(`[proc-region] dumphouse failed: ${reason}`);
       }
       return true;
-    });
+    }, PlayerRights.OWNER);
 
     api.registerCommand("dumpterrain", ({ player, parts }) => {
-      if (!isDev(player)) {
-        player.sendMessage("Developer rights required.");
-        return true;
-      }
-
       if (parts.length !== 2) {
         player.sendMessage("Usage: ::dumpterrain <biome>");
         return true;
@@ -1797,14 +1757,9 @@ module.exports = {
         player.sendMessage(`[proc-region] dumpterrain failed: ${reason}`);
       }
       return true;
-    });
+    }, PlayerRights.OWNER);
 
     api.registerCommand("genterrain", ({ player, parts }) => {
-      if (!isDev(player)) {
-        player.sendMessage("Developer rights required.");
-        return true;
-      }
-
       if (parts.length < 2 || parts.length > 3) {
         player.sendMessage("Usage: ::genterrain <biome> [seed]");
         return true;
@@ -1834,14 +1789,9 @@ module.exports = {
         player.sendMessage(`[proc-region] genterrain failed: ${reason}`);
       }
       return true;
-    });
+    }, PlayerRights.OWNER);
 
     api.registerCommand("buildhouse", ({ player, parts }) => {
-      if (!isDev(player)) {
-        player.sendMessage("Developer rights required.");
-        return true;
-      }
-
       if (parts.length < 2 || parts.length > 3) {
         player.sendMessage("Usage: ::buildhouse <style> [index]");
         return true;
@@ -1870,14 +1820,9 @@ module.exports = {
         player.sendMessage(`[proc-region] buildhouse failed: ${reason}`);
       }
       return true;
-    });
+    }, PlayerRights.OWNER);
 
     api.registerCommand("genhouse", ({ player, parts }) => {
-      if (!isDev(player)) {
-        player.sendMessage("Developer rights required.");
-        return true;
-      }
-
       if (parts.length < 2 || parts.length > 4) {
         player.sendMessage("Usage: ::genhouse <style> [type] [seed]");
         return true;
@@ -1919,14 +1864,9 @@ module.exports = {
         player.sendMessage(`[proc-region] genhouse failed: ${reason}`);
       }
       return true;
-    });
+    }, PlayerRights.OWNER);
 
     api.registerCommand("genstreet", ({ player, parts }) => {
-      if (!isDev(player)) {
-        player.sendMessage("Developer rights required.");
-        return true;
-      }
-
       if (parts.length > 4) {
         player.sendMessage("Usage: ::genstreet [style] [type] [seed]");
         return true;
@@ -1976,14 +1916,9 @@ module.exports = {
         player.sendMessage(`[proc-region] genstreet failed: ${reason}`);
       }
       return true;
-    });
+    }, PlayerRights.OWNER);
 
     api.registerCommand("checkhouse", ({ player }) => {
-      if (!isDev(player)) {
-        player.sendMessage("Developer rights required.");
-        return true;
-      }
-
       try {
         const result = checkHouseBoundary(player);
         player.sendMessage(
@@ -1994,6 +1929,6 @@ module.exports = {
         player.sendMessage(`[proc-region] checkhouse failed: ${reason}`);
       }
       return true;
-    });
+    }, PlayerRights.OWNER);
   },
 };
