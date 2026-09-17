@@ -1,17 +1,12 @@
 
 const { Equipment } = require("../../src/main/typescript/elvarg/game/model/container/impl/Equipment");
-const { Inventory } = require("../../src/main/typescript/elvarg/game/model/container/impl/Inventory");
 const { EquipPacketListener } = require("../../src/main/typescript/elvarg/net/packet/impl/EquipPacketListener");
 const { WeaponProfiles } = require("../../src/main/typescript/elvarg/game/content/combat/WeaponProfile");
 
 // OpenRune cache names: component.wornitems:equipment and interface.equipment.
 const OPEN_EQUIPMENT_STATS_BUTTON = (387 << 16) | 1;
 const EQUIPMENT_STATS_INTERFACE_ID = 84;
-const EQUIPMENT_SIDE_INTERFACE_ID = 85;
 const MAIN_MODAL_TARGET_UID = (161 << 16) | 16;
-const SIDE_MODAL_TARGET_UID = (161 << 16) | 74;
-const INVENTORY_ID = 93;
-const EQUIPMENT_SIDE_ITEMS_COMPONENT = EQUIPMENT_SIDE_INTERFACE_ID << 16;
 const EQUIPMENT_SLOT_COMPONENTS = [
   Equipment.HEAD_SLOT,
   Equipment.CAPE_SLOT,
@@ -139,29 +134,13 @@ function open(player) {
   player
     .getPacketSender()
     .sendVarbit(12393, 1)
-    .sendSubInterface(MAIN_MODAL_TARGET_UID, EQUIPMENT_STATS_INTERFACE_ID, 0)
-    .sendSubInterface(SIDE_MODAL_TARGET_UID, EQUIPMENT_SIDE_INTERFACE_ID, 3)
-    .sendInterfaceFlagsRange(EQUIPMENT_SIDE_INTERFACE_ID << 16, 0, 27, 1180674)
-    .sendInterfaceScript(149, [EQUIPMENT_SIDE_INTERFACE_ID << 16, INVENTORY_ID, 4, 7, 1, -1, "Equip", "", "", "", ""])
-    .sendInterfaceScript(151, [EQUIPMENT_SIDE_INTERFACE_ID << 16, INVENTORY_ID, 4, 7, 1, -1, "Equip", "", "", "", "", "", "", "", ""]);
+    .sendSubInterface(MAIN_MODAL_TARGET_UID, EQUIPMENT_STATS_INTERFACE_ID, 0);
   update(player);
   return true;
 }
 
-function handleItemAction({ player, buttonId, action, itemId, slot }) {
+function handleItemAction({ player, buttonId, action }) {
   if (player.getInterfaceId?.() !== EQUIPMENT_STATS_INTERFACE_ID) return false;
-
-  if (buttonId === EQUIPMENT_SIDE_ITEMS_COMPONENT) {
-    const item = player.getInventory().getItems()[slot];
-    if (!item || item.getId() !== itemId) return true;
-    if (action === 1) {
-      EquipPacketListener.equip(player, itemId, slot, Inventory.INTERFACE_ID);
-    } else if (action === 10) {
-      const definition = item.getDefinition();
-      player.getPacketSender().sendMessage(definition.getExamine() || definition.getName());
-    }
-    return true;
-  }
 
   const equipmentSlot = EQUIPMENT_SLOT_BY_COMPONENT.get(buttonId);
   if (equipmentSlot === undefined) return false;
@@ -181,10 +160,7 @@ module.exports = {
   register(api) {
     BonusManager = api.getBonusManager();
     api.onInterfaceActionButton(OPEN_EQUIPMENT_STATS_BUTTON, ({ player }) => open(player));
-    api.onInterfaceActionButton(
-      [EQUIPMENT_SIDE_ITEMS_COMPONENT, ...EQUIPMENT_SLOT_BY_COMPONENT.keys()],
-      handleItemAction,
-    );
+    api.onInterfaceActionButton([...EQUIPMENT_SLOT_BY_COMPONENT.keys()], handleItemAction);
     api.onPlayerProcess(({ player }) => {
       if (player.getInterfaceId?.() === EQUIPMENT_STATS_INTERFACE_ID) {
         update(player);
