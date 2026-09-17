@@ -25,6 +25,6 @@ export class DragonScimitarCombatMethod extends MeleeCombatMethod {
             return;
         }
         CombatFactory.disableProtectionPrayers(hit.getTarget().getAsPlayer());
-        hit.getAttacker().getAsPlayer().getPacketSender().sendMessage("Your target can no longer use protection prayers.");
+        hit.getAttacker().getAsPlayer().sendMessage("Your target can no longer use protection prayers.");
     }
 }

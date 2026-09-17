@@ -32,7 +32,7 @@ class LunarSpell extends Spell {
     getSpellbook(): MagicSpellbook { return MagicSpellbook.LUNAR; }
     cast(player: Player, effect: () => void): boolean {
         if (player.getSkillManager().getMaxLevel(Skill.DEFENCE) < 40) {
-            player.getPacketSender().sendMessage("You need at least level 40 Defence to cast Lunar spells.");
+            player.sendMessage("You need at least level 40 Defence to cast Lunar spells.");
             return true;
         }
         if (!this.canCast(player, false) || !this.canCast(player, true)) return true;
@@ -109,7 +109,7 @@ export class LunarSpells {
                 const maximum = player.getSkillManager().getMaxLevel(skill);
                 if (current < maximum) player.getSkillManager().setCurrentLevels(skill, maximum);
             }
-            player.getPacketSender().sendMessage("You feel completely refreshed.");
+            player.sendMessage("You feel completely refreshed.");
         });
         if (key === "heal group") return spell.cast(player, () => {
             const transferred = Math.floor(player.getHitpoints() * 0.75);
@@ -157,7 +157,7 @@ export class LunarSpells {
             [7196, [7198, 175]], [7206, [7208, 240]], [7216, [7218, 260]],
         ]);
         if (key === "bake pie" && !items.some(item => pies.has(item.getId()))) {
-            player.getPacketSender().sendMessage("You do not have any uncooked pies to bake.");
+            player.sendMessage("You do not have any uncooked pies to bake.");
             return true;
         }
         const waterContainers = new Map<number, number>([
@@ -165,29 +165,29 @@ export class LunarSpells {
             [1825, 1823], [1827, 1823], [1829, 1823], [1831, 1823], [5331, 5340],
         ]);
         if (key === "humidify" && !items.some(item => waterContainers.has(item.getId()))) {
-            player.getPacketSender().sendMessage("You do not have any containers that can be filled with water.");
+            player.sendMessage("You do not have any containers that can be filled with water.");
             return true;
         }
         if (key === "hunter kit" && inventory.getFreeSlots() < 5) {
-            player.getPacketSender().sendMessage("You need at least five free inventory spaces to cast Hunter Kit.");
+            player.sendMessage("You need at least five free inventory spaces to cast Hunter Kit.");
             return true;
         }
         if (key === "spin flax" && !has([1779])) {
-            player.getPacketSender().sendMessage("You do not have any flax to spin.");
+            player.sendMessage("You do not have any flax to spin.");
             return true;
         }
         if (key === "superglass make" && (!inventory.contains(1783) || !inventory.contains(1781))) {
-            player.getPacketSender().sendMessage("You need both bucket of sand and soda ash to make glass.");
+            player.sendMessage("You need both bucket of sand and soda ash to make glass.");
             return true;
         }
         const hides = [1753, 1751, 1749, 1747];
         if (key === "tan leather" && !has(hides)) {
-            player.getPacketSender().sendMessage("You do not have any dragonhide to tan.");
+            player.sendMessage("You do not have any dragonhide to tan.");
             return true;
         }
         const planks = new Map([[1511, [960, 350]], [1521, [8778, 1050]], [6333, [8780, 350]], [6332, [8782, 1050]]]);
         if (key === "plank make" && !items.some(item => planks.has(item.getId()))) {
-            player.getPacketSender().sendMessage("You do not have any logs to turn into planks.");
+            player.sendMessage("You do not have any logs to turn into planks.");
             return true;
         }
         const spell = new LunarSpell(data);
@@ -250,7 +250,7 @@ export class LunarSpells {
         if (key === "cure other") return spell.cast(player, () => this.curePoison(target));
         if (key === "energy transfer") {
             if (player.getSpecialPercentage() < 100) {
-                player.getPacketSender().sendMessage("You need a full special attack bar to cast Energy Transfer.");
+                player.sendMessage("You need a full special attack bar to cast Energy Transfer.");
                 return true;
             }
             return spell.cast(player, () => {
@@ -269,16 +269,16 @@ export class LunarSpells {
         });
         if (key === "stat spy") return spell.cast(player, () => {
             const stats = Skill.values().map(skill => `${skill.getName()}: ${target.getSkillManager().getCurrentLevel(skill)}`).join(", ");
-            player.getPacketSender().sendMessage(stats);
+            player.sendMessage(stats);
         });
         if (key === "stat restore pot share" || key === "boost potion share") {
             return spell.cast(player, () => {
                 player.setAttribute("lunar:potion-share", { target, type: key === "stat restore pot share" ? "restore" : "boost", expiresAt: Date.now() + 30_000 });
-                player.getPacketSender().sendMessage("Drink a matching potion within 30 seconds to share its effect.");
+                player.sendMessage("Drink a matching potion within 30 seconds to share its effect.");
             });
         }
         if (target.hasVengeanceReturn() || !target.getVengeanceTimer().finished()) {
-            player.getPacketSender().sendMessage("That player cannot receive Vengeance right now.");
+            player.sendMessage("That player cannot receive Vengeance right now.");
             return true;
         }
         return spell.cast(player, () => {
@@ -300,7 +300,7 @@ export class LunarSpells {
             const name = definition?.getName?.() ?? "This creature";
             const level = definition?.getCombatLevel?.() ?? 0;
             const hitpoints = target.getHitpoints?.() ?? 0;
-            player.getPacketSender().sendMessage(`${name}: combat level ${level}, ${hitpoints} hitpoints remaining.`);
+            player.sendMessage(`${name}: combat level ${level}, ${hitpoints} hitpoints remaining.`);
         });
     }
 
@@ -317,7 +317,7 @@ export class LunarSpells {
             const unstrung = new Map<number, number>([[1635, 1656], [1637, 1658], [1639, 1660], [1641, 1662], [6571, 6573]]);
             const result = unstrung.get(itemId);
             if (!result) {
-                player.getPacketSender().sendMessage("This spell can only be cast on an unstrung amulet.");
+                player.sendMessage("This spell can only be cast on an unstrung amulet.");
                 return true;
             }
             return new LunarSpell(data).cast(player, () => { item.setId(result); player.getInventory().refreshItems(); });
@@ -329,7 +329,7 @@ export class LunarSpells {
         ]);
         const result = charged.get(itemId);
         if (!result) {
-            player.getPacketSender().sendMessage("This spell can only recharge dragonstone jewellery.");
+            player.sendMessage("This spell can only recharge dragonstone jewellery.");
             return true;
         }
         return new LunarSpell(data).cast(player, () => { item.setId(result); player.getInventory().refreshItems(); });
@@ -366,7 +366,7 @@ export class LunarSpells {
         builder.add(new OptionDialogue(0, { executeOption: (option: DialogueOption) => {
             const contact = contacts[(option as number) - 1];
             player.getPacketSender().sendInterfaceRemoval();
-            if (contact) player.getPacketSender().sendMessage(`You contact ${contact}.`);
+            if (contact) player.sendMessage(`You contact ${contact}.`);
         } }, ...contacts));
         player.getDialogueManager().startDialogues(builder);
     }

@@ -442,7 +442,7 @@ export class CombatSpecial {
 
             if (spec == CombatSpecial.GRANITE_MAUL) {
                 if (!developerGraniteMaulSpam && player.getSpecialPercentage() < player.getCombatSpecial().getDrainAmount()) {
-                    player.getPacketSender().sendMessage("You do not have enough special attack energy left!");
+                    player.sendMessage("You do not have enough special attack energy left!");
                     player.setSpecialActivated(false);
                     CombatSpecial.updateBar(player);
                     return;
@@ -468,9 +468,8 @@ export class CombatSpecial {
                 } else {
                     // Uninformed player using gmaul without being in combat..
                     // Teach them a lesson!
-                    player.getPacketSender()
-                        .sendMessage("Although not required, the Granite maul special attack should be used during")
-                        .sendMessage("combat for maximum effect.");
+                    player.sendMessage("Although not required, the Granite maul special attack should be used during");
+                    player.sendMessage("combat for maximum effect.");
                 }
             }
         }

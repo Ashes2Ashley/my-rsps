@@ -420,7 +420,7 @@ function openPresetInterface(player, preset = null) {
   }
 
   if (isPresetBlockedInWilderness(player)) {
-    player.getPacketSender().sendMessage("You can't open presets in the wilderness!");
+    player.sendMessage("You can't open presets in the wilderness!");
     return false;
   }
 
@@ -584,7 +584,7 @@ function promptSavePreset(player, index) {
     execute: (rawInput) => {
       const input = Misc.formatText(rawInput ?? "");
       if (!Misc.isValidName(input)) {
-        player.getPacketSender().sendMessage("Invalid name for preset.");
+        player.sendMessage("Invalid name for preset.");
         player.setCurrentPreset(null);
         openPresetInterface(player, null);
         return;
@@ -594,9 +594,7 @@ function promptSavePreset(player, index) {
       const equipment = player.getEquipment().copyValidItemsArray();
       for (const item of [...inventory, ...equipment]) {
         if (item?.getDefinition?.()?.isNoted?.()) {
-          player
-            .getPacketSender()
-            .sendMessage("You cannot create presets which contain noted items.");
+          player.sendMessage("You cannot create presets which contain noted items.");
           return;
         }
       }
@@ -639,7 +637,7 @@ function handlePresetRowClick(player, buttonId) {
   if (globalRow >= 0) {
     const preset = getGlobalPresetPool()[globalRow] ?? null;
     if (!preset) {
-      player.getPacketSender().sendMessage("That preset is currently unavailable.");
+      player.sendMessage("That preset is currently unavailable.");
       return true;
     }
     selectPreset(player, preset);
@@ -674,7 +672,7 @@ function handlePresetActionButton(player, buttonId) {
     case uid(COMPONENT.LOAD_BUTTON): {
       const preset = player.getCurrentPreset();
       if (!preset) {
-        player.getPacketSender().sendMessage("You haven't selected any preset yet.");
+        player.sendMessage("You haven't selected any preset yet.");
         return true;
       }
       applyPreset(player, preset);
@@ -688,9 +686,7 @@ function handlePresetActionButton(player, buttonId) {
       const selectedIndex = selected ? selectedCustomPresetSlot(player) : -1;
       const index = selectedIndex >= 0 ? selectedIndex : firstFreePresetSlot(player);
       if (index < 0) {
-        player
-          .getPacketSender()
-          .sendMessage(`You already have ${MAX_PRESETS} presets. Select one to overwrite it.`);
+        player.sendMessage(`You already have ${MAX_PRESETS} presets. Select one to overwrite it.`);
         return true;
       }
       promptSavePreset(player, index);

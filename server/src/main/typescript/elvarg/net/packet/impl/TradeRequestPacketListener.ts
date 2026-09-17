@@ -40,7 +40,7 @@ export class TradeRequestPacketListener {
 
   static sendRequest(player: any, target: any) {
     if (player.busy()) {
-      player.getPacketSender().sendMessage("You cannot do that right now.");
+      player.sendMessage("You cannot do that right now.");
       return;
     }
 
@@ -51,13 +51,13 @@ export class TradeRequestPacketListener {
         msg = "That player is currently trading with someone else.";
       }
 
-      player.getPacketSender().sendMessage(msg);
+      player.sendMessage(msg);
       return;
     }
 
     const pluginCanTrade = PluginManager.emitCanTrade(player, target);
     if (pluginCanTrade === false) {
-      player.getPacketSender().sendMessage("You cannot trade here.");
+      player.sendMessage("You cannot trade here.");
       return;
     }
     if (player.getLocalPlayers().indexOf(target) !== -1) {

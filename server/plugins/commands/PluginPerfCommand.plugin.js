@@ -59,13 +59,13 @@ function streamPluginPerfToPlayer(player, limit = DEFAULT_LIMIT) {
   const logLines = [];
 
   if (!rows.length) {
-    player.getPacketSender().sendMessage("[pluginperf] No samples yet.");
+    player.sendMessage("[pluginperf] No samples yet.");
     logLines.push(`${timestamp} [pluginperf] No samples yet.`);
     appendPluginPerfLog(logLines);
     return;
   }
 
-  player.getPacketSender().sendMessage(
+  player.sendMessage(
     `[pluginperf] Top ${rows.length} plugins (total/avg/max ms)`
   );
   logLines.push(`${timestamp} [pluginperf] Top ${rows.length} plugins (total/avg/max ms)`);
@@ -78,7 +78,7 @@ function streamPluginPerfToPlayer(player, limit = DEFAULT_LIMIT) {
     )}ms c=${row.topEventCalls} avg=${row.topEventAvgMs.toFixed(
       3
     )}ms p95=${row.topEventP95Ms.toFixed(3)}ms)`;
-    player.getPacketSender().sendMessage(line);
+    player.sendMessage(line);
     logLines.push(`${timestamp} ${line}`);
   }
 
@@ -91,7 +91,7 @@ function streamServerPerfToPlayer(player, limitTicks = 60) {
   const lines = [];
 
   if (!summary || summary.ticks <= 0) {
-    player.getPacketSender().sendMessage("[serverperf] No tick samples yet.");
+    player.sendMessage("[serverperf] No tick samples yet.");
     lines.push(`${timestamp} [serverperf] No tick samples yet.`);
     fs.mkdirSync(path.dirname(SERVER_PERF_SNAPSHOT_FILE), { recursive: true });
     fs.appendFileSync(SERVER_PERF_SNAPSHOT_FILE, `${lines.join("\n")}\n`, "utf8");
@@ -105,8 +105,8 @@ function streamServerPerfToPlayer(player, limitTicks = 60) {
   )}ms maxDrift=${summary.maxDriftMs.toFixed(1)}ms`;
   const header2 = `[serverperf] lastTick=${summary.lastTickNumber} players=${summary.lastPlayers} npcs=${summary.lastNpcs} tasks=${summary.lastTasks}`;
 
-  player.getPacketSender().sendMessage(header1);
-  player.getPacketSender().sendMessage(header2);
+  player.sendMessage(header1);
+  player.sendMessage(header2);
   lines.push(`${timestamp} ${header1}`);
   lines.push(`${timestamp} ${header2}`);
 
@@ -114,7 +114,7 @@ function streamServerPerfToPlayer(player, limitTicks = 60) {
     const line = `[serverperf] ${phase.name}: total=${phase.totalMs.toFixed(1)}ms avg=${phase.avgMs.toFixed(
       1
     )}ms max=${phase.maxMs.toFixed(1)}ms`;
-    player.getPacketSender().sendMessage(line);
+    player.sendMessage(line);
     lines.push(`${timestamp} ${line}`);
   }
 
@@ -142,7 +142,7 @@ module.exports = {
 
     api.registerCommand("pluginperf", ({ player, parts }) => {
       if (!adminOrAbove(player)) {
-        player.getPacketSender().sendMessage("You do not have permission to use this command.");
+        player.sendMessage("You do not have permission to use this command.");
         return true;
       }
 
@@ -162,7 +162,7 @@ module.exports = {
 
       if (sub === "reset") {
         pluginApi.resetPluginPerformanceStats();
-        player.getPacketSender().sendMessage("[pluginperf] Stats reset.");
+        player.sendMessage("[pluginperf] Stats reset.");
         return true;
       }
 
@@ -171,11 +171,9 @@ module.exports = {
         if (pluginPerfStreams.size === 0) {
           pluginApi.setPluginPerformanceProfilingEnabled(false);
         }
-        player
-          .getPacketSender()
-          .sendMessage(
-            `[pluginperf] Live stream disabled. profiling=${pluginApi.isPluginPerformanceProfilingEnabled()}`
-          );
+        player.sendMessage(
+          `[pluginperf] Live stream disabled. profiling=${pluginApi.isPluginPerformanceProfilingEnabled()}`
+        );
         return true;
       }
 
@@ -194,11 +192,9 @@ module.exports = {
         }, intervalMs);
         timer.unref?.();
         pluginPerfStreams.set(username, timer);
-        player
-          .getPacketSender()
-          .sendMessage(
-            `[pluginperf] Live stream enabled every ${intervalMs}ms (limit=${limit}).`
-          );
+        player.sendMessage(
+          `[pluginperf] Live stream enabled every ${intervalMs}ms (limit=${limit}).`
+        );
         return true;
       }
 
@@ -212,15 +208,13 @@ module.exports = {
         return true;
       }
 
-      player
-        .getPacketSender()
-        .sendMessage("Usage: ::pluginperf [once|on|off|reset] [limit] [intervalMs]");
+      player.sendMessage("Usage: ::pluginperf [once|on|off|reset] [limit] [intervalMs]");
       return true;
     });
 
     api.registerCommand("serverperf", ({ player, parts }) => {
       if (!adminOrAbove(player)) {
-        player.getPacketSender().sendMessage("You do not have permission to use this command.");
+        player.sendMessage("You do not have permission to use this command.");
         return true;
       }
       const ticksArg = parseIntArg(parts[1]);

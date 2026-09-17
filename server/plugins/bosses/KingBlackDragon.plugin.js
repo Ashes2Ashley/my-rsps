@@ -87,7 +87,7 @@ class KingBlackDragonCombatMethod extends CombatMethod {
           CombatEquipment.hasDragonProtectionGear(player) &&
           !player.getCombat().getFireImmunityTimer().finished()
         ) {
-          target.getPacketSender().sendMessage("You're protected against the dragonfire breath.");
+          target.sendMessage("You're protected against the dragonfire breath.");
           return [hit];
         }
         let extendedHit = 25;
@@ -100,7 +100,7 @@ class KingBlackDragonCombatMethod extends CombatMethod {
         if (CombatEquipment.hasDragonProtectionGear(player)) {
           extendedHit -= 10;
         }
-        player.getPacketSender().sendMessage("The dragonfire burns you.");
+        player.sendMessage("The dragonfire burns you.");
         hit.getHits()[0].incrementDamage(extendedHit);
       }
       if (this.currentAttackType === CombatType.MAGIC) {

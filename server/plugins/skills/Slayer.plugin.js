@@ -173,18 +173,14 @@ function onNpcKilled(player, npc) {
   }
 
   player.setSlayerPoints(player.getSlayerPoints() + rewardPoints);
-  player
-    .getPacketSender()
-    .sendMessage(
-      `You have succesfully completed @dre@${player.getConsecutiveTasks()}@bla@ slayer tasks in a row.`
-    );
-  player
-    .getPacketSender()
-    .sendMessage(
-      `You earned @dre@${rewardPoints}@bla@ Slayer ${
-        rewardPoints === 1 ? "point" : "points"
-      }, your new total is now @dre@${player.getSlayerPoints()}.`
-    );
+  player.sendMessage(
+    `You have succesfully completed @dre@${player.getConsecutiveTasks()}@bla@ slayer tasks in a row.`
+  );
+  player.sendMessage(
+    `You earned @dre@${rewardPoints}@bla@ Slayer ${
+      rewardPoints === 1 ? "point" : "points"
+    }, your new total is now @dre@${player.getSlayerPoints()}.`
+  );
   player.setSlayerTask(null);
 }
 

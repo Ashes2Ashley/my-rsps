@@ -320,11 +320,9 @@ export abstract class ItemContainer {
       ) {
         item.setAmount(Number.MAX_SAFE_INTEGER - to.getAmount(item.getId()));
         if (item.getAmount() <= 0) {
-          this.getPlayer()
-            .getPacketSender()
-            .sendMessage(
-              "You cannot deposit that entire amount into your bank."
-            );
+          this.getPlayer().sendMessage(
+            "You cannot deposit that entire amount into your bank."
+          );
           return this;
         }
       }
@@ -499,9 +497,7 @@ export abstract class ItemContainer {
       }
       if (slot == -1) {
         if (this.getPlayer() != null) {
-          this.getPlayer()
-            .getPacketSender()
-            .sendMessage("You couldn't hold all those items.");
+          this.getPlayer().sendMessage("You couldn't hold all those items.");
         }
         if (refresh) {
           this.refreshItems();
@@ -523,9 +519,7 @@ export abstract class ItemContainer {
       while (amount > 0) {
         let slot = this.getEmptySlot();
         if (slot == -1) {
-          this.getPlayer()
-            .getPacketSender()
-            .sendMessage("You couldn't hold all those items.");
+          this.getPlayer().sendMessage("You couldn't hold all those items.");
           if (refresh) {
             this.refreshItems();
           }

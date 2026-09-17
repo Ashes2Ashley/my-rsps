@@ -73,7 +73,7 @@ export class VenenatisCombatMethod extends CombatMethod {
             const player = hit.getTarget().getAsPlayer();
             hit.getTarget().performGraphic(VenenatisCombatMethod.DRAIN_PRAYER_GRAPHIC);
             player.getSkillManager().decreaseCurrentLevel(Skill.PRAYER, (hit.getTotalDamage() * 0.35) as number, 0);
-            player.getPacketSender().sendMessage("Venenatis drained your prayer!");
+            player.sendMessage("Venenatis drained your prayer!");
         }
     }
 }

@@ -71,22 +71,22 @@ export class Autocasting {
 
     private static openSelector(player: Player, defensive: boolean): boolean {
         if (player.getSpellbook() === MagicSpellbook.LUNAR) {
-            player.getPacketSender().sendMessage("You can't autocast lunar spells.");
+            player.sendMessage("You can't autocast lunar spells.");
             return true;
         }
         if (!player.getEquipment().hasStaffEquipped()) {
-            player.getPacketSender().sendMessage("You need to equip a staff to autocast spells.");
+            player.sendMessage("You need to equip a staff to autocast spells.");
             return true;
         }
 
         const weaponId = player.getEquipment().getWeapon().getId();
         if (player.getSpellbook() === MagicSpellbook.ANCIENT &&
             !this.ANCIENT_SPELL_AUTOCAST_STAFFS.has(weaponId) && !Barrows.hasDamnedSet(player, "ahrims")) {
-            player.getPacketSender().sendMessage("You can only autocast regular offensive spells with this staff.");
+            player.sendMessage("You can only autocast regular offensive spells with this staff.");
             return true;
         }
         if (player.getSpellbook() === MagicSpellbook.NORMAL && weaponId === ItemIdentifiers.ANCIENT_STAFF) {
-            player.getPacketSender().sendMessage("You can only autocast ancient magicks with that.");
+            player.sendMessage("You can only autocast ancient magicks with that.");
             return true;
         }
 
@@ -108,7 +108,7 @@ export class Autocasting {
     public static setAutocast(player: Player, spell: CombatSpell | null): void {
         player.getCombat().setAutocastSpell(spell);
         if (!player.getEquipment().hasStaffEquipped() && spell != null) {
-            player.getPacketSender().sendMessage("Default spell set. Please equip a staff to use autocast.");
+            player.sendMessage("Default spell set. Please equip a staff to use autocast.");
             return;
         }
 

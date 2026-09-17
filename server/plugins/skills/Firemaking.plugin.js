@@ -97,9 +97,7 @@ function canLightFireAt(player, location) {
       handled: false,
     });
     if (!handled) {
-      player
-        .getPacketSender()
-        .sendMessage("You cannot light a fire here. Try moving around a bit.");
+      player.sendMessage("You cannot light a fire here. Try moving around a bit.");
     }
     return false;
   }
@@ -194,11 +192,9 @@ function startFiremakingAttempt(player, log, source, activeSessions) {
   }
 
   if (getFiremakingLevel(player) < log.requiredLevel) {
-    player
-      .getPacketSender()
-      .sendMessage(
-        `You need a Firemaking level of at least ${log.requiredLevel} to light those logs.`
-      );
+    player.sendMessage(
+      `You need a Firemaking level of at least ${log.requiredLevel} to light those logs.`
+    );
     return false;
   }
 
@@ -208,7 +204,7 @@ function startFiremakingAttempt(player, log, source, activeSessions) {
     requiresTinderbox(player) &&
     !inventory.contains(TINDERBOX_ID)
   ) {
-    player.getPacketSender().sendMessage("You need a tinderbox to light fires.");
+    player.sendMessage("You need a tinderbox to light fires.");
     return false;
   }
 
@@ -218,7 +214,7 @@ function startFiremakingAttempt(player, log, source, activeSessions) {
   if (source.mode === SESSION_MODE.INVENTORY) {
     sessionLocation = player.getLocation().clone();
     if (!inventory.contains(log.itemId)) {
-      player.getPacketSender().sendMessage("You've run out of logs.");
+      player.sendMessage("You've run out of logs.");
       return false;
     }
     if (!canLightFireAt(player, sessionLocation)) {
@@ -245,7 +241,7 @@ function startFiremakingAttempt(player, log, source, activeSessions) {
       return false;
     }
     if (!inventory.contains(log.itemId)) {
-      player.getPacketSender().sendMessage("You've run out of logs.");
+      player.sendMessage("You've run out of logs.");
       return false;
     }
     const fire = MapObjects.get(FIRE_OBJECT_ID, sessionLocation, privateArea);
@@ -269,11 +265,11 @@ function startFiremakingAttempt(player, log, source, activeSessions) {
   });
 
   if (source.mode === SESSION_MODE.BONFIRE) {
-    player.getPacketSender().sendMessage("You attempt to add the logs to the fire.");
+    player.sendMessage("You attempt to add the logs to the fire.");
     Sounds.sendSound(player, Sound.FIRE_LIGHT);
     player.performAnimation(BONFIRE_ANIMATION);
   } else {
-    player.getPacketSender().sendMessage("You attempt to light the logs..");
+    player.sendMessage("You attempt to light the logs..");
     // No explicit FIRE_LIGHT here: animation 733 has sound 2597 baked into
     // frames 8 and 10 in the cache, so sending it too made lighting a fire
     // play three overlapping "strike" sounds instead of one.
@@ -290,7 +286,7 @@ function completeInventoryOrGroundFire(player, state) {
 
   if (state.mode === SESSION_MODE.INVENTORY) {
     if (!player.getInventory().contains(state.log.itemId)) {
-      player.getPacketSender().sendMessage("You've run out of logs.");
+      player.sendMessage("You've run out of logs.");
       return false;
     }
     player.getInventory().deleteNumber(state.log.itemId, 1);
@@ -310,7 +306,7 @@ function completeInventoryOrGroundFire(player, state) {
   player.getSkillManager().addExperiences(Skill.FIREMAKING, state.log.xpReward);
   pluginApi.emitCustomEvent("firemaking:success", { player, skill: Skill.FIREMAKING });
   Sounds.sendSound(player, Sound.FIRE_SUCCESSFUL);
-  player.getPacketSender().sendMessage("The logs catch fire and begin to burn.");
+  player.sendMessage("The logs catch fire and begin to burn.");
   return true;
 }
 
@@ -320,7 +316,7 @@ function completeBonfire(player, state) {
     return false;
   }
   if (!player.getInventory().contains(state.log.itemId)) {
-    player.getPacketSender().sendMessage("You've run out of logs.");
+    player.sendMessage("You've run out of logs.");
     return false;
   }
 
@@ -328,7 +324,7 @@ function completeBonfire(player, state) {
   player.getSkillManager().addExperiences(Skill.FIREMAKING, state.log.xpReward);
   pluginApi.emitCustomEvent("firemaking:success", { player, skill: Skill.FIREMAKING });
   Sounds.sendSound(player, Sound.FIRE_SUCCESSFUL);
-  player.getPacketSender().sendMessage("You add a log to the fire.");
+  player.sendMessage("You add a log to the fire.");
   return true;
 }
 
@@ -364,7 +360,7 @@ function processFiremakingTick(activeSessions, currentTick) {
       requiresTinderbox(player) &&
       !player.getInventory().contains(TINDERBOX_ID)
     ) {
-      player.getPacketSender().sendMessage("You need a tinderbox to light fires.");
+      player.sendMessage("You need a tinderbox to light fires.");
       stopFiremaking(activeSessions, player);
       continue;
     }

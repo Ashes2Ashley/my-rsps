@@ -281,7 +281,7 @@ export class CombatFactory {
             }
         } else if (attacker.isPlayer() && target.isNpc()) {
             if (target.getAsNpc().getOwner() != null && target.getAsNpc().getOwner() != attacker.getAsPlayer()) {
-                attacker.getAsPlayer().getPacketSender().sendMessage("This npc was not spawned for you.");
+                attacker.getAsPlayer().sendMessage("This npc was not spawned for you.");
                 return false;
             }
         }
@@ -843,7 +843,7 @@ export class CombatFactory {
                 return;
             }
             if (!alreadyPoisoned) {
-                player.getPacketSender().sendMessage("You have been poisoned!");
+                player.sendMessage("You have been poisoned!");
             }
             player.getPacketSender().sendPoisonType(poisonOrbType);
         }
@@ -865,7 +865,7 @@ export class CombatFactory {
         }
         player.getCombat().getPrayerBlockTimer().start(200);
         PrayerHandler.resetPrayers(player, PrayerHandler.PROTECTION_PRAYERS);
-        player.getPacketSender().sendMessage("You have been disabled and can no longer use protection prayers.");
+        player.sendMessage("You have been disabled and can no longer use protection prayers.");
     }
 
     public static handleRecoil(player: Player, attacker: Mobile, damage: number) {
@@ -885,7 +885,7 @@ export class CombatFactory {
         if (player.getRecoilDamage() >= 40) {
             player.getEquipment().set(Equipment.RING_SLOT, new Item(-1));
             player.getEquipment().refreshItems();
-            player.getPacketSender().sendMessage("Your ring of recoil has degraded.");
+            player.sendMessage("Your ring of recoil has degraded.");
             player.setRecoilDamage(0);
         }
     }
@@ -950,11 +950,11 @@ export class CombatFactory {
         player.setSkullTimer(Misc.getTicks(seconds));
         player.getUpdateFlag().flag(Flag.APPEARANCE);
         if (type == SkullType.RED_SKULL) {
-            player.getPacketSender().sendMessage(
+            player.sendMessage(
                 "@bla@You have received a @red@red skull@bla@! You can no longer use the Protect item prayer!");
             PrayerHandler.deactivatePrayer(player, PrayerHandler.PROTECT_ITEM);
         } else if (type == SkullType.WHITE_SKULL) {
-            player.getPacketSender().sendMessage("You've been skulled!");
+            player.sendMessage("You've been skulled!");
         }
     }
 
@@ -979,7 +979,7 @@ export class CombatFactory {
         character.performGraphic(new Graphic(348, GraphicHeight.HIGH));
 
         if (character.isPlayer()) {
-            character.getAsPlayer().getPacketSender().sendMessage("You've been stunned!");
+            character.getAsPlayer().sendMessage("You've been stunned!");
         }
     }
 
@@ -1064,7 +1064,8 @@ export class CombatFactory {
         character.getMovementQueue().reset();
 
         if (character.isPlayer()) {
-            character.getAsPlayer().getPacketSender().sendMessage("You have been frozen!").sendEffectTimer(seconds, EffectTimer.FREEZE);
+            character.getAsPlayer().sendMessage("You have been frozen!");
+            character.getAsPlayer().getPacketSender().sendEffectTimer(seconds, EffectTimer.FREEZE);
         }
     }
 
@@ -1074,7 +1075,7 @@ export class CombatFactory {
             victim.performGraphic(new Graphic(436));
             victim.getSkillManager().setCurrentLevels(Skill.PRAYER, 0);
             victim.getSkillManager().setCurrentLevels(Skill.HITPOINTS, victim.getHitpoints() + amountToHeal);
-            victim.getPacketSender().sendMessage("You've run out of prayer points!");
+            victim.sendMessage("You've run out of prayer points!");
             PrayerHandler.deactivatePrayers(victim);
         }
     }
@@ -1100,7 +1101,7 @@ export class CombatFactory {
         const rangedWeapon = player.getCombat().getRangedWeapon();
         const ammoData = player.getCombat().getAmmunition();
         const reject = (message?: string) => {
-            if (message) player.getPacketSender().sendMessage(message);
+            if (message) player.sendMessage(message);
             if (!skipReset) player.getCombat().reset();
             return false;
         };
@@ -1219,7 +1220,7 @@ export class CombatFactory {
             player.getUpdateFlag().flag(Flag.APPEARANCE);
 
             if (isEmptyCrystalBow(currentWeaponId)) {
-                player.getPacketSender().sendMessage("Your crystal bow has run out of charges.");
+                player.sendMessage("Your crystal bow has run out of charges.");
             }
             return;
         }
@@ -1241,7 +1242,7 @@ export class CombatFactory {
 
         // If we are at 0 ammo remove the item from the equipment completely.
         if (player.getEquipment().get(slot).getAmount() == 0) {
-            player.getPacketSender().sendMessage("You have run out of ammunition!");
+            player.sendMessage("You have run out of ammunition!");
             player.getEquipment().set(slot, new Item(-1));
 
             if (slot == Equipment.WEAPON_SLOT) {

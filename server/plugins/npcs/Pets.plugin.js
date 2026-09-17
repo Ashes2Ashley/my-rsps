@@ -584,11 +584,11 @@ function drop(player, itemId, reward) {
     }, 1200);
 
     if (reward) {
-      player.getPacketSender().sendMessage("You have a funny feeling like you're being followed.");
+      player.sendMessage("You have a funny feeling like you're being followed.");
     } else {
       player.getInventory().deleteNumber(pet.itemId, 1);
       Sounds.sendSound(player, Sound.DROP_ITEM);
-      player.getPacketSender().sendMessage("You drop your pet..");
+      player.sendMessage("You drop your pet..");
       player.performAnimation(INTERACTION_ANIM);
       player.setPositionToFace(npc.getLocation());
     }
@@ -598,7 +598,7 @@ function drop(player, itemId, reward) {
     } else {
       ItemOnGroundManager.registerNonGlobal(player, new Item(pet.itemId));
     }
-    player.getPacketSender().sendMessage("@dre@You've received a pet!");
+    player.sendMessage("@dre@You've received a pet!");
   } else {
     const currentPet = player.getCurrentPet();
     log("drop_already_has_pet", {
@@ -607,7 +607,7 @@ function drop(player, itemId, reward) {
       currentPetId: currentPet?.getId?.() ?? null,
       currentPetRegistered: currentPet?.isRegistered?.() ?? null,
     });
-    player.getPacketSender().sendMessage("You already have a pet following you.");
+    player.sendMessage("You already have a pet following you.");
   }
 
   return true;
@@ -647,7 +647,7 @@ function pickup(player, npc) {
     player.getBank(Bank.getTabForItem(player, pet.itemId)).adds(pet.itemId, 1);
   }
 
-  player.getPacketSender().sendMessage("You pick up your pet..");
+  player.sendMessage("You pick up your pet..");
   Sounds.sendSound(player, Sound.PICK_UP_ITEM);
   player.setCurrentPet(null);
   return true;
@@ -669,7 +669,7 @@ function morph(player, npc) {
 
   if (pet.morphId !== 0) {
     npc.setNpcTransformationId(pet.morphId);
-    player.getPacketSender().sendMessage("Your pet endures metamorphosis and transforms.");
+    player.sendMessage("Your pet endures metamorphosis and transforms.");
   }
   return true;
 }

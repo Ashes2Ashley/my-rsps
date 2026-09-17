@@ -84,7 +84,7 @@ function openKey(player, slot, expectedKey = null) {
   if (!isLootKey(key) || (expectedKey && key !== expectedKey) || chestItems(player).length) return false;
   const items = keyItems(key);
   if (!items.length) {
-    player.getPacketSender().sendMessage("This Loot key has no recoverable loot and was not consumed.");
+    player.sendMessage("This Loot key has no recoverable loot and was not consumed.");
     return false;
   }
   player.getInventory().deleteAtSlot(slot, 1);
@@ -126,7 +126,7 @@ function takeChestItem(player, index, destination, asNotes = false, requestedAmo
     const inventory = player.getInventory();
     const stackable = ItemDefinition.forId(moved.id).isStackable?.() === true;
     if (!((stackable && hasSameItem(inventory, moved)) || inventory.getFreeSlots() >= (stackable ? 1 : amount))) {
-      player.getPacketSender().sendMessage("You don't have enough inventory space.");
+      player.sendMessage("You don't have enough inventory space.");
       return true;
     }
     inventory.add(new Item(moved.id, moved.amount, moved.meta), false);
@@ -134,7 +134,7 @@ function takeChestItem(player, index, destination, asNotes = false, requestedAmo
   } else {
     const bank = bankForItem(player, moved);
     if (!bank) {
-      player.getPacketSender().sendMessage("You need more space in your bank.");
+      player.sendMessage("You need more space in your bank.");
       return true;
     }
     bank.add(new Item(moved.id, moved.amount, moved.meta), false);
@@ -212,7 +212,7 @@ function createLootKey({ killer, victim }) {
   candidates.push(...state.keys.sort((left, right) => LootKeys.describeKey(right).value - LootKeys.describeKey(left).value));
   const available = LootKeys.MAX_KEYS - LootKeys.countKeys(killer);
   const received = candidates.slice(0, available).map((key) => giveKey(killer, key, victim.getLocation()));
-  if (drops.length) killer.getPacketSender().sendMessage(received[0]
+  if (drops.length) killer.sendMessage(received[0]
     ? "Your opponent's loot has been placed in a Loot key."
     : "Your inventory is full, so your Loot key has been placed on the ground.");
 }
@@ -221,14 +221,14 @@ function checkOrDestroy(api, event) {
   if (!LootKeys.isLootKey(event.item)) return;
   const option = String(event.option ?? "").toLowerCase();
   if (option === "check") {
-    event.player.getPacketSender().sendMessage(`This Loot key contains ${LootKeys.describeKey(event.item).description}.`);
+    event.player.sendMessage(`This Loot key contains ${LootKeys.describeKey(event.item).description}.`);
     event.handled = true;
     return;
   }
   if (option !== "destroy") return;
   event.handled = true;
   if (!Wilderness.isIn(event.player) || LootKeys.describeKey(event.item).value >= DESTROY_VALUE_LIMIT) {
-    event.player.getPacketSender().sendMessage("This Loot key cannot be destroyed here or is worth too much.");
+    event.player.sendMessage("This Loot key cannot be destroyed here or is worth too much.");
     return;
   }
   const key = event.item;
@@ -242,7 +242,7 @@ function setFloorValue(player) {
   player.setEnteredAmountAction({ execute: (amount) => {
     if (!Number.isInteger(amount) || amount < 0) return;
     LootKeys.setSettings(player, { ...LootKeys.getSettings(player), floorValue: amount });
-    player.getPacketSender().sendMessage(`Items worth ${amount.toLocaleString("en-US")} coins or more will drop to the floor.`);
+    player.sendMessage(`Items worth ${amount.toLocaleString("en-US")} coins or more will drop to the floor.`);
   }});
   player.getPacketSender().sendEnterAmountPrompt("Set Loot Key floor-value threshold (0 to disable)");
 }
@@ -255,13 +255,13 @@ function openSkullyPrompt(api, player) {
     enabled ? "Disable Loot Keys" : LootKeys.hasUnlockedLootKeys(player) ? "Enable Loot Keys" : "Unlock Loot Keys (1,000,000 coins)", () => {
       if (LootKeys.hasEnabledLootKeys(player)) {
         LootKeys.setLootKeysEnabled(player, false);
-        player.getPacketSender().sendMessage("You will now receive normal PvP loot piles.");
+        player.sendMessage("You will now receive normal PvP loot piles.");
       } else if (!LootKeys.hasUnlockedLootKeys(player) && player.getInventory().getAmount(ItemIdentifiers.COINS) < UNLOCK_COST) {
-        player.getPacketSender().sendMessage("You need 1,000,000 coins to unlock Loot Keys.");
+        player.sendMessage("You need 1,000,000 coins to unlock Loot Keys.");
       } else {
         if (!LootKeys.hasUnlockedLootKeys(player)) player.getInventory().delete(ItemIdentifiers.COINS, UNLOCK_COST);
         LootKeys.setLootKeysEnabled(player, true);
-        player.getPacketSender().sendMessage("You will now receive Loot keys for Wilderness player kills.");
+        player.sendMessage("You will now receive Loot keys for Wilderness player kills.");
       }
     },
     `Supplies in keys: ${settings.includeSupplies ? "On" : "Off"}`, () => {
@@ -269,7 +269,7 @@ function openSkullyPrompt(api, player) {
       openSkullyPrompt(api, player);
     },
     `Floor-value threshold: ${settings.floorValue.toLocaleString("en-US")}`, () => setFloorValue(player),
-    "What are Loot Keys?", () => player.getPacketSender().sendMessage("Loot Keys hold a defeated player's dropped items in one inventory slot. Open them at a Loot Chest."),
+    "What are Loot Keys?", () => player.sendMessage("Loot Keys hold a defeated player's dropped items in one inventory slot. Open them at a Loot Chest."),
     "Never mind", () => {}
   );
 }
@@ -352,7 +352,7 @@ function openKeySelection(api, player) {
   if (LootKeys.chestItems(player).length) return openChest(player);
   const keys = inventoryKeys(player);
   if (!keys.length) {
-    player.getPacketSender().sendMessage("You do not currently have any Wilderness Loot Keys. For more information, speak to Skully in the Ferox Enclave.");
+    player.sendMessage("You do not currently have any Wilderness Loot Keys. For more information, speak to Skully in the Ferox Enclave.");
     return true;
   }
   if (keys.length === 1) return openChestKey(player, keys[0].slot, keys[0].item);
@@ -479,7 +479,7 @@ function passThrough({ player, object }) {
   const crossing = crossingTarget(current, object);
   if (!crossing) return true;
   if (crossing.entering && isTeleblocked(player)) {
-    player.getPacketSender().sendMessage("A magical force prevents you from entering the Ferox Enclave while teleblocked.");
+    player.sendMessage("A magical force prevents you from entering the Ferox Enclave while teleblocked.");
     return true;
   }
   if (current && TaskManager && player.getForceMovement?.() == null) {
@@ -513,14 +513,14 @@ module.exports = {
       if (LootKeys.countKeys(event.killer) < LootKeys.MAX_KEYS) warnedAtKeyLimit.delete(event.killer);
       if (LootKeys.hasEnabledLootKeys(event.killer) && LootKeys.countKeys(event.killer) >= LootKeys.MAX_KEYS && !warnedAtKeyLimit.has(event.killer)) {
         warnedAtKeyLimit.add(event.killer);
-        event.killer.getPacketSender().sendMessage("You have reached the limit of 5 loot keys.");
+        event.killer.sendMessage("You have reached the limit of 5 loot keys.");
       }
       queueDrop(event);
     });
     api.onPlayerDefeated((event) => { warnedAtKeyLimit.delete(event.victim); createLootKey(event); });
     api.onCanBankItem((event) => {
       if (LootKeys.isLootKey(event.item)) {
-        event.player.getPacketSender().sendMessage("Loot keys cannot be banked.");
+        event.player.sendMessage("Loot keys cannot be banked.");
         event.allow = false;
       }
     });

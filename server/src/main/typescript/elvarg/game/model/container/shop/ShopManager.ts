@@ -240,7 +240,7 @@ export class ShopManager {
             if (!item) return true;
             if (examine) {
                 const definition = ItemDefinition.forId(item.itemId);
-                player.getPacketSender().sendMessage(definition.getExamine() || definition.getName());
+                player.sendMessage(definition.getExamine() || definition.getName());
             } else {
                 this.handleItemContainerAction(player, {
                     kind: amount != null ? "buy_sell" : "value",
@@ -258,7 +258,7 @@ export class ShopManager {
             if (!item || item.getId() < 0) return true;
             if (examine) {
                 const definition = ItemDefinition.forId(item.getId());
-                player.getPacketSender().sendMessage(definition.getExamine() || definition.getName());
+                player.sendMessage(definition.getExamine() || definition.getName());
             } else {
                 this.handleItemContainerAction(player, {
                     kind: amount != null ? "buy_sell" : "value",
@@ -442,7 +442,7 @@ export class ShopManager {
         fromShop: boolean
     ): void {
         if (!fromShop && !this.buysItem(shop, itemId)) {
-            player.getPacketSender().sendMessage(
+            player.sendMessage(
                 "You cannot sell this item to this shop."
             );
             return;
@@ -451,7 +451,7 @@ export class ShopManager {
         let price = this.itemPrice(shop, definition);
         if (!fromShop) {
             if (!definition.isSellable?.()) {
-                player.getPacketSender().sendMessage(
+                player.sendMessage(
                     "This item cannot be sold to a shop."
                 );
                 return;
@@ -461,10 +461,10 @@ export class ShopManager {
             }
         }
         if (price <= 0) {
-            player.getPacketSender().sendMessage("This item has no value.");
+            player.sendMessage("This item has no value.");
             return;
         }
-        player.getPacketSender().sendMessage(
+        player.sendMessage(
             `${definition.getName()}${fromShop ? " currently costs " : ": shop will buy for "}` +
             `${Misc.insertCommasToNumber(String(price))} x ` +
             `${this.currencyName(shop.definition.getCurrency())}.`
@@ -490,7 +490,7 @@ export class ShopManager {
         const stock = shop.stock.get(itemId) ?? 0;
         const available = Math.max(0, stock - (this.deletesItems(shop) ? 0 : 1));
         if (available <= 0) {
-            player.getPacketSender().sendMessage(
+            player.sendMessage(
                 "This item is currently out of stock. Come back later."
             );
             return;
@@ -503,7 +503,7 @@ export class ShopManager {
             available
         );
         if (quantity <= 0) {
-            player.getPacketSender().sendMessage("You can't afford that.");
+            player.sendMessage("You can't afford that.");
             return;
         }
 
@@ -543,14 +543,14 @@ export class ShopManager {
         amount: number
     ): void {
         if (!this.buysItem(shop, itemId)) {
-            player.getPacketSender().sendMessage(
+            player.sendMessage(
                 "You cannot sell this item to this shop."
             );
             return;
         }
         const definition = ItemDefinition.forId(itemId);
         if (!definition.isSellable?.()) {
-            player.getPacketSender().sendMessage("This item cannot be sold.");
+            player.sendMessage("This item cannot be sold.");
             return;
         }
 
@@ -564,11 +564,11 @@ export class ShopManager {
             price = Math.floor(price * this.SALES_TAX);
         }
         if (price <= 0) {
-            player.getPacketSender().sendMessage("This item has no value.");
+            player.sendMessage("This item has no value.");
             return;
         }
         if ((shop.stock.get(itemId) ?? 0) <= 0 && shop.order.length >= this.MAX_SHOP_ITEMS) {
-            player.getPacketSender().sendMessage("The shop is currently full.");
+            player.sendMessage("The shop is currently full.");
             return;
         }
 

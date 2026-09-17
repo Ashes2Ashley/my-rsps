@@ -183,9 +183,9 @@ export class SkillManager {
             this.player.getPacketSender().sendChatboxInterface(skill.getChatboxInterface());
             this.player.performGraphic(SkillManager.LEVEL_UP_GRAPHIC);
             Sounds.sendSound(this.player, Sound.LEVEL_UP);
-            this.player.getPacketSender().sendMessage("You've just advanced " + skillName + " level! You have reached level " + newLevel);
+            this.player.sendMessage("You've just advanced " + skillName + " level! You have reached level " + newLevel);
             if (this.skills.maxLevel[skill.getIndex()] == SkillManager.getMaxAchievingLevel(skill)) {
-                this.player.getPacketSender().sendMessage("Well done! You've achieved the highest possible level in this skill!");
+                this.player.sendMessage("Well done! You've achieved the highest possible level in this skill!");
                 World.sendMessage("<shad=15536940>News: " + this.player.getUsername()
                     + " has just achieved the highest possible level in " + skillName + "!");
             }
@@ -201,7 +201,7 @@ export class SkillManager {
             if (!skill.canSetLevel()) {
                 if (this.player.getRights() != PlayerRights.ADMINISTRATOR && this.player.getRights() != PlayerRights.DEVELOPER
                     && this.player.getRights() != PlayerRights.OWNER) {
-                    this.player.getPacketSender().sendMessage("You can currently not set that level.");
+                    this.player.sendMessage("You can currently not set that level.");
                     return true;
                 }
             }
@@ -213,7 +213,7 @@ export class SkillManager {
                     max = 9999;
                 }
                 if (amount <= 0 || amount > max) {
-                    this.player.getPacketSender().sendMessage("Invalid syntax. Please enter a level in the range of 1-99.");
+                    this.player.sendMessage("Invalid syntax. Please enter a level in the range of 1-99.");
                     return;
                 }
                 this.player.getSkillManager().setLevel(skill, amount);
@@ -232,7 +232,7 @@ export class SkillManager {
         if (Wilderness.isIn(this.player)) {
             if (this.player.getRights() != PlayerRights.ADMINISTRATOR && this.player.getRights() != PlayerRights.DEVELOPER
                 && this.player.getRights() != PlayerRights.OWNER) {
-                this.player.getPacketSender().sendMessage("You cannot do this in the Wilderness!");
+                this.player.sendMessage("You cannot do this in the Wilderness!");
                 return;
             }
         }
@@ -246,7 +246,7 @@ export class SkillManager {
                 }
                 if (item.getDefinition().getRequirements() != null) {
                     if (item.getDefinition().getRequirements()[skill.getIndex()] > level) {
-                        this.player.getPacketSender().sendMessage(
+                        this.player.sendMessage(
                             "Please unequip your " + item.getDefinition().getName() + " before doing that.");
                         return;
                     }
@@ -256,7 +256,7 @@ export class SkillManager {
 
         if (skill == Skill.HITPOINTS) {
             if (level < 10) {
-                this.player.getPacketSender().sendMessage("Hitpoints must be set to at least level 10.");
+                this.player.sendMessage("Hitpoints must be set to at least level 10.");
                 return;
             }
         }

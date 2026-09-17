@@ -29,6 +29,7 @@ const player = {
   getInventory: () => inventory,
   setEnteredAmountAction(action) { amountAction = action; },
   getPacketSender: () => sender, getLastItemPickup: () => ({ reset() {} }),
+  sendMessage: (message) => sender.sendMessage(message),
 };
 const moduleStub = { exports: {} };
 vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../plugins/items/LootingBag.plugin.js'), 'utf8'), {

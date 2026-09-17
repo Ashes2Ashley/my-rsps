@@ -54,7 +54,6 @@ function refresh(player) {
 
 function sendChargesMessage(player, item) {
   player
-    .getPacketSender()
     .sendMessage(`Your amulet has ${bloodFuryCharges(item).toLocaleString("en-US")} charges left.`);
 }
 
@@ -62,13 +61,13 @@ function createBloodFury(player, furyItem) {
   player.getInventory().deleteNumber(BLOOD_SHARD_ID, 1);
   setBloodFuryCharges(furyItem, BLOOD_FURY_CHARGES_PER_SHARD);
   refresh(player);
-  player.getPacketSender().sendMessage("You combine the blood shard with the amulet of fury.");
+  player.sendMessage("You combine the blood shard with the amulet of fury.");
 }
 
 function chargeBloodFury(player, amuletItem) {
   const charges = bloodFuryCharges(amuletItem);
   if (charges >= BLOOD_FURY_MAX_CHARGES) {
-    player.getPacketSender().sendMessage("Your amulet of blood fury cannot hold any more charges.");
+    player.sendMessage("Your amulet of blood fury cannot hold any more charges.");
     return;
   }
 
@@ -81,7 +80,7 @@ function chargeBloodFury(player, amuletItem) {
   player.getInventory().deleteNumber(BLOOD_SHARD_ID, addShards);
   setBloodFuryCharges(amuletItem, charges + addShards * BLOOD_FURY_CHARGES_PER_SHARD);
   refresh(player);
-  player.getPacketSender().sendMessage(
+  player.sendMessage(
     addShards === 1
       ? "You charge the amulet of blood fury with 1 blood shard."
       : `You charge the amulet of blood fury with ${addShards} blood shards.`
@@ -91,7 +90,7 @@ function chargeBloodFury(player, amuletItem) {
 function revertBloodFury(player, item) {
   setBloodFuryCharges(item, 0);
   refresh(player);
-  player.getPacketSender().sendMessage("You remove the blood magic from the amulet.");
+  player.sendMessage("You remove the blood magic from the amulet.");
 }
 
 function applyBloodFuryEffect(hit) {
@@ -125,7 +124,7 @@ function applyBloodFuryEffect(hit) {
   setBloodFuryCharges(amuletItem, charges);
   refresh(player);
   if (charges <= 0) {
-    player.getPacketSender().sendMessage("Your amulet of blood fury has run out of charges.");
+    player.sendMessage("Your amulet of blood fury has run out of charges.");
   }
 }
 

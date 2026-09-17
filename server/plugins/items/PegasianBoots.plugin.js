@@ -12,7 +12,7 @@ function combine(player) {
     skills.getMaxLevel(Skill.MAGIC) < MAGIC_LEVEL ||
     skills.getMaxLevel(Skill.RUNECRAFTING) < RUNECRAFTING_LEVEL
   ) {
-    player.getPacketSender().sendMessage("You need level 60 Magic and Runecrafting to do this.");
+    player.sendMessage("You need level 60 Magic and Runecrafting to do this.");
     return false;
   }
 
@@ -29,7 +29,7 @@ function combine(player) {
   inventory.addItem(new Item(ItemIdentifiers.PEGASIAN_BOOTS, 1));
   skills.addExperiences(Skill.MAGIC, EXPERIENCE);
   skills.addExperiences(Skill.RUNECRAFTING, EXPERIENCE);
-  player.getPacketSender().sendMessage("You combine the pegasian crystal with the ranger boots.");
+  player.sendMessage("You combine the pegasian crystal with the ranger boots.");
   return true;
 }
 

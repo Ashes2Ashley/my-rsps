@@ -24,7 +24,7 @@ class PlayerItemContainer extends ItemContainer {
     }
   
     full(): ItemContainer {
-      this.player.getPacketSender().sendMessage("You cannot trade more items.");
+      this.player.sendMessage("You cannot trade more items.");
       return this;
     }
   
@@ -117,8 +117,7 @@ export class Trading {
         if (this.state == TradeState.NONE || this.state == TradeState.REQUESTED_TRADE) {
             if (!this.request_delay.finished()) {
                 let seconds = this.request_delay.secondsRemaining();
-                this.player.getPacketSender()
-                    .sendMessage("You must wait another " + (seconds == 1 ? "second" : "" + seconds + " seconds")
+                this.player.sendMessage("You must wait another " + (seconds == 1 ? "second" : "" + seconds + " seconds")
                         + " before sending more trade requests.");
                 return;
             }
@@ -138,8 +137,8 @@ export class Trading {
                 this.player.getTrading().initiateTrade();
                 t_.getTrading().initiateTrade();
             } else {
-                this.player.getPacketSender().sendMessage("You've sent a trade request to " + t_.getUsername() + ".");
-                t_.getPacketSender().sendMessage(this.player.getUsername() + ":tradereq:");
+                this.player.sendMessage("You've sent a trade request to " + t_.getUsername() + ".");
+                t_.sendMessage(this.player.getUsername() + ":tradereq:");
                 t_.getSession().sendClientPacket(encodeTradeRequest(this.player.getIndex(), this.player.getUsername()));
                 if (t_.isPlayerBot && t_.isPlayerBot()) {
                     // Player Bots: Automatically accept any trade request
@@ -148,7 +147,7 @@ export class Trading {
             }
             this.request_delay.start(2);
         } else {
-            this.player.getPacketSender().sendMessage("You cannot do that right now.");
+            this.player.sendMessage("You cannot do that right now.");
         }
     }
 
@@ -181,7 +180,7 @@ export class Trading {
             }
             this.player.getInventory().refreshItems();
             this.resetAttributes();
-            this.player.getPacketSender().sendMessage("Trade declined.");
+            this.player.sendMessage("Trade declined.");
             this.player.getPacketSender().sendInterfaceRemoval();
             if (interact_ != null) {
                 if (interact_.getStatus() == PlayerStatus.TRADING) {
@@ -212,13 +211,12 @@ export class Trading {
             }
             let freeSlots = this.interact.getInventory().getFreeSlots();
             if (slotsNeeded > freeSlots) {
-                this.player.getPacketSender().sendMessage("")
-                    .sendMessage("@or3@" + this.interact.getUsername() + " will not be able to hold that item.")
-                    .sendMessage(
-                        "@or3@They have " + freeSlots + " free inventory slot" + (freeSlots == 1 ? "." : "s."));
+                this.player.sendMessage("");
+                this.player.sendMessage("@or3@" + this.interact.getUsername() + " will not be able to hold that item.");
+                this.player.sendMessage(
+                    "@or3@They have " + freeSlots + " free inventory slot" + (freeSlots == 1 ? "." : "s."));
 
-                this.interact.getPacketSender()
-                    .sendMessage("Trade cannot be accepted, you don't have enough free inventory space.");
+                this.interact.sendMessage("Trade cannot be accepted, you don't have enough free inventory space.");
                 return;
             }
             this.state = (TradeState.ACCEPTED_TRADE_SCREEN);
@@ -260,8 +258,8 @@ export class Trading {
                 this.player.getPacketSender().sendInterfaceRemoval();
                 interact_.getPacketSender().sendInterfaceRemoval();
                 // Send successful trade message!
-                this.player.getPacketSender().sendMessage("Trade accepted!");
-                interact_.getPacketSender().sendMessage("Trade accepted!");
+                this.player.sendMessage("Trade accepted!");
+                interact_.sendMessage("Trade accepted!");
             }
         } else {
             if (interact_.isPlayerBot && interact_.isPlayerBot()) {

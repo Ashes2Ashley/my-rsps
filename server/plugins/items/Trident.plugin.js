@@ -82,7 +82,7 @@ function refreshTridentState(player, item, recipe, slot = -1) {
 function chargeTrident(player, tridentItem, tridentSlot, recipe) {
   const current = getCharges(tridentItem);
   if (current >= TRIDENT_MAX_CHARGES) {
-    player.getPacketSender().sendMessage("Your trident cannot hold any more charges.");
+    player.sendMessage("Your trident cannot hold any more charges.");
     return;
   }
 
@@ -96,7 +96,7 @@ function chargeTrident(player, tridentItem, tridentSlot, recipe) {
   );
 
   if (affordable <= 0) {
-    player.getPacketSender().sendMessage(
+    player.sendMessage(
       `You need death runes, chaos runes, fire runes and ${recipe.primaryName} to charge this.`
     );
     return;
@@ -109,13 +109,13 @@ function chargeTrident(player, tridentItem, tridentSlot, recipe) {
 
   setCharges(tridentItem, current + affordable);
   refreshTridentState(player, tridentItem, recipe, tridentSlot);
-  player.getPacketSender().sendMessage(
+  player.sendMessage(
     `You add ${affordable} charge${affordable === 1 ? "" : "s"} to your trident. It now has ${current + affordable} charges.`
   );
 }
 
 function sendChargeStatus(player, tridentItem) {
-  player.getPacketSender().sendMessage(`Your trident has ${getCharges(tridentItem)} charges left.`);
+  player.sendMessage(`Your trident has ${getCharges(tridentItem)} charges left.`);
 }
 
 module.exports = {

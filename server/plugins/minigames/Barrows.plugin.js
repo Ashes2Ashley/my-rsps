@@ -289,7 +289,7 @@ function dig({ player }) {
   player.performAnimation(DIG_ANIMATION);
   const brother = BROTHERS.find((entry) => entry.mound.inside(player.getLocation()));
   if (!brother) {
-    player.getPacketSender().sendMessage("You dig into the ground, but find nothing.");
+    player.sendMessage("You dig into the ground, but find nothing.");
     return true;
   }
   // Keep the animation on the mound for two ticks before changing planes.
@@ -315,7 +315,7 @@ function searchCrypt(player, index) {
     pluginApi.sendMultiChatboxPrompt(player, "You've found a hidden tunnel. Enter?",
       "Enter", () => enterTunnel(player, run, brother), "Cancel", () => player.getPacketSender().sendInterfaceRemoval());
   } else if (state.brother || run.killed.includes(index)) {
-    player.getPacketSender().sendMessage("The sarcophagus appears to be empty.");
+    player.sendMessage("The sarcophagus appears to be empty.");
   } else {
     spawnNpc(player, brother.npcId, brother.spawn, true);
   }
@@ -353,7 +353,7 @@ function consumeLockpick(player) {
   if (!Number.isInteger(charges) || charges < 1 || charges > 50) return false;
   if (charges === 1) {
     inventory.deleteItem(item, inventory.getItems().indexOf(item));
-    player.getPacketSender().sendMessage("Your strange old lockpick crumbles to dust.");
+    player.sendMessage("Your strange old lockpick crumbles to dust.");
   } else {
     item.setId(Items.STRANGE_OLD_LOCKPICK);
     item.setMetaValue("barrows:lockpickCharges", charges - 1);
@@ -364,7 +364,7 @@ function consumeLockpick(player) {
 
 function inspectLockpick({ player, item }) {
   const charges = item.getId() === Items.STRANGE_OLD_LOCKPICK_FULL_ ? 50 : item.getMetaValue("barrows:lockpickCharges") ?? 50;
-  player.getPacketSender().sendMessage(`Your strange old lockpick has ${charges} charges remaining.`);
+  player.sendMessage(`Your strange old lockpick has ${charges} charges remaining.`);
 }
 
 function crossDoor(player, door) {
@@ -394,7 +394,7 @@ function useDoor(player, door) {
   const centre = DOOR_LINKS.find(([id]) => id === door.varbit).slice(1).includes(4);
   if (!run.openDoors.includes(door.varbit)) {
     if (!consumeLockpick(player)) {
-      player.getPacketSender().sendMessage("This door is locked.");
+      player.sendMessage("This door is locked.");
       return;
     }
   } else if (centre && !run.puzzleSolved && roomAt(player.getLocation()) !== 4 && !run.looted) {
@@ -517,7 +517,7 @@ function answerPuzzle(event) {
   if (pending.options[slot] !== 0) {
     randomiseLayout(pending.run);
     syncTunnels(player, pending.run);
-    player.getPacketSender().sendMessage("Wrong! The passages shift around you.");
+    player.sendMessage("Wrong! The passages shift around you.");
     return;
   }
   pending.run.puzzleSolved = true;
@@ -625,7 +625,7 @@ function drainPrayer(player, run) {
   const skills = player.getSkillManager();
   skills.setCurrentLevelCombat(Skill.PRAYER, Math.max(0, skills.getCurrentLevel(Skill.PRAYER) - 8 - run.killed.length));
   skills.updateSkill(Skill.PRAYER);
-  player.getPacketSender().sendMessage("A strange force drains your Prayer.");
+  player.sendMessage("A strange force drains your Prayer.");
 }
 
 function processPlayer({ player }) {
@@ -641,7 +641,7 @@ function processPlayer({ player }) {
     if (player.getLocation().equals(dig.from) && player.getHitpoints() > 0) {
       cleanupNpcs(player, true);
       player.moveTo(dig.to.clone());
-      player.getPacketSender().sendMessage("You've found a crypt!");
+      player.sendMessage("You've found a crypt!");
     }
   }
   const phase = !inBarrows(player) ? "outside" : inTunnels(player) ? "tunnels" : player.getLocation().getZ() === 3 ? "crypt" : "surface";

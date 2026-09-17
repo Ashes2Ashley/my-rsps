@@ -36,7 +36,7 @@ export class ArceuusOfferings {
     private static offer(player: Player, experience: (id: number) => number, maxItems: number, multiplier: number, prayerRestore = (_id: number) => 1): boolean {
         const items = player.getInventory().getValidItems().filter((item) => experience(item.getId()) > 0).slice(0, maxItems);
         if (items.length === 0) {
-            player.getPacketSender().sendMessage("You do not have any suitable remains in your inventory.");
+            player.sendMessage("You do not have any suitable remains in your inventory.");
             return false;
         }
         let prayerXp = 0;

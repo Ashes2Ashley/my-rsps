@@ -406,7 +406,7 @@ export class Bank extends ItemContainer {
             case 32513:
                 player.setPlaceholders(!player.isPlaceholders());
                 player.getPacketSender().sendConfig(118, player.isPlaceholders() ? 1 : 0);
-                player.getPacketSender().sendMessage(
+                player.sendMessage(
                         "Placeholders are now " + (player.isPlaceholders() ? "enabled" : "disabled") + ".");
                 break;
             }
@@ -435,7 +435,7 @@ export class Bank extends ItemContainer {
                             }
                             let items: Item[] = player.getBank(bankId).getValidItems();
                             if (player.getBank(0).getFreeSlots() < items.length) {
-                                player.getPacketSender().sendMessage("You don't have enough free slots in your Main tab to do that.");
+                                player.sendMessage("You don't have enough free slots in your Main tab to do that.");
                                 return true;
                             }
                             let noteWithdrawal: boolean = player.withdrawAsNote();
@@ -451,7 +451,7 @@ export class Bank extends ItemContainer {
                                 player.setCurrentBankTab(bankId);
                                 player.getBank(bankId).open();
                             } else {
-                                player.getPacketSender().sendMessage("To create a new tab, simply drag an item here.");
+                                player.sendMessage("To create a new tab, simply drag an item here.");
                                 if (searching) {
                                     player.getBank(player.getCurrentBankTab()).open();
                                 }
@@ -697,7 +697,7 @@ export class Bank extends ItemContainer {
     }
 
     public fulls(): ItemContainer | boolean {
-        this.getPlayer().getPacketSender().sendMessage("Not enough space in bank.");
+        this.getPlayer().sendMessage("Not enough space in bank.");
         return this;
     }
 
@@ -748,8 +748,7 @@ export class Bank extends ItemContainer {
                     || to.getAmount(checkId) + item.getAmount() <= 0) {
                 item.setAmount(Number.MAX_SAFE_INTEGER - (to.getAmount(item.getId())));
                 if (item.getAmount() <= 0) {
-                    this.getPlayer().getPacketSender()
-                    .sendMessage("You cannot withdraw that entire amount into your inventory.");
+                    this.getPlayer().sendMessage("You cannot withdraw that entire amount into your inventory.");
                         return this;
                 }
             }
@@ -768,7 +767,7 @@ export class Bank extends ItemContainer {
             if (canWithdrawAsNote)
                 item.setId(noteId);
             else
-                this.getPlayer().getPacketSender().sendMessage("This item cannot be withdrawn as a note.");
+                this.getPlayer().sendMessage("This item cannot be withdrawn as a note.");
         }
 
         // Add the item to the other container

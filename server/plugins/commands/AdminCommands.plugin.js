@@ -284,7 +284,7 @@ function adminOrAbove(player) {
 }
 
 function deny(player) {
-  player.getPacketSender().sendMessage("You do not have permission to use this command.");
+  player.sendMessage("You do not have permission to use this command.");
 }
 
 function requireRights(player, predicate) {
@@ -399,7 +399,6 @@ function spawnSearchedItem(player, id, amount) {
   // Stacks are a signed 32-bit value; the container clamps and stops on a full inventory.
   player.getInventory().adds(id, amount);
   player
-    .getPacketSender()
     .sendMessage(`Spawned ${amount} x ${ItemDefinition.forId(id)?.getName?.() ?? "item"} (${id}).`);
 }
 
@@ -409,7 +408,6 @@ function spawnSearchedNpc(player, id, amount) {
   }
   const spawned = queueNpcSpawn(player, id, amount);
   player
-    .getPacketSender()
     .sendMessage(`Spawned ${spawned} x ${NpcDefinition.forId(id)?.getName?.() ?? "npc"} (${id}).`);
 }
 
@@ -534,7 +532,7 @@ function startNpcAnimationQuestionnaire(api, player, npcId, possibleAnimations) 
     npc = spawned;
   }, 1);
   if (!npc) {
-    player.getPacketSender().sendMessage("Unable to spawn that NPC.");
+    player.sendMessage("Unable to spawn that NPC.");
     return;
   }
 
@@ -555,7 +553,7 @@ function startNpcAnimationQuestionnaire(api, player, npcId, possibleAnimations) 
           execute: (rawInput) => {
             const property = normalizeNpcAnimationProperty(rawInput);
             if (!property) {
-              player.getPacketSender().sendMessage("Enter a property name using letters, numbers, and underscores.");
+              player.sendMessage("Enter a property name using letters, numbers, and underscores.");
               ask(animationId);
               return;
             }
@@ -579,13 +577,13 @@ function startNpcAnimationQuestionnaire(api, player, npcId, possibleAnimations) 
         (matchingNpcId) => NpcDefinition.forId(matchingNpcId)?.getName?.()
       );
       applyNpcCombatAnimations(matchingNpcIds, assignments);
-      player.getPacketSender().sendMessage(`Saved animation definitions for ${matchingNpcIds.length} NPC${matchingNpcIds.length === 1 ? "" : "s"} to npc-combat-defs.json.`);
+      player.sendMessage(`Saved animation definitions for ${matchingNpcIds.length} NPC${matchingNpcIds.length === 1 ? "" : "s"} to npc-combat-defs.json.`);
       return;
     }
 
     const animationId = possibleAnimations[index++];
     loopNpcAnimation(npc, animationId, animationLoopKey);
-    player.getPacketSender().sendMessage(
+    player.sendMessage(
       `NPC ${npcId}: animation ${animationId} (${index}/${possibleAnimations.length}).`
     );
     ask(animationId);
@@ -600,7 +598,7 @@ function startNpcAnimationScanner(api, player, npcId, possibleAnimations) {
     npc = spawned;
   }, 1);
   if (!npc) {
-    player.getPacketSender().sendMessage("Unable to spawn that NPC.");
+    player.sendMessage("Unable to spawn that NPC.");
     return;
   }
 
@@ -619,7 +617,7 @@ function startNpcAnimationScanner(api, player, npcId, possibleAnimations) {
 
     const animationId = possibleAnimations[index++];
     loopNpcAnimation(npc, animationId, animationLoopKey);
-    player.getPacketSender().sendMessage(`NPC ${npcId}: compatible animation ${animationId} (${index}/${possibleAnimations.length}).`);
+    player.sendMessage(`NPC ${npcId}: compatible animation ${animationId} (${index}/${possibleAnimations.length}).`);
     api.sendMultiChatboxPrompt(
       player,
       "Choose an action for this animation.",
@@ -631,13 +629,13 @@ function startNpcAnimationScanner(api, player, npcId, possibleAnimations) {
   const save = () => {
     stop();
     if (Object.keys(assignments).length === 0) {
-      player.getPacketSender().sendMessage("No animation assignments saved.");
+      player.sendMessage("No animation assignments saved.");
       return;
     }
     const matchingNpcIds = getNpcIdsWithSamePossibleAnimations(npcId);
     writeNpcCombatAnimations(matchingNpcIds, assignments);
     applyNpcCombatAnimations(matchingNpcIds, assignments);
-    player.getPacketSender().sendMessage(`Saved ${Object.keys(assignments).join(", ")} animations for ${matchingNpcIds.length} matching NPC${matchingNpcIds.length === 1 ? "" : "s"}.`);
+    player.sendMessage(`Saved ${Object.keys(assignments).join(", ")} animations for ${matchingNpcIds.length} matching NPC${matchingNpcIds.length === 1 ? "" : "s"}.`);
   };
   const assign = (animationId) => {
     api.sendMultiChatboxPrompt(
@@ -695,14 +693,14 @@ module.exports = {
         return true;
       }
       if (parts.length < 3 || parts.length > 4) {
-        player.getPacketSender().sendMessage("Usage: ::tele x y [z]");
+        player.sendMessage("Usage: ::tele x y [z]");
         return true;
       }
       const x = parseIntArg(parts[1]);
       const y = parseIntArg(parts[2]);
       const z = parts.length === 4 ? parseIntArg(parts[3]) : player.getLocation().getZ();
       if (x === null || y === null || z === null) {
-        player.getPacketSender().sendMessage("Usage: ::tele x y [z]");
+        player.sendMessage("Usage: ::tele x y [z]");
         return true;
       }
       player.moveTo(new Location(x, y, z));
@@ -714,9 +712,7 @@ module.exports = {
         return true;
       }
       const location = player.getLocation();
-      player
-        .getPacketSender()
-        .sendMessage(`Coords: ${location.getX()}, ${location.getY()}, ${location.getZ()}`);
+      player.sendMessage(`Coords: ${location.getX()}, ${location.getY()}, ${location.getZ()}`);
       return true;
     });
 
@@ -727,7 +723,6 @@ module.exports = {
       const presetToken = String(parts[1] ?? "").trim().toLowerCase();
       if (!presetToken) {
         player
-          .getPacketSender()
           .sendMessage("Usage: ::glow off|blood|gold|toxic|ice|royal|infernal|cycle [1-5] [player]");
         return true;
       }
@@ -735,9 +730,7 @@ module.exports = {
       if (presetToken === "cycle") {
         cancelGlowCycle(player);
         startGlowCycle(player);
-        player
-          .getPacketSender()
-          .sendMessage("You are now cycling through the killstreak glows every 3 seconds.");
+        player.sendMessage("You are now cycling through the killstreak glows every 3 seconds.");
         return true;
       }
 
@@ -745,9 +738,7 @@ module.exports = {
       if (glowPreset === undefined) {
         const parsedPreset = parseIntArg(presetToken);
         if (parsedPreset === null || parsedPreset < 0 || parsedPreset > 6) {
-          player
-            .getPacketSender()
-            .sendMessage("Glow presets: off, blood, gold, toxic, ice, royal, infernal, cycle");
+          player.sendMessage("Glow presets: off, blood, gold, toxic, ice, royal, infernal, cycle");
           return true;
         }
         glowPreset = parsedPreset;
@@ -762,7 +753,7 @@ module.exports = {
         const parsedIntensity = parseIntArg(firstTailToken);
         if (parsedIntensity !== null) {
           if (parsedIntensity < 1 || parsedIntensity > 5) {
-            player.getPacketSender().sendMessage("Glow intensity must be between 1 and 5.");
+            player.sendMessage("Glow intensity must be between 1 and 5.");
             return true;
           }
           glowIntensity = parsedIntensity;
@@ -772,7 +763,7 @@ module.exports = {
       if (targetTail.length > 0) {
         target = resolvePlayerByCommandTail(`glow ${targetTail}`, ["glow"]);
         if (!target) {
-          player.getPacketSender().sendMessage(`Player ${targetTail} is not online.`);
+          player.sendMessage(`Player ${targetTail} is not online.`);
           return true;
         }
       }
@@ -784,15 +775,13 @@ module.exports = {
       const presetLabel =
         Object.keys(GLOW_PRESETS).find((key) => GLOW_PRESETS[key] === glowPreset && key !== "none") ??
         String(glowPreset);
-      player
-        .getPacketSender()
-        .sendMessage(
-          `${targetLabel} ${
-            glowPreset === 0
-              ? "no longer have a glow"
-              : `now use ${presetLabel} glow at intensity ${glowIntensity}`
-          }.`
-        );
+      player.sendMessage(
+        `${targetLabel} ${
+          glowPreset === 0
+            ? "no longer have a glow"
+            : `now use ${presetLabel} glow at intensity ${glowIntensity}`
+        }.`
+      );
       return true;
     });
 
@@ -802,7 +791,7 @@ module.exports = {
       }
       const target = resolvePlayerByCommandTail(raw, parts);
       if (!target) {
-        player.getPacketSender().sendMessage("Usage: ::teleto [playername]");
+        player.sendMessage("Usage: ::teleto [playername]");
         return true;
       }
       player.moveTo(target.getLocation().clone());
@@ -815,7 +804,7 @@ module.exports = {
       }
       const target = resolvePlayerByCommandTail(raw, parts);
       if (!target) {
-        player.getPacketSender().sendMessage("Usage: ::teletome [playername]");
+        player.sendMessage("Usage: ::teletome [playername]");
         return true;
       }
       target.moveTo(player.getLocation().clone());
@@ -840,15 +829,15 @@ module.exports = {
       const targetName = commandTail(raw, parts);
       const target = World.getPlayerByName(targetName);
       if (!target) {
-        player.getPacketSender().sendMessage(`Player ${targetName} is not online.`);
+        player.sendMessage(`Player ${targetName} is not online.`);
         return true;
       }
       if (CombatFactory.inCombat(target)) {
-        player.getPacketSender().sendMessage(`Player ${targetName} is in combat!`);
+        player.sendMessage(`Player ${targetName} is in combat!`);
         return true;
       }
       target.getPacketSender().sendExit();
-      player.getPacketSender().sendMessage("Closed other player's client.");
+      player.sendMessage("Closed other player's client.");
       return true;
     });
 
@@ -895,13 +884,11 @@ module.exports = {
         inventory.adds(rune, 1000);
         given++;
       }
-      player
-        .getPacketSender()
-        .sendMessage(
-          given === RUNE_IDS.length
-            ? "Spawned 1,000 of each rune type."
-            : `Spawned ${given}/${RUNE_IDS.length} rune types - free up inventory space for the rest.`
-        );
+      player.sendMessage(
+        given === RUNE_IDS.length
+          ? "Spawned 1,000 of each rune type."
+          : `Spawned ${given}/${RUNE_IDS.length} rune types - free up inventory space for the rest.`
+      );
       return true;
     });
 
@@ -959,7 +946,7 @@ module.exports = {
       }
       const id = parseIntArg(parts[1]);
       if (id === null || id < -1 || id > 65535) {
-        player.getPacketSender().sendMessage("Usage: ::pnpc npc-id (-1 to reset)");
+        player.sendMessage("Usage: ::pnpc npc-id (-1 to reset)");
         return true;
       }
       player.performAnimation(Animation.DEFAULT_RESET_ANIMATION);
@@ -978,11 +965,11 @@ module.exports = {
       const id = parseIntArg(parts[1]);
       const amount = parts.length >= 3 ? parseIntArg(parts[2]) : 1;
       if (id === null || id < 0 || amount === null || amount < 1) {
-        player.getPacketSender().sendMessage("Usage: ::npc id [amount]");
+        player.sendMessage("Usage: ::npc id [amount]");
         return true;
       }
       const spawned = queueNpcSpawn(player, id, amount);
-      player.getPacketSender().sendMessage(
+      player.sendMessage(
         `Queued ${spawned} NPC${spawned === 1 ? "" : "s"} (id=${id}).`
       );
       return true;
@@ -994,7 +981,7 @@ module.exports = {
       }
       const id = parseIntArg(parts[1]);
       if (id === null || id < 0) {
-        player.getPacketSender().sendMessage("Usage: ::npcanims npc-id");
+        player.sendMessage("Usage: ::npcanims npc-id");
         return true;
       }
 
@@ -1003,11 +990,11 @@ module.exports = {
         possibleAnimations = getNpcPossibleAnimations(id);
       } catch (error) {
         console.error(error);
-        player.getPacketSender().sendMessage("Unable to read NPC animations.");
+        player.sendMessage("Unable to read NPC animations.");
         return true;
       }
       if (possibleAnimations.length === 0) {
-        player.getPacketSender().sendMessage(`No possible animations found for NPC ${id}.`);
+        player.sendMessage(`No possible animations found for NPC ${id}.`);
         return true;
       }
 
@@ -1015,7 +1002,7 @@ module.exports = {
         startNpcAnimationQuestionnaire(api, player, id, possibleAnimations);
       } catch (error) {
         console.error(error);
-        player.getPacketSender().sendMessage("Unable to start NPC animation questionnaire.");
+        player.sendMessage("Unable to start NPC animation questionnaire.");
       }
       return true;
     };
@@ -1028,7 +1015,7 @@ module.exports = {
       }
       const id = parseIntArg(parts[1]);
       if (id === null || id < 0) {
-        player.getPacketSender().sendMessage("Usage: ::npcanimscan npc-id [first-sequence last-sequence]");
+        player.sendMessage("Usage: ::npcanimscan npc-id [first-sequence last-sequence]");
         return true;
       }
 
@@ -1037,25 +1024,25 @@ module.exports = {
         const minimumId = parts.length >= 4 ? parseIntArg(parts[2]) : 0;
         const maximumId = parts.length >= 4 ? parseIntArg(parts[3]) : getLastSequenceId();
         if (baseAnimations.length === 0 || minimumId === null || maximumId === null || minimumId < 0 || maximumId < minimumId) {
-          player.getPacketSender().sendMessage("Use a valid sequence range.");
+          player.sendMessage("Use a valid sequence range.");
           return true;
         }
-        player.getPacketSender().sendMessage(`Scanning cache animations ${minimumId}-${maximumId}...`);
+        player.sendMessage(`Scanning cache animations ${minimumId}-${maximumId}...`);
         void findNpcRigAnimations(baseAnimations, minimumId, maximumId)
           .then((possibleAnimations) => {
             if (possibleAnimations.length === 0) {
-              player.getPacketSender().sendMessage(`No compatible animations found for NPC ${id} in ${minimumId}-${maximumId}.`);
+              player.sendMessage(`No compatible animations found for NPC ${id} in ${minimumId}-${maximumId}.`);
               return;
             }
             startNpcAnimationScanner(api, player, id, possibleAnimations);
           })
           .catch((error) => {
             console.error(error);
-            player.getPacketSender().sendMessage("Unable to scan cache animation data.");
+            player.sendMessage("Unable to scan cache animation data.");
           });
       } catch (error) {
         console.error(error);
-        player.getPacketSender().sendMessage("Unable to scan cache animation data.");
+        player.sendMessage("Unable to scan cache animation data.");
       }
       return true;
     });
@@ -1078,19 +1065,18 @@ module.exports = {
         }
       }
       if (id === null || id < 0) {
-        player.getPacketSender().sendMessage("Usage: ::npcperm id [radius] [north|south|east|west|0-7]");
+        player.sendMessage("Usage: ::npcperm id [radius] [north|south|east|west|0-7]");
         return true;
       }
 
       if (radiusArg !== null && radiusArg < 0) {
-        player.getPacketSender().sendMessage("Radius must be 0 or higher.");
+        player.sendMessage("Radius must be 0 or higher.");
         return true;
       }
 
       const facing = parseFacingArg(facingArg);
       if (facingArg != null && facing == null) {
         player
-          .getPacketSender()
           .sendMessage("Invalid facing. Use north/south/east/west (or north_east etc) or -1..7.");
         return true;
       }
@@ -1110,16 +1096,14 @@ module.exports = {
         file = appendPersistentNpcSpawn(spawnEntry);
       } catch (error) {
         console.error(error);
-        player.getPacketSender().sendMessage("Failed to append persistent npc spawn.");
+        player.sendMessage("Failed to append persistent npc spawn.");
         return true;
       }
 
       const spawned = queueNpcSpawn(player, id, 1);
-      player
-        .getPacketSender()
-        .sendMessage(
-          `Spawned ${spawned} NPC (id=${id}) and appended to ${file} at ${location.getX()},${location.getY()},${location.getZ()} (radius=${spawnEntry.wanderRadius}, facing=${facing?.label ?? "default"}).`
-        );
+      player.sendMessage(
+        `Spawned ${spawned} NPC (id=${id}) and appended to ${file} at ${location.getX()},${location.getY()},${location.getZ()} (radius=${spawnEntry.wanderRadius}, facing=${facing?.label ?? "default"}).`
+      );
       return true;
     });
 
@@ -1142,7 +1126,7 @@ module.exports = {
       if (!requireRights(player, ownerOrDev)) {
         return true;
       }
-      player.getPacketSender().sendMessage(player.getLocation().toString());
+      player.sendMessage(player.getLocation().toString());
       return true;
     });
 
@@ -1156,7 +1140,7 @@ module.exports = {
         return true;
       }
       player.getPacketSender().sendConfig(id, state);
-      player.getPacketSender().sendMessage("Sent config");
+      player.sendMessage("Sent config");
       return true;
     });
 
@@ -1187,9 +1171,7 @@ module.exports = {
       }
       const input = parts[1];
       if (!input) {
-        player
-          .getPacketSender()
-          .sendMessage("Usage: ::sound <id|SOUND_NAME> [volume=1] [delay=0] [loop=1]");
+        player.sendMessage("Usage: ::sound <id|SOUND_NAME> [volume=1] [delay=0] [loop=1]");
         return true;
       }
 
@@ -1199,7 +1181,6 @@ module.exports = {
       const id = resolvedSound ? resolvedSound.getId() : directId;
       if (id === null) {
         player
-          .getPacketSender()
           .sendMessage("Unknown sound id/name. Example: ::sound 386 or ::sound MAGIC_SHORTBOW_SPECIAL");
         return true;
       }
@@ -1218,7 +1199,7 @@ module.exports = {
       if (resolvedSound) {
         const soundName =
           Object.entries(Sound).find(([, value]) => value === resolvedSound)?.[0] ?? "UNKNOWN";
-        player.getPacketSender().sendMessage(`Played ${soundName} (${id}).`);
+        player.sendMessage(`Played ${soundName} (${id}).`);
       }
       return true;
     });
@@ -1288,10 +1269,10 @@ module.exports = {
         return true;
       }
       if (player.getArea()) {
-        player.getPacketSender().sendMessage("");
-        player.getPacketSender().sendMessage(`Area: ${player.getArea().constructor.name}`);
+        player.sendMessage("");
+        player.sendMessage(`Area: ${player.getArea().constructor.name}`);
       } else {
-        player.getPacketSender().sendMessage("No area found for your coordinates.");
+        player.sendMessage("No area found for your coordinates.");
       }
       return true;
     });
@@ -1301,7 +1282,7 @@ module.exports = {
         return true;
       }
       player.setInfiniteHealth(!player.hasInfiniteHealth());
-      player.getPacketSender().sendMessage(`Invulnerable: ${player.hasInfiniteHealth()}`);
+      player.sendMessage(`Invulnerable: ${player.hasInfiniteHealth()}`);
       return true;
     });
 
@@ -1326,7 +1307,7 @@ module.exports = {
 
       player.setPoisonDamage(0);
       CombatFactory.poisonEntity(player, poisonSeverity, typeToken === "venom" || typeToken === "v" ? 2 : 1);
-      player.getPacketSender().sendMessage(`Poison test applied: ${typeToken}.`);
+      player.sendMessage(`Poison test applied: ${typeToken}.`);
       return true;
     });
 
@@ -1334,7 +1315,7 @@ module.exports = {
       if (!requireRights(player, ownerOrDev)) {
         return true;
       }
-      player.getPacketSender().sendMessage(`Active tasks :${TaskManager.getTaskAmount()}.`);
+      player.sendMessage(`Active tasks :${TaskManager.getTaskAmount()}.`);
       return true;
     });
 
@@ -1343,7 +1324,7 @@ module.exports = {
         return true;
       }
       player.getPacketSender().sendEnableNoclip();
-      player.getPacketSender().sendMessage("Noclip enabled.");
+      player.sendMessage("Noclip enabled.");
       return true;
     });
 
@@ -1362,7 +1343,7 @@ module.exports = {
       const next = player.getLocation().clone().setZ(player.getLocation().getZ() - 1);
       if (next.getZ() < 0) {
         next.setZ(0);
-        player.getPacketSender().sendMessage("You cannot move to a negative plane!");
+        player.sendMessage("You cannot move to a negative plane!");
       }
       player.moveTo(next);
       return true;
@@ -1373,7 +1354,7 @@ module.exports = {
         return true;
       }
       GameConstants.PLAYER_PERSISTENCE.save(player);
-      player.getPacketSender().sendMessage("Queued player save.");
+      player.sendMessage("Queued player save.");
       return true;
     });
 
@@ -1385,7 +1366,7 @@ module.exports = {
       const requested = commandTail(raw, parts);
       const targetName = requested.length > 0 ? requested : player.getUsername();
       if (!targetName) {
-        player.getPacketSender().sendMessage("Usage: ::reprocorruptsave [username]");
+        player.sendMessage("Usage: ::reprocorruptsave [username]");
         return true;
       }
 
@@ -1393,23 +1374,18 @@ module.exports = {
         const filePath = resolveSaveFilePathForUsername(targetName);
         if (!filePath) {
           player
-            .getPacketSender()
             .sendMessage("This command is only available with the legacy file-based save provider.");
           return;
         }
         if (!fs.existsSync(filePath)) {
-          player
-            .getPacketSender()
-            .sendMessage(`No save file found for ${targetName} at ${filePath}.`);
+          player.sendMessage(`No save file found for ${targetName} at ${filePath}.`);
           return;
         }
 
         const backupPath = `${filePath}.repro.bak.${Date.now()}`;
         const original = fs.readFileSync(filePath, "utf8");
         if (original.length < 4) {
-          player
-            .getPacketSender()
-            .sendMessage(`Save file is too small to corrupt safely: ${filePath}`);
+          player.sendMessage(`Save file is too small to corrupt safely: ${filePath}`);
           return;
         }
 
@@ -1430,10 +1406,10 @@ module.exports = {
           `[admin] reprocorruptsave target=${targetName} mode=partial_non_atomic file=${filePath} backup=${backupPath} bytes=${partialLength}/${sourceJson.length}`
         );
 
-        player.getPacketSender().sendMessage(
+        player.sendMessage(
           `Simulated interrupted save for ${targetName}. Backup: ${backupPath}`
         );
-        player.getPacketSender().sendMessage(
+        player.sendMessage(
           "Relog target to reproduce persistence_load_failed from partial JSON."
         );
       };
@@ -1441,20 +1417,16 @@ module.exports = {
       const onlineTarget = World.getPlayerByName(targetName);
       if (onlineTarget) {
         const serializedLiveSave = JSON.stringify(PlayerSave.fromPlayer(onlineTarget), null, 2);
-        player
-          .getPacketSender()
-          .sendMessage(
-            `Forcing ${targetName} logout, then simulating interrupted non-atomic save write...`
-          );
+        player.sendMessage(
+          `Forcing ${targetName} logout, then simulating interrupted non-atomic save write...`
+        );
         onlineTarget.requestLogout();
         TaskManager.submit(
           new UpdateTask(2, () => {
             if (World.getPlayerByName(targetName)) {
-              player
-                .getPacketSender()
-                .sendMessage(
-                  `Target ${targetName} is still online. Run ::reprocorruptsave again in a moment.`
-                );
+              player.sendMessage(
+                `Target ${targetName} is still online. Run ::reprocorruptsave again in a moment.`
+              );
               return;
             }
             corruptTargetSave(serializedLiveSave);
@@ -1472,7 +1444,7 @@ module.exports = {
         return true;
       }
       World.savePlayers();
-      player.getPacketSender().sendMessage("Queued save for all players.");
+      player.sendMessage("Queued save for all players.");
       return true;
     });
 
@@ -1487,7 +1459,7 @@ module.exports = {
       }
       player.getPacketSender().sendInterface(11169);
       player.getPacketSender().sendInterfaceComponentMoval(x, y, 11332);
-      player.getPacketSender().sendMessage(`Sending RedX to X=${x}, Y=${y}`);
+      player.sendMessage(`Sending RedX to X=${x}, Y=${y}`);
       return true;
     });
 
@@ -1495,11 +1467,9 @@ module.exports = {
       if (!requireRights(player, ownerOrDev)) {
         return true;
       }
-      player
-        .getPacketSender()
-        .sendMessage(
-          `Players: ${Array.from(World.getPlayers()).length}, NPCs: ${World.getNpcs().sizeReturn()}, Objects: ${World.getObjects().length}, GroundItems: ${World.getItems().length}.`
-        );
+      player.sendMessage(
+        `Players: ${Array.from(World.getPlayers()).length}, NPCs: ${World.getNpcs().sizeReturn()}, Objects: ${World.getObjects().length}, GroundItems: ${World.getItems().length}.`
+      );
       return true;
     });
 
@@ -1544,14 +1514,12 @@ module.exports = {
       const id = parseIntArg(parts[1]);
       const amount = parts.length > 2 ? parseIntArg(parts[2]) : 1;
       if (id === null || amount === null || id < 0 || amount <= 0) {
-        player.getPacketSender().sendMessage("Usage: ::item id [amount]");
+        player.sendMessage("Usage: ::item id [amount]");
         return true;
       }
       const cappedAmount = Math.min(amount, Number.MAX_SAFE_INTEGER);
       player.getInventory().adds(id, cappedAmount);
-      player
-        .getPacketSender()
-        .sendMessage(`Spawned item ${id} x${cappedAmount}.`);
+      player.sendMessage(`Spawned item ${id} x${cappedAmount}.`);
       return true;
     });
 
@@ -1606,7 +1574,7 @@ module.exports = {
         return true;
       }
       PlayerPunishment.init();
-      player.getPacketSender().sendMessage("Reloaded");
+      player.sendMessage("Reloaded");
       return true;
     });
 
@@ -1618,14 +1586,14 @@ module.exports = {
         const loaded = new ShopDefinitionLoader().load();
         const shopCount = ShopManager.reload();
         if (loaded === false) {
-          player.getPacketSender().sendMessage(
+          player.sendMessage(
             "Some plugin shop definition sources failed to reload."
           );
         }
-        player.getPacketSender().sendMessage(`Reloaded shops (${shopCount}).`);
+        player.sendMessage(`Reloaded shops (${shopCount}).`);
       } catch (error) {
         console.error(error);
-        player.getPacketSender().sendMessage("Error reloading shops.");
+        player.sendMessage("Error reloading shops.");
       }
       return true;
     });
@@ -1636,11 +1604,11 @@ module.exports = {
       }
       const shopId = parseIntArg(parts[1]);
       if (shopId === null || shopId < 0) {
-        player.getPacketSender().sendMessage("Usage: ::shop [id]");
+        player.sendMessage("Usage: ::shop [id]");
         return true;
       }
       if (!ShopManager.open(player, shopId)) {
-        player.getPacketSender().sendMessage(`Shop ${shopId} does not exist.`);
+        player.sendMessage(`Shop ${shopId} does not exist.`);
       }
       return true;
     });
@@ -1653,19 +1621,17 @@ module.exports = {
         const loader = new NpcSpawnDefinitionLoader();
         const loaded = loader.load();
         if (loaded === false) {
-          player.getPacketSender().sendMessage("Error reloading npc spawns.");
+          player.sendMessage("Error reloading npc spawns.");
           return true;
         }
 
         const source = DefinitionLoader.getSourceNames(
           NpcSpawnDefinitionLoader.DEFINITION_TYPE
         ).join("+") || "none";
-        player
-          .getPacketSender()
-          .sendMessage(`Reloaded npc spawns from: ${source}.`);
+        player.sendMessage(`Reloaded npc spawns from: ${source}.`);
       } catch (error) {
         console.error(error);
-        player.getPacketSender().sendMessage("Error reloading npc spawns.");
+        player.sendMessage("Error reloading npc spawns.");
       }
       return true;
     });
@@ -1674,7 +1640,7 @@ module.exports = {
       if (!requireRights(player, ownerOrDev)) {
         return true;
       }
-      player.getPacketSender().sendMessage("Reloaded npc defs.");
+      player.sendMessage("Reloaded npc defs.");
       return true;
     });
 
@@ -1685,9 +1651,9 @@ module.exports = {
       const levels = ServerLogger.getEnabledLevels().join(",") || "(none)";
       const enabledTypes = ServerLogger.getEnabledTypes().join(",") || "(none)";
       const disabledTypes = ServerLogger.getDisabledTypes().join(",") || "(none)";
-      player.getPacketSender().sendMessage(`Log levels: ${levels}`);
-      player.getPacketSender().sendMessage(`Enabled types: ${enabledTypes}`);
-      player.getPacketSender().sendMessage(`Disabled types: ${disabledTypes}`);
+      player.sendMessage(`Log levels: ${levels}`);
+      player.sendMessage(`Enabled types: ${enabledTypes}`);
+      player.sendMessage(`Disabled types: ${disabledTypes}`);
       return true;
     });
 
@@ -1697,14 +1663,14 @@ module.exports = {
       }
       const values = parseCsvArgs(parts, 1);
       if (values.length === 0) {
-        player.getPacketSender().sendMessage("Usage: ::loglevels debug,info,warn,error");
+        player.sendMessage("Usage: ::loglevels debug,info,warn,error");
         return true;
       }
       const valid = values.filter((value) =>
         value === "debug" || value === "info" || value === "warn" || value === "error"
       );
       ServerLogger.setEnabledLevels(valid);
-      player.getPacketSender().sendMessage(`Updated log levels: ${valid.join(",") || "(none)"}`);
+      player.sendMessage(`Updated log levels: ${valid.join(",") || "(none)"}`);
       return true;
     });
 
@@ -1714,12 +1680,12 @@ module.exports = {
       }
       const values = parseCsvArgs(parts, 1);
       if (values.length === 0) {
-        player.getPacketSender().sendMessage("Usage: ::logtypeon plugin,packet.out,world");
+        player.sendMessage("Usage: ::logtypeon plugin,packet.out,world");
         return true;
       }
       const merged = new Set([...(ServerLogger.getEnabledTypes() || []), ...values]);
       ServerLogger.setEnabledTypes(Array.from(merged));
-      player.getPacketSender().sendMessage(`Enabled log types: ${Array.from(merged).join(",")}`);
+      player.sendMessage(`Enabled log types: ${Array.from(merged).join(",")}`);
       return true;
     });
 
@@ -1729,12 +1695,12 @@ module.exports = {
       }
       const values = parseCsvArgs(parts, 1);
       if (values.length === 0) {
-        player.getPacketSender().sendMessage("Usage: ::logtypeoff plugin,packet.out,world");
+        player.sendMessage("Usage: ::logtypeoff plugin,packet.out,world");
         return true;
       }
       const merged = new Set([...(ServerLogger.getDisabledTypes() || []), ...values]);
       ServerLogger.setDisabledTypes(Array.from(merged));
-      player.getPacketSender().sendMessage(`Disabled log types: ${Array.from(merged).join(",")}`);
+      player.sendMessage(`Disabled log types: ${Array.from(merged).join(",")}`);
       return true;
     });
 
@@ -1749,7 +1715,7 @@ module.exports = {
       if (mode === "disabled" || mode === "all") {
         ServerLogger.setDisabledTypes([]);
       }
-      player.getPacketSender().sendMessage(
+      player.sendMessage(
         `Cleared log type filters (${mode}). Enabled: ${ServerLogger.getEnabledTypes().join(",") || "(none)"} Disabled: ${ServerLogger.getDisabledTypes().join(",") || "(none)"}`
       );
       return true;
@@ -1759,7 +1725,7 @@ module.exports = {
       if (!requireRights(player, ownerOrDev)) {
         return true;
       }
-      player.getPacketSender().sendMessage("Reloaded item defs");
+      player.sendMessage("Reloaded item defs");
       return true;
     });
 
@@ -1770,7 +1736,7 @@ module.exports = {
       const targetName = commandTail(raw, parts);
       const target = World.getPlayerByName(targetName);
       if (!GameConstants.PLAYER_PERSISTENCE.exists(targetName) && !target) {
-        player.getPacketSender().sendMessage(`Player ${targetName} does not exist.`);
+        player.sendMessage(`Player ${targetName} does not exist.`);
       }
       return true;
     });
@@ -1782,11 +1748,11 @@ module.exports = {
       const targetName = commandTail(raw, parts);
       const target = World.getPlayerByName(targetName);
       if (!GameConstants.PLAYER_PERSISTENCE.exists(targetName) && !target) {
-        player.getPacketSender().sendMessage(`Player ${targetName} does not exist.`);
+        player.sendMessage(`Player ${targetName} does not exist.`);
         return true;
       }
       if (!PlayerPunishment.muted(targetName)) {
-        player.getPacketSender().sendMessage(`Player ${targetName} does not have an active mute.`);
+        player.sendMessage(`Player ${targetName} does not have an active mute.`);
       }
       return true;
     });
@@ -1798,7 +1764,7 @@ module.exports = {
       const targetName = commandTail(raw, parts);
       const target = World.getPlayerByName(targetName);
       if (!target) {
-        player.getPacketSender().sendMessage(`Player ${targetName} is not online.`);
+        player.sendMessage(`Player ${targetName} is not online.`);
       }
       return true;
     });
@@ -1810,11 +1776,11 @@ module.exports = {
       const targetName = commandTail(raw, parts);
       const target = World.getPlayerByName(targetName);
       if (!target) {
-        player.getPacketSender().sendMessage(`Player ${targetName} is not online.`);
+        player.sendMessage(`Player ${targetName} is not online.`);
         return true;
       }
       if (CombatFactory.inCombat(target)) {
-        player.getPacketSender().sendMessage(`Player ${targetName} is in combat!`);
+        player.sendMessage(`Player ${targetName} is in combat!`);
       }
       return true;
     });
@@ -1826,11 +1792,11 @@ module.exports = {
       const targetName = commandTail(raw, parts);
       const target = World.getPlayerByName(targetName);
       if (!GameConstants.PLAYER_PERSISTENCE.exists(targetName) && !target) {
-        player.getPacketSender().sendMessage(`Player ${targetName} is not a valid online player.`);
+        player.sendMessage(`Player ${targetName} is not a valid online player.`);
         return true;
       }
       if (PlayerPunishment.banned(targetName)) {
-        player.getPacketSender().sendMessage(`Player ${targetName} already has an active ban.`);
+        player.sendMessage(`Player ${targetName} already has an active ban.`);
         if (target) {
           target.requestLogout();
         }
@@ -1844,11 +1810,11 @@ module.exports = {
       }
       const targetName = commandTail(raw, parts);
       if (!GameConstants.PLAYER_PERSISTENCE.exists(targetName)) {
-        player.getPacketSender().sendMessage(`Player ${targetName} is not online.`);
+        player.sendMessage(`Player ${targetName} is not online.`);
         return true;
       }
       if (!PlayerPunishment.banned(targetName)) {
-        player.getPacketSender().sendMessage(`Player ${targetName} is not banned!`);
+        player.sendMessage(`Player ${targetName} is not banned!`);
       }
       return true;
     });
@@ -1860,7 +1826,7 @@ module.exports = {
       const targetName = commandTail(raw, parts);
       const target = World.getPlayerByName(targetName);
       if (!target) {
-        player.getPacketSender().sendMessage(`Player ${targetName} is not online.`);
+        player.sendMessage(`Player ${targetName} is not online.`);
       }
       return true;
     });

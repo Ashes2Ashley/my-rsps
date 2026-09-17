@@ -158,7 +158,7 @@ function handleItemAction({ player, buttonId, action, itemId, slot }) {
       EquipPacketListener.equip(player, itemId, slot, Inventory.INTERFACE_ID);
     } else if (action === 10) {
       const definition = item.getDefinition();
-      player.getPacketSender().sendMessage(definition.getExamine() || definition.getName());
+      player.sendMessage(definition.getExamine() || definition.getName());
     }
     return true;
   }
@@ -171,7 +171,7 @@ function handleItemAction({ player, buttonId, action, itemId, slot }) {
     EquipPacketListener.unequip(player, equipmentSlot);
   } else if (action === 10) {
     const definition = item.getDefinition();
-    player.getPacketSender().sendMessage(definition.getExamine() || definition.getName());
+    player.sendMessage(definition.getExamine() || definition.getName());
   }
   return true;
 }

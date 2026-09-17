@@ -129,9 +129,7 @@ function applyPoisonImmunity(player, seconds, message = true) {
   curePoisonAndVenom(player);
   player.getCombat().getPoisonImmunityTimer().start(seconds);
   if (message) {
-    player
-      .getPacketSender()
-      .sendMessage(`You are now immune to poison for another ${seconds} seconds.`);
+    player.sendMessage(`You are now immune to poison for another ${seconds} seconds.`);
   }
 }
 
@@ -697,7 +695,7 @@ function processDivine(player) {
 
   if (Date.now() >= state.endsAt) {
     player.setAttribute(ATTR_DIVINE_STATE, null);
-    player.getPacketSender().sendMessage("Your divine potion effect has worn off.");
+    player.sendMessage("Your divine potion effect has worn off.");
     return;
   }
 
@@ -728,20 +726,18 @@ function handlePotionDrink(player, itemId, slot) {
   }
 
   if (!canDrink(player, itemId)) {
-    player.getPacketSender().sendMessage("You cannot use potions here.");
+    player.sendMessage("You cannot use potions here.");
     return true;
   }
 
   if (entry.potion.requiresFoodPermission && !canEat(player, itemId)) {
-    player.getPacketSender().sendMessage("You cannot eat here.");
+    player.sendMessage("You cannot eat here.");
     return true;
   }
 
   const timers = player.getTimers();
   if (timers.has(TimerKey.STUN)) {
-    player
-      .getPacketSender()
-      .sendMessage("You're currently stunned and cannot use potions.");
+    player.sendMessage("You're currently stunned and cannot use potions.");
     return true;
   }
 
@@ -765,13 +761,13 @@ function handlePotionDrink(player, itemId, slot) {
     const restorative = /restore|prayer|energy|stamina|antipoison|antidote|antifire|guthix rest/i.test(entry.potion.name);
     if ((share.type === "restore") === restorative) {
       entry.potion.effect(share.target);
-      share.target.getPacketSender().sendMessage(`${player.getUsername()} shares their ${entry.potion.name}.`);
+      share.target.sendMessage(`${player.getUsername()} shares their ${entry.potion.name}.`);
       player.setAttribute("lunar:potion-share", null);
     }
   }
 
   if (entry.replacementId === entry.potion.emptyItemId) {
-    player.getPacketSender().sendMessage("You have finished your potion.");
+    player.sendMessage("You have finished your potion.");
   }
 
   return true;

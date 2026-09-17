@@ -39,11 +39,9 @@ module.exports = {
       }
 
       if (player.getSkillManager().getCurrentLevel(Skill.CRAFTING) < gem.level) {
-        player
-          .getPacketSender()
-          .sendMessage(
-            `You need a Crafting level of at least ${gem.level} to cut this gem.`
-          );
+        player.sendMessage(
+          `You need a Crafting level of at least ${gem.level} to cut this gem.`
+        );
         event.handled = true;
         return;
       }

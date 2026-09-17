@@ -135,7 +135,7 @@ export class PrayerHandler {
             const player = character.getAsPlayer();
             if (player.getSkillManager().getCurrentLevel(Skill.PRAYER) <= 0) {
                 player.getPacketSender().sendVarbit(pd.configId, 0);
-                player.getPacketSender().sendMessage("You do not have enough Prayer points.");
+                player.sendMessage("You do not have enough Prayer points.");
                 Sounds.sendSound(player, Sound.PRAYER_INSUFFICIENT);
                 return;
             }
@@ -228,28 +228,28 @@ export class PrayerHandler {
         if (player.getSkillManager().getMaxLevel(Skill.PRAYER) < (prayer.requirement)) {
             if (msg) {
                 player.getPacketSender().sendVarbit(prayer.configId, 0);
-                player.getPacketSender().sendMessage("You need a Prayer level of at least" + prayer.requirement + " to use" + PrayerData.getPrayerName() + ".");
+                player.sendMessage("You need a Prayer level of at least" + prayer.requirement + " to use" + PrayerData.getPrayerName() + ".");
             }
             return false;
         }
         if (prayer === PrayerData.CHIVALRY && player.getSkillManager().getMaxLevel(Skill.DEFENCE) < 60) {
             if (msg) {
                 player.getPacketSender().sendVarbit(prayer.configId, 0);
-                player.getPacketSender().sendMessage("You need a Defence level of at least 60 to use Chivalry.");
+                player.sendMessage("You need a Defence level of at least 60 to use Chivalry.");
             }
             return false;
         }
         if (prayer === PrayerData.PIETY && player.getSkillManager().getMaxLevel(Skill.DEFENCE) < 70) {
             if (msg) {
                 player.getPacketSender().sendVarbit(prayer.configId, 0);
-                player.getPacketSender().sendMessage("You need a Defence level of at least 70 to use Piety.");
+                player.sendMessage("You need a Defence level of at least 70 to use Piety.");
             }
             return false;
         }
         if ((prayer === PrayerData.RIGOUR || prayer === PrayerData.AUGURY) && player.getSkillManager().getMaxLevel(Skill.DEFENCE) < 70) {
             if (msg) {
                 player.getPacketSender().sendVarbit(prayer.configId, 0);
-                player.getPacketSender().sendMessage("You need a Defence level of at least 70 to use that prayer.");
+                player.sendMessage("You need a Defence level of at least 70 to use that prayer.");
             }
             return false;
         }
@@ -267,8 +267,7 @@ export class PrayerHandler {
                 || prayer == PrayerData.PROTECT_FROM_MAGIC) {
                 if (msg) {
                     player.getPacketSender().sendVarbit(prayer.configId, 0);
-                    player.getPacketSender()
-                        .sendMessage("You have been disabled and can no longer use protection prayers.");
+                    player.sendMessage("You have been disabled and can no longer use protection prayers.");
                 }
                 return false;
             }
@@ -418,7 +417,7 @@ export class PrayerHandler {
             player.getSkillManager().setCurrentLevel(Skill.PRAYER, total, true);
             if (player.getSkillManager().getCurrentLevel(Skill.PRAYER) <= 0) {
                 PrayerHandler.deactivatePrayers(player);
-                player.getPacketSender().sendMessage("You have run out of Prayer points!");
+                player.sendMessage("You have run out of Prayer points!");
                 Sounds.sendSound(player, Sound.PRAYER_DEPLETED);
                 PrayerHandler.stopDrain(player);
                 return;

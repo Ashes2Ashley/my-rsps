@@ -104,19 +104,19 @@ export class TeleportHandler {
 
     public static checkReqs(player: Player, targetLocation: Location, wildernessLevelLimit: number = 20): boolean {
         if (player.busy()) {
-            player.getPacketSender().sendMessage("You cannot do that right now.");
+            player.sendMessage("You cannot do that right now.");
             return false;
         }
 
         if (Wilderness.isIn(player) && player.getWildernessLevel() > wildernessLevelLimit && player.getRights() !== PlayerRights.DEVELOPER &&
             !(player.isPlayerBot() && hasGlobalWorldTag("pvp"))) {
-            player.getPacketSender().sendMessage(`You must be below level ${wildernessLevelLimit} of Wilderness to use teleportation.`);
+            player.sendMessage(`You must be below level ${wildernessLevelLimit} of Wilderness to use teleportation.`);
             return false;
         }
 
         if (!player.getCombat().getTeleblockTimer().finished()) {
             if (Wilderness.isIn(player)) {
-                player.getPacketSender().sendMessage("A magical spell is blocking you from teleporting.");
+                player.sendMessage("A magical spell is blocking you from teleporting.");
                 return false;
             } else {
                 player.getCombat().getTeleblockTimer().stop();

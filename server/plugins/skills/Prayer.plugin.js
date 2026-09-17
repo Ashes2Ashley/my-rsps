@@ -46,11 +46,11 @@ module.exports = {
       player.getPacketSender().sendInterfaceRemoval();
       player.performAnimation(BURY_ANIMATION);
       Sounds.sendSound(player, Sound.BURY_BONES);
-      player.getPacketSender().sendMessage("You dig a hole in the ground..");
+      player.sendMessage("You dig a hole in the ground..");
       player.getInventory().deleteAtSlot(slot, 1);
       setTimeout(() => {
         const name = ItemDefinition.forId(itemId).getName();
-        player.getPacketSender().sendMessage(`..and bury the ${name}.`);
+        player.sendMessage(`..and bury the ${name}.`);
         player.getSkillManager().addExperiences(Skill.PRAYER, xp);
       }, BURY_DELAY_MS);
       player.getClickDelay().reset();

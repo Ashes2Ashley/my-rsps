@@ -51,7 +51,7 @@ export class DropItemPacketListener {
     }
 
     if (player.getRights() == PlayerRights.DEVELOPER) {
-      player.getPacketSender().sendMessage("Drop item: " + item.getId().toString() + ".");
+      player.sendMessage("Drop item: " + item.getId().toString() + ".");
     }
 
     player.getPacketSender().sendInterfaceRemoval();
