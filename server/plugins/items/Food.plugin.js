@@ -42,6 +42,9 @@ const FOOD = new Map([
   [ItemIdentifiers.MARLIN, { heal: 24 }],
   [ItemIds.COOKED_KARAMBWAN, { heal: 18, karambwan: true }],
   [ItemIds.ANGLERFISH, { heal: 22, anglerfish: true }],
+  [ItemIdentifiers.BLIGHTED_MANTA_RAY, { heal: 22 }],
+  [ItemIdentifiers.BLIGHTED_ANGLERFISH, { heal: 22, anglerfish: true }],
+  [ItemIdentifiers.BLIGHTED_KARAMBWAN, { heal: 18, karambwan: true }],
   [ItemIdentifiers.BANANA, { heal: 2 }],
   [ItemIdentifiers.PEACH, { heal: 8 }],
   [ItemIdentifiers.BANDAGES, { heal: 12, verb: "use" }],
@@ -53,6 +56,25 @@ const FOOD = new Map([
   [ItemIds.POTATO_WITH_CHEESE, { heal: 16 }],
   [ItemIds.MUSHROOM_POTATO, { heal: 20 }],
   [ItemIds.TUNA_POTATO, { heal: 20 }],
+  [ItemIdentifiers.MEAT_PIZZA, { heal: 8, replacementId: ItemIdentifiers._1_2_MEAT_PIZZA }],
+  [ItemIdentifiers._1_2_MEAT_PIZZA, { heal: 8 }],
+  [ItemIdentifiers.ANCHOVY_PIZZA, { heal: 9, replacementId: ItemIdentifiers._1_2_ANCHOVY_PIZZA }],
+  [ItemIdentifiers._1_2_ANCHOVY_PIZZA, { heal: 9 }],
+  [ItemIdentifiers.PINEAPPLE_PIZZA, { heal: 11, replacementId: ItemIdentifiers._1_2_PINEAPPLE_PIZZA }],
+  [ItemIdentifiers._1_2_PINEAPPLE_PIZZA, { heal: 11 }],
+  [ItemIdentifiers.APPLE_PIE, { heal: 7, replacementId: ItemIdentifiers.HALF_AN_APPLE_PIE }],
+  [ItemIdentifiers.HALF_AN_APPLE_PIE, { heal: 7, replacementId: ItemIdentifiers.PIE_DISH }],
+  [ItemIdentifiers.ADMIRAL_PIE, { heal: 8, replacementId: ItemIdentifiers.HALF_AN_ADMIRAL_PIE }],
+  [ItemIdentifiers.HALF_AN_ADMIRAL_PIE, { heal: 8, replacementId: ItemIdentifiers.PIE_DISH }],
+  [ItemIdentifiers.WILD_PIE, { heal: 11, replacementId: ItemIdentifiers.HALF_A_WILD_PIE }],
+  [ItemIdentifiers.HALF_A_WILD_PIE, { heal: 11, replacementId: ItemIdentifiers.PIE_DISH }],
+  [ItemIdentifiers.SUMMER_PIE, { heal: 11, replacementId: ItemIdentifiers.HALF_A_SUMMER_PIE }],
+  [ItemIdentifiers.HALF_A_SUMMER_PIE, { heal: 11, replacementId: ItemIdentifiers.PIE_DISH }],
+  [ItemIdentifiers.CHOCOLATE_CAKE, { heal: 5, replacementId: ItemIdentifiers._2_3_CHOCOLATE_CAKE }],
+  [ItemIdentifiers._2_3_CHOCOLATE_CAKE, { heal: 5, replacementId: ItemIdentifiers.CHOCOLATE_SLICE }],
+  [ItemIdentifiers.CHOCOLATE_SLICE, { heal: 5 }],
+  [ItemIdentifiers.STRAWBERRY, { heal: 1 }],
+  [ItemIdentifiers.COOKED_SWEETCORN, { heal: 0, sweetcorn: true }],
 ]);
 
 const FOOD_ITEM_IDS = [...FOOD.keys()];
@@ -141,6 +163,8 @@ module.exports = {
       if (food.anglerfish) {
         healAmount = getAnglerfishHeal(currentHp);
         maxHp += healAmount;
+      } else if (food.sweetcorn) {
+        healAmount = Math.floor(maxHp / 10) + 1;
       }
 
       const nextHp = Math.min(currentHp + healAmount, maxHp);
