@@ -1293,8 +1293,7 @@ export class PluginManager {
     if (required === null || required === undefined) {
       return true;
     }
-    const rightsId = player?.getRights?.()?.getId?.();
-    return Number.isInteger(rightsId) && rightsId >= required;
+    return player.getRights().getId() >= required;
   }
 
   /** Overrides the rank a command requires. PlayerRights.NONE opens it to every player. */
@@ -1331,8 +1330,8 @@ export class PluginManager {
 
     if (!PluginManager.playerHasCommandRights(event.player, event.base)) {
       event.player
-        ?.getPacketSender?.()
-        ?.sendMessage("You do not have permission to use this command.");
+        .getPacketSender()
+        .sendMessage("You do not have permission to use this command.");
       return true;
     }
 
