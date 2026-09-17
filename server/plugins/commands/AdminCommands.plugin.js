@@ -381,7 +381,7 @@ function spawnEnteredAmount(spawn, amount, id) {
 
 function spawnSearchedItem(player, id, amount) {
   // Re-checked here: the pick arrives on a later tick, and this is a privileged action.
-  if (!adminOrAbove(player) || id >= CacheDefinitions.getCounts().items) {
+  if (!adminOrAbove(player) || !CacheDefinitions.hasItem(id)) {
     return;
   }
   // Stacks are a signed 32-bit value; the container clamps and stops on a full inventory.

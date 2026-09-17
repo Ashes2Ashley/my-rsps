@@ -16,6 +16,7 @@ import type { CustomObjTypeProps } from "./CustomItemTypes";
  */
 export class CustomObjTypeLoader implements ObjTypeLoader {
     private readonly customCache = new Map<number, ObjType>();
+    private revision = -1;
 
     constructor(
         private readonly base: ObjTypeLoader,
@@ -23,6 +24,10 @@ export class CustomObjTypeLoader implements ObjTypeLoader {
     ) {}
 
     load(id: number): ObjType {
+        if (this.revision !== CustomItemRegistry.revision) {
+            this.customCache.clear();
+            this.revision = CustomItemRegistry.revision;
+        }
         // Check custom cache first
         const cached = this.customCache.get(id);
         if (cached) return cached;
@@ -139,6 +144,10 @@ export class CustomObjTypeLoader implements ObjTypeLoader {
         // Apply each property if defined in the custom props
         if (props.name !== undefined) objType.name = props.name;
         if (props.examine !== undefined) objType.examine = props.examine;
+        for (const key of ["wearPos", "wearPos2", "wearPos3", "note", "noteTemplate",
+            "unnotedId", "notedId", "placeholder", "placeholderTemplate"] as const) {
+            if (props[key] !== undefined) objType[key] = props[key]!;
+        }
         if (props.model !== undefined) objType.model = props.model;
         if (props.zoom2d !== undefined) objType.zoom2d = props.zoom2d;
         if (props.xan2d !== undefined) objType.xan2d = props.xan2d;

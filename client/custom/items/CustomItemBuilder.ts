@@ -3,7 +3,7 @@ import type {
     ItemBonuses,
     ItemRequirements,
     WeaponInterface,
-} from "../../../server/src/data/items";
+} from "./CustomItemTypes";
 import { ObjStackability } from "../../rs/config/objtype/ObjStackability";
 import type {
     CustomItemDefProps,

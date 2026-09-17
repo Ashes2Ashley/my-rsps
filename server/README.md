@@ -51,6 +51,38 @@ api.registerNpcInteraction([506, 512], {
 
 Use `onNpcInteraction` for stateful or otherwise scripted interactions.
 
+## Custom items without cache packing
+
+Add records to `data/definitions/custom-items.json`. Each record has a stable
+`id` (50000–65022), a cache `baseItemId`, client appearance/menu overrides in
+`objType`, and optional server gameplay overrides in `itemDef`. The base item
+supplies equipment type, bonuses, requirements and animations. Use existing
+cache model IDs for recolours, or list external models in `models`:
+
+```json
+"models": {
+  "1000000": "dragonic-katana/drop.dat",
+  "1000001": "dragonic-katana/equip.dat"
+}
+```
+
+Paths are relative to `data/models`; external model IDs start at 1000000.
+Set `objType.model` for inventory/ground rendering and `maleModel`/`femaleModel`
+for equipment. Clear inherited secondary models and recolours when replacing
+the entire model. Inventory framing (`zoom2d`, angles and offsets) and wearable
+offsets remain configurable for calibration.
+
+Restart the server and reconnect after editing. Definitions and compressed
+model bytes are delivered before the initial appearance/inventory updates;
+the client and render workers use them ahead of cache assets. Each compressed
+model packet and the definition packet must fit the transport's 64 KiB frame.
+New textures and animations are not streamed by this item mechanism.
+
+The bundled **Dragonic katana** is item `50000`, with dragon scimitar gameplay
+stats. An authorised administrator can test it with `::item 50000 1`, then
+wield it or drop/pick it up. Model attribution is in
+`data/models/dragonic-katana/README.md`.
+
 ## Logging
 
 Server logging is centralized and all `console.log/info/warn/error/debug` calls go through one logger.

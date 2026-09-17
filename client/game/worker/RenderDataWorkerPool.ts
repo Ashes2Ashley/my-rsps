@@ -4,6 +4,8 @@ import { WorkerDescriptor } from "threads/dist/master/pool-types";
 import { ObservablePromise } from "threads/dist/observable-promise";
 
 import { LoadedCache } from "../Caches";
+import { CustomItemRegistry } from "../../custom/items/CustomItemRegistry";
+import { CustomModelRegistry } from "../../custom/items/CustomModelRegistry";
 import { NpcGeometryData } from "../../render/loader/NpcGeometryData";
 import type { NpcInstance } from "../../render/npc/NpcRenderTemplate";
 import { RenderDataLoader } from "./RenderDataLoader";
@@ -35,7 +37,13 @@ export class RenderDataWorkerPool {
 
     initCache(cache: LoadedCache, npcInstances: NpcInstance[]): void {
         for (const worker of this.workers) {
-            worker.init.then((w) => w.initCache(cache, npcInstances));
+            worker.init.then((w) => {
+                w.initCache(cache, npcInstances);
+                return w.setCustomContent({ gamemodeId: "custom-items", datasets: [
+                    { key: "customItems", rows: Array.from(CustomItemRegistry.getAll(), (item) => item.definition) },
+                    { key: "customModels", rows: CustomModelRegistry.getAll() },
+                ] });
+            });
         }
     }
 

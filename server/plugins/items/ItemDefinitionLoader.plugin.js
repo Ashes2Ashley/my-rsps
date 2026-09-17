@@ -32,6 +32,8 @@ const getWeaponInterfaces = () =>
     .WeaponInterfaces;
 const getItemIdentifiers = () =>
   requireGameModule(path.join("util", "ItemIdentifiers")).ItemIdentifiers;
+const { CacheDefinitions } = requireGameModule("game/cache/CacheDefinitions");
+const { encodeContentData } = requireGameModule("net/protocol/ClientProtocol");
 
 const AVERNIC_TREADS_BONUSES = [
   5, 5, 5, 11, 15,
@@ -158,6 +160,70 @@ function loadItemDefinitions() {
     }
   }
 
+  const customPath = path.resolve(process.cwd(), getGameConstants().DEFINITIONS_DIRECTORY, "custom-items.json");
+  let customRows = [];
+  if (fs.existsSync(customPath)) {
+    const parsed = JSON.parse(fs.readFileSync(customPath, "utf8"));
+    customRows = Array.isArray(parsed) ? parsed : Object.values(parsed ?? {});
+  }
+  const modelRoot = path.resolve(process.cwd(), getGameConstants().DEFINITIONS_DIRECTORY, "../models");
+  const customModels = [];
+  const modelIds = new Set();
+  for (const row of customRows) {
+    for (const [rawId, rawFile] of Object.entries(row.models ?? {})) {
+      const modelId = Number(rawId);
+      if (!Number.isInteger(modelId) || modelId < 1000000 || modelIds.has(modelId) || typeof rawFile !== "string" || !/^[a-zA-Z0-9._/-]+\.dat$/.test(rawFile)) {
+        throw new Error(`[custom-items] invalid model ${String(rawId)} for item ${row.id}`);
+      }
+      modelIds.add(modelId);
+      const filePath = fs.realpathSync(path.resolve(modelRoot, rawFile));
+      if (!filePath.startsWith(`${modelRoot}${path.sep}`)) throw new Error(`[custom-items] model path escapes data/models: ${rawFile}`);
+      const data = fs.readFileSync(filePath);
+      if (data.length < 18 || data.length > 1024 * 1024) throw new Error(`[custom-items] model ${filePath} must be 18 bytes..1 MiB`);
+      const model = { id: modelId, data: data.toString("base64") };
+      if (encodeContentData("server", [{ key: "customModels", rows: [model] }]).length > 0xffff) {
+        throw new Error(`[custom-items] model packet ${modelId} exceeds protocol limit`);
+      }
+      customModels.push(model);
+    }
+  }
+  for (const row of customRows) {
+    for (const [key, value] of Object.entries(row.objType ?? {})) {
+      if (/^(model|(?:male|female)(?:Head)?Model[12]?)$/.test(key) && value >= 1000000 && !modelIds.has(value)) {
+        throw new Error(`[custom-items] item ${row.id} references missing model ${value}`);
+      }
+    }
+    const props = row.itemDef ?? {};
+    for (const [key, value] of Object.entries(props)) {
+      if (["equipmentType", "weaponInterface"].includes(key)) continue;
+      if (["bonuses", "requirements"].includes(key)) {
+        if (!Array.isArray(value) || !value.every(Number.isFinite)) throw new Error(`[custom-items] invalid ${key} for item ${row.id}`);
+      } else if (["doubleHanded", "stackable", "tradeable", "dropable", "sellable"].includes(key)) {
+        if (typeof value !== "boolean") throw new Error(`[custom-items] invalid ${key} for item ${row.id}`);
+      } else if (!Number.isFinite(value)) {
+        throw new Error(`[custom-items] invalid ${key} for item ${row.id}`);
+      }
+    }
+    if (props.equipmentType !== undefined && !getEquipmentType()[props.equipmentType]) {
+      throw new Error(`[custom-items] invalid equipmentType for item ${row.id}`);
+    }
+    if (props.weaponInterface !== undefined && !getWeaponInterfaces()[props.weaponInterface]) {
+      throw new Error(`[custom-items] invalid weaponInterface for item ${row.id}`);
+    }
+  }
+  // ponytail: one compressed packet per model/definition list; use chunked delivery if these outgrow 64 KiB.
+  if (encodeContentData("server", [{ key: "customItems", rows: customRows }]).length > 0xffff) {
+    throw new Error("[custom-items] definitions exceed the transport limit");
+  }
+  CacheDefinitions.registerCustomItems(customRows);
+  CacheDefinitions.setCustomModels(customModels);
+  for (const row of CacheDefinitions.getCustomItems()) {
+    const props = { ...(row.itemDef ?? {}) };
+    if (typeof props.equipmentType === "string") props.equipmentType = hydrateEquipmentType(props.equipmentType);
+    if (typeof props.weaponInterface === "string") props.weaponInterface = hydrateWeaponInterface(props.weaponInterface);
+    ItemDefinition.registerCustom(row.id, row.baseItemId ?? -1, props);
+  }
+
   return {
     filePath,
     loaded,
@@ -165,6 +231,22 @@ function loadItemDefinitions() {
     unresolvedWeaponInterfaces,
     mismatched,
   };
+}
+
+function customItemsResource() { return CacheDefinitions.getCustomItems(); }
+
+function customModelsResource(_query, segments) {
+  const models = CacheDefinitions.getCustomModels();
+  return segments.length ? models.find((model) => String(model.id) === segments[0]) : models;
+}
+
+function sendCustomItems({ player }) {
+  const sender = player.getPacketSender();
+  sender.sendContentData("server", [{ key: "customModels", rows: [] }]);
+  for (const model of CacheDefinitions.getCustomModels()) {
+    sender.sendContentData("server", [{ key: "customModels", rows: [model] }]);
+  }
+  sender.sendContentData("server", [{ key: "customItems", rows: CacheDefinitions.getCustomItems() }]);
 }
 
 module.exports = {
@@ -180,5 +262,8 @@ module.exports = {
       mismatched: result.mismatched,
       elapsedMs: Date.now() - startedAt,
     });
+    api.registerContentEndpoint("custom-items", customItemsResource);
+    api.registerContentEndpoint("custom-models", customModelsResource);
+    api.onPlayerLogin(sendCustomItems);
   },
 };
