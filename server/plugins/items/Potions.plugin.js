@@ -735,6 +735,11 @@ function processDivine(player) {
 
   if (Date.now() >= state.endsAt) {
     player.setAttribute(ATTR_DIVINE_STATE, null);
+    for (const entry of state.targets) {
+      if (entry?.skill) {
+        setCurrentLevel(player, entry.skill, getMaxLevel(player, entry.skill));
+      }
+    }
     player.sendMessage("Your divine potion effect has worn off.");
     return;
   }
@@ -743,10 +748,7 @@ function processDivine(player) {
     if (!entry || !entry.skill) {
       continue;
     }
-    const current = getCurrentLevel(player, entry.skill);
-    if (current < entry.target) {
-      setCurrentLevel(player, entry.skill, entry.target);
-    }
+    setCurrentLevel(player, entry.skill, entry.target);
   }
 }
 

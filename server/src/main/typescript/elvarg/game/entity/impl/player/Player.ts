@@ -489,7 +489,7 @@ export class Player extends Mobile {
         // PlayerBot-specific processing skipped in this runtime.
         // Decrease boosted stats Increase lowered stats
         if (this.getHitpoints() > 0) {
-            if (this.increaseStats.finished() || this.decreaseStats.secondsElapsed() >= (PrayerHandler.isActivated(this, PrayerHandler.PRESERVE) ? 72 : 60)) {
+            if (this.increaseStats.finished() || this.decreaseStats.secondsElapsed() >= (PrayerHandler.isActivated(this, PrayerHandler.PRESERVE) ? 90 : 60)) {
                 timed("stats", () => {
                     for (let skill of Skill.values()) {
                         let current = this.getSkillManager().getCurrentLevel(skill);
@@ -517,7 +517,7 @@ export class Player extends Mobile {
                         } else if (current > max) {
 
                             // Should boosted stats be decreased?
-                            if (this.decreaseStats.secondsElapsed() >= (PrayerHandler.isActivated(this, PrayerHandler.PRESERVE) ? 72 : 60)) {
+                            if (this.decreaseStats.secondsElapsed() >= (PrayerHandler.isActivated(this, PrayerHandler.PRESERVE) ? 90 : 60)) {
 
                                 // Never decrease Hitpoints / Prayer, and keep player-bot boosts static.
                                 if (!isBot && skill != Skill.HITPOINTS && skill != Skill.PRAYER) {
@@ -532,8 +532,8 @@ export class Player extends Mobile {
                         this.increaseStats.start(60);
                     }
                     if (this.decreaseStats
-                        .secondsElapsed() >= (PrayerHandler.isActivated(this, PrayerHandler.PRESERVE) ? 72 : 60)) {
-                        this.decreaseStats.start((PrayerHandler.isActivated(this, PrayerHandler.PRESERVE) ? 72 : 60));
+                        .secondsElapsed() >= (PrayerHandler.isActivated(this, PrayerHandler.PRESERVE) ? 90 : 60)) {
+                        this.decreaseStats.start((PrayerHandler.isActivated(this, PrayerHandler.PRESERVE) ? 90 : 60));
                     }
                 });
             }
