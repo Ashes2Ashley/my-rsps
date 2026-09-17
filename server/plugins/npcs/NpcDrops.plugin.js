@@ -368,12 +368,6 @@ module.exports = {
     });
 
     api.registerCommand("reloaddrops", ({ player }) => {
-      // Same guard the command carried in AdminCommands before it moved here.
-      const rights = player?.getRights?.();
-      if (rights !== PlayerRights.OWNER && rights !== PlayerRights.DEVELOPER) {
-        player.getPacketSender().sendMessage("You do not have permission to use this command.");
-        return true;
-      }
       try {
         const reloaded = loadDrops();
         player.getPacketSender().sendMessage(
@@ -384,7 +378,7 @@ module.exports = {
         player.getPacketSender().sendMessage("Error reloading npc drops.");
       }
       return true;
-    });
+    }, PlayerRights.OWNER);
 
     api.log("registered", stats);
   },
