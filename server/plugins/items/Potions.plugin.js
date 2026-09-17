@@ -5,6 +5,8 @@ const { Sounds } = require("../../src/main/typescript/elvarg/game/Sounds");
 const { Animation } = require("../../src/main/typescript/elvarg/game/model/Animation");
 const { EffectTimer } = require("../../src/main/typescript/elvarg/game/model/EffectTimer");
 const { Item } = require("../../src/main/typescript/elvarg/game/model/Item");
+const { HitDamage } = require("../../src/main/typescript/elvarg/game/content/combat/hit/HitDamage");
+const { HitMask } = require("../../src/main/typescript/elvarg/game/content/combat/hit/HitMask");
 const { ItemIds } = require("../../src/main/typescript/elvarg/util/IdEnums");
 const {
   DragonfireProtectionTier,
@@ -19,10 +21,14 @@ const DRINK_ANIMATION = new Animation(829);
 const DEFAULT_EMPTY_ITEM = ItemIds.VIAL;
 const STAMINA_DURATION_MS = 2 * 60 * 1000;
 const DIVINE_DURATION_MS = 5 * 60 * 1000;
+const OVERLOAD_DURATION_MS = 5 * 60 * 1000;
+const OVERLOAD_REFRESH_MS = 15 * 1000;
+const OVERLOAD_DAMAGE_INTERVAL_MS = 600;
 
 const ATTR_STAMINA_END = "potions:stamina:end";
 const ATTR_STAMINA_ACC = "potions:stamina:acc";
 const ATTR_DIVINE_STATE = "potions:divine:state";
+const ATTR_OVERLOAD_STATE = "potions:overload:state";
 
 const POTION_BY_ITEM_ID = new Map();
 const REGISTERED_POTIONS = [];
@@ -224,6 +230,27 @@ function applyDivine(player, baseEffect, affectedSkills) {
   });
 }
 
+const OVERLOAD_SKILLS = [Skill.ATTACK, Skill.STRENGTH, Skill.DEFENCE, Skill.RANGED, Skill.MAGIC];
+
+function applyOverloadBoost(player, flat, percent) {
+  for (const skill of OVERLOAD_SKILLS) {
+    boostSkill(player, skill, flat, percent);
+  }
+}
+
+function applyOverload(player, flat = 5, percent = 0.15) {
+  const now = Date.now();
+  applyOverloadBoost(player, flat, percent);
+  player.setAttribute(ATTR_OVERLOAD_STATE, {
+    endsAt: now + OVERLOAD_DURATION_MS,
+    nextBoostAt: now + OVERLOAD_REFRESH_MS,
+    nextDamageAt: now + OVERLOAD_DAMAGE_INTERVAL_MS,
+    damageHitsRemaining: 5,
+    flat,
+    percent,
+  });
+}
+
 function applyMix(baseEffect) {
   return (player) => {
     baseEffect(player);
@@ -247,6 +274,7 @@ function registerPotion(definition) {
   const normalized = {
     name: definition.name,
     effect: definition.effect,
+    canUse: typeof definition.canUse === "function" ? definition.canUse : null,
     requiresFoodPermission: Boolean(definition.requiresFoodPermission),
     emptyItemId: isItemId(definition.emptyItemId)
       ? definition.emptyItemId
@@ -648,6 +676,18 @@ registerPotion({
       [Skill.ATTACK, Skill.STRENGTH, Skill.DEFENCE]
     ),
 });
+registerPotion({
+  name: "Overload",
+  chains: [doseChain("OVERLOAD_4_", "OVERLOAD_3_", "OVERLOAD_2_", "OVERLOAD_1_")],
+  canUse: (player) => getCurrentLevel(player, Skill.HITPOINTS) > 50,
+  effect: applyOverload,
+});
+registerPotion({
+  name: "Overload (+)",
+  chains: [doseChain("OVERLOAD_4__5", "OVERLOAD_3__5", "OVERLOAD_2__5", "OVERLOAD_1__5")],
+  canUse: (player) => getCurrentLevel(player, Skill.HITPOINTS) > 50,
+  effect: (player) => applyOverload(player, 6, 0.16),
+});
 
 function processStamina(player) {
   const endsAt = player.getAttribute(ATTR_STAMINA_END);
@@ -710,6 +750,35 @@ function processDivine(player) {
   }
 }
 
+function processOverload(player) {
+  const state = player.getAttribute(ATTR_OVERLOAD_STATE);
+  if (!state) {
+    return;
+  }
+
+  const now = Date.now();
+  if (now >= state.endsAt) {
+    player.setAttribute(ATTR_OVERLOAD_STATE, null);
+    for (const skill of OVERLOAD_SKILLS) {
+      setCurrentLevel(player, skill, getMaxLevel(player, skill));
+    }
+    heal(player, 50);
+    player.sendMessage("The effects of the overload have worn off, and you feel normal again.");
+    return;
+  }
+
+  if (state.damageHitsRemaining > 0 && now >= state.nextDamageAt) {
+    player.getCombat().getHitQueue().addPendingDamage([new HitDamage(10, HitMask.RED)]);
+    state.damageHitsRemaining--;
+    state.nextDamageAt = now + OVERLOAD_DAMAGE_INTERVAL_MS;
+  }
+  if (now >= state.nextBoostAt) {
+    applyOverloadBoost(player, state.flat, state.percent);
+    state.nextBoostAt = now + OVERLOAD_REFRESH_MS;
+  }
+  player.setAttribute(ATTR_OVERLOAD_STATE, state);
+}
+
 function handlePotionDrink(player, itemId, slot) {
   const entry = POTION_BY_ITEM_ID.get(itemId);
   if (!entry || !player) {
@@ -742,6 +811,11 @@ function handlePotionDrink(player, itemId, slot) {
   }
 
   if (timers.has(TimerKey.POTION)) {
+    return true;
+  }
+
+  if (entry.potion.canUse && !entry.potion.canUse(player)) {
+    player.sendMessage("You need more than 50 Hitpoints to drink this potion.");
     return true;
   }
 
@@ -792,6 +866,7 @@ module.exports = {
       }
       processStamina(player);
       processDivine(player);
+      processOverload(player);
       processDragonfireProtection(player);
     });
 
