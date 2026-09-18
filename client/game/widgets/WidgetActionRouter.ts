@@ -22,6 +22,7 @@ import {
 import {
     buildWidgetActionPayload,
     inferWidgetOpId,
+    isCombatSkillWidgetAction,
     resolveTransmitFlagWidget,
     type WidgetActionEvent,
 } from "./widgetActionPayload";
@@ -110,6 +111,12 @@ export class WidgetActionRouter {
                   : w?.uid & 0xffff;
 
         if (this.deps.getCustomInterfaces().handleWidgetClick(groupId | 0, childId | 0)) {
+            return;
+        }
+
+        const skillPayload = buildWidgetActionPayload(widgetManager, event);
+        if (skillPayload && isCombatSkillWidgetAction(skillPayload)) {
+            sendWidgetActionMessage(skillPayload);
             return;
         }
 
