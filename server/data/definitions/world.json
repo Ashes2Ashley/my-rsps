@@ -1,5 +1,5 @@
 {
-  "disabledPlugins": [],
+  "disabledPlugins": ["SpawnMode"],
   "experienceMultiplier": 1,
   "spawn": {
     "x": 3089,
