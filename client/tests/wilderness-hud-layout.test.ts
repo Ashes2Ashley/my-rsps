@@ -15,7 +15,8 @@ const widgetManager: any = {
     getWidgetByUid: (uid: number) => widgets.get(uid),
     invalidateWidget: (widget: any) => invalidated.push(widget.uid),
 };
-const varManager: any = { getVarbit: (id: number) => id === 5963 ? 1 : 0 };
+let mapFlags = 0;
+const varManager: any = { getVarp: () => mapFlags, getVarbit: (id: number) => id === 5963 ? 1 : 0 };
 
 assert.equal(applyWildernessHudLayout(widgetManager, varManager, 387), false);
 assert.equal(applyWildernessHudLayout(widgetManager, varManager, 386), true);
@@ -29,8 +30,7 @@ assert.deepEqual(
 );
 assert.deepEqual(invalidated, [range.uid, level.uid]);
 
-// A PvP zone outside the levelled Wilderness, or a world that is PvP everywhere: the server
-// hides the level row, and the range it would pair with applies to nobody, so it goes too.
+// Custom PvP zones on normal worlds have no level-based combat range.
 for (const unlevelled of [{ hidden: true }, { text: "" }] as any[]) {
     Object.assign(level, unlevelled);
     range.hidden = false;
@@ -41,6 +41,15 @@ for (const unlevelled of [{ hidden: true }, { text: "" }] as any[]) {
     assert.deepEqual(invalidated, [range.uid]);
     Object.assign(level, { hidden: false, text: "Level: 12" });
 }
+
+mapFlags = 1 << 2;
+level.hidden = true;
+assert.equal(applyWildernessHudLayout(widgetManager, varManager, 388), true);
+assert.equal(range.hidden, false, "PvP worlds show the range outside the Wilderness");
+assert.equal(level.hidden, true, "outside the Wilderness the level row stays hidden");
+level.hidden = false;
+assert.equal(applyWildernessHudLayout(widgetManager, varManager, 388), true);
+mapFlags = 0;
 
 function script(id: number, instructions: number[], operands: number[]): Script {
     const value = new Script();

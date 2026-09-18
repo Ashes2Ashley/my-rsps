@@ -174,3 +174,52 @@ test('retreat blocks southbound ditch crossings, including queued crossings, but
   pending.execute();
   assert.equal(crossings, 1, 'returning to the Wilderness is allowed');
 });
+
+test('PvP worlds add 15 to the shared Wilderness level for players and bots', () => {
+  let globalPvp = false;
+  const coreFile = path.resolve(__dirname, '../dist/game/content/wilderness/Wilderness.js');
+  const core = { exports: {} }, coreRequire = createRequire(coreFile);
+  vm.runInNewContext(fs.readFileSync(coreFile, 'utf8'), {
+    exports: core.exports, require(name) {
+      if (name.endsWith('/WorldDefinition')) return { hasGlobalWorldTag: () => true };
+      return coreRequire(name);
+    },
+  }, { filename: coreFile });
+  const levelAt = core.exports.Wilderness.levelAt;
+  const file = path.resolve(__dirname, '../plugins/areas/Wilderness.plugin.js');
+  const local = createRequire(file), module = { exports: {} };
+  vm.runInNewContext(fs.readFileSync(file, 'utf8'), {
+    module, require(name) {
+      if (name.endsWith('/WorldDefinition')) return {
+        hasGlobalWorldTag: () => globalPvp, WORLD_ZONE_BOUNDARIES: { safe: [] },
+      };
+      if (name.endsWith('/wilderness/Wilderness')) return { Wilderness: {
+        levelAt, isInLocation: () => true, isInSafeBuilding: () => false,
+      } };
+      if (name.endsWith('/LootKeys.plugin')) return { isSafeLocation: () => false };
+      return local(name);
+    },
+  }, { filename: file });
+  const { wildernessAttackRange, canAttackByWildernessLevel } = module.exports;
+  const player = (combat, y) => ({
+    getLocation: () => new Location(3100, y, 0), getWildernessLevel: () => 0,
+    getSkillManager: () => ({ getCombatLevel: () => combat }),
+  });
+  assert.equal(levelAt(3100, 3520), 1);
+  assert.equal(levelAt(3100, 3528), 2);
+  assert.equal(levelAt(3100, 9920), 1);
+  assert.equal(levelAt(3200, 3200), 0);
+  assert.equal(wildernessAttackRange(player(80, 3520), player(81, 3528)), 1);
+  assert.equal(canAttackByWildernessLevel(player(80, 3520), player(82, 3528)), false);
+  globalPvp = true;
+  for (const [y, range] of [[3200, 15], [3520, 16], [3528, 17], [9920, 16]]) {
+    assert.equal(wildernessAttackRange(player(80, y), player(80 + range, y)), range);
+    for (const sign of [-1, 1]) {
+      assert.equal(canAttackByWildernessLevel(player(80, y), player(80 + sign * range, y)), true);
+      assert.equal(canAttackByWildernessLevel(player(80, y), player(80 + sign * (range + 1), y)), false);
+    }
+  }
+  assert.equal(wildernessAttackRange(player(80, 3520), player(97, 3528)), 16);
+  assert.equal(canAttackByWildernessLevel(player(80, 3520), player(97, 3528)), false);
+  assert.equal(wildernessAttackRange(player(80, 3200), player(96, 3528)), 15);
+});
