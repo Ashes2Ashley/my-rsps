@@ -4,6 +4,7 @@ const { Location } = require("../../src/main/typescript/elvarg/game/model/Locati
 const { Server } = require("../../src/main/typescript/elvarg/Server");
 const { GameConstants } = require("../../src/main/typescript/elvarg/game/GameConstants");
 const { PlayerRights } = require("../../src/main/typescript/elvarg/game/model/rights/PlayerRights");
+const { PluginManager } = require("../../src/main/typescript/elvarg/plugins/PluginManager");
 const { Skill } = require("../../src/main/typescript/elvarg/game/model/Skill");
 const { MagicSpellbook } = require("../../src/main/typescript/elvarg/game/model/MagicSpellbook");
 const { WeaponInterfaceManager } = require("../../src/main/typescript/elvarg/game/content/combat/WeaponInterfaceManager");
@@ -279,10 +280,6 @@ function devOnly(player) {
   return player?.getRights?.() === PlayerRights.DEVELOPER;
 }
 
-function adminOrAbove(player) {
-  return PlayerRights.hasAdminRights(player);
-}
-
 function queueNpcSpawn(player, id, amount = 1, onSpawn = null, xOffset = 0, yOffset = 0) {
   const origin = player.getLocation().clone();
   origin.add(xOffset, yOffset);
@@ -381,7 +378,7 @@ function spawnEnteredAmount(spawn, amount, id) {
 
 function spawnSearchedItem(player, id, amount) {
   // Re-checked here: the pick arrives on a later tick, and this is a privileged action.
-  if (!adminOrAbove(player) || !CacheDefinitions.hasItem(id)) {
+  if (!PluginManager.playerHasCommandRights(player, "items") || !CacheDefinitions.hasItem(id)) {
     return;
   }
   // Stacks are a signed 32-bit value; the container clamps and stops on a full inventory.
