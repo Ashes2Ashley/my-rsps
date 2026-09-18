@@ -1,4 +1,5 @@
 import { vec3 } from "gl-matrix";
+import { getNpcMenuActions } from "./menu/WorldMenuBuilder";
 
 import { directionToDelta } from "../common/Direction";
 import { ChatMessageType } from "../common/chat/ChatMessageType";
@@ -4222,7 +4223,7 @@ export class OsrsClient {
             const npcType = base?.transforms
                 ? base.transform(this.varManager, this.npcTypeLoader)
                 : base;
-            const actions = npcType?.actions ?? [];
+            const actions = npcType ? getNpcMenuActions(npcType) : [];
             for (let i = 0; i < 5; i++) {
                 if (sanitizeText(actions[i])?.toLowerCase() === normalizedOption) {
                     return i + 1;

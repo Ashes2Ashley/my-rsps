@@ -11,6 +11,7 @@ import type { WidgetInteractionController } from "../WidgetInteractionController
 import type { WidgetManager } from "../../../widgets/WidgetManager";
 import type { WidgetInputControllerDeps, WidgetInputFrame, WidgetInputState } from "./widgetInputTypes";
 import type { PrimaryWidgetAction } from "./widgetPrimaryAction";
+import { isCombatSkillWidgetAction } from "../widgetActionPayload";
 
 export function processWidgetClickInput(
     deps: WidgetInputControllerDeps,
@@ -285,6 +286,22 @@ export function processWidgetClickInput(
                             widgetInteraction.clickedWidgetHandled = true;
                             break;
                         }
+                    }
+                    const skillPayload = deps.buildWidgetActionPayload({
+                        widget: w,
+                        option: primaryAction.option,
+                        target: primaryAction.target,
+                        source: "primary",
+                        cursorX: widgetInteraction.clickedWidgetX,
+                        cursorY: widgetInteraction.clickedWidgetY,
+                        slot: primaryAction.slot,
+                        itemId: primaryAction.itemId,
+                        opIndex: primaryAction.opIndex,
+                    });
+                    if (skillPayload && isCombatSkillWidgetAction(skillPayload)) {
+                        sendWidgetActionMessage(skillPayload);
+                        widgetInteraction.clickedWidgetHandled = true;
+                        break;
                     }
                     if (
                         deps.handleTradeWidgetAction(

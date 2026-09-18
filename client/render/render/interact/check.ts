@@ -123,7 +123,10 @@ import { NpcEcs } from "../../../game/ecs/NpcEcs";
 import type { PlayerAnimKey } from "../../../game/ecs/PlayerEcs";
 import { GameState, LoginIndex } from "../../../game/login";
 import { Ray, rayIntersectsBox } from "../../../game/math/Raycast";
-import { isMouseInUIRegion as checkMouseInUIRegion } from "../../../game/menu/WorldMenuBuilder";
+import {
+    getNpcMenuActions,
+    isMouseInUIRegion as checkMouseInUIRegion,
+} from "../../../game/menu/WorldMenuBuilder";
 import {
     advanceAnimation,
     computeMovementOrientation,
@@ -752,7 +755,7 @@ export function checkInteractions(host: WebGLOsrsRendererHost, ): void {
                     return;
                 }
 
-                const actions = npcType.actions ?? [];
+                const actions = getNpcMenuActions(npcType);
                 const followerDeprioritized = isFollowerLowPriority;
 
                 // OSRS: Non-attack options first (4..0).

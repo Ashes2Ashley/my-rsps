@@ -103,6 +103,27 @@ const NPC_MENU_OPCODES = [
     MenuOpcode.NpcFifthOption,
 ] as const;
 
+// These pet definitions predate some cached follower options.
+const PET_NPC_IDS = new Set([
+    318, 425, 495, 497, 1625, 2055, 2130, 2131, 2132, 2833, 3564, 5536, 5537,
+    5561, 5884, 5892, 6628, 6629, 6630, 6631, 6632, 6633, 6634, 6635, 6636,
+    6637, 6638, 6639, 6640, 6642, 6715, 6717, 6718, 6719, 6720, 7219, 7334,
+    7335, 7336, 7337, 7338, 7339, 7340, 7341, 7342, 7343, 7344, 7345, 7346,
+    7347, 7348, 7349, 7350, 7520, 7642, 7674, 7759, 7890, 7891, 8025, 8336,
+    11276, 11652, 12005, 12153, 12154, 12155, 12156, 13681,
+]);
+
+export function getNpcMenuActions(npcType: NpcType): string[] {
+    const actions = [...(npcType.actions ?? [])];
+    if (!PET_NPC_IDS.has(npcType.id)) return actions;
+
+    actions[0] ||= "Talk-to";
+    if (!actions.some((action) => action?.toLowerCase() === "pick-up")) {
+        actions[2] = "Pick-up";
+    }
+    return actions;
+}
+
 export type NpcMenuOption = {
     option: string;
     actionIndex: number;
@@ -112,7 +133,7 @@ export type NpcMenuOption = {
 
 /** Cache actions annotated with the same internal opcode used for their clicks. */
 export function getNpcMenuOptions(npcType: NpcType): NpcMenuOption[] {
-    return npcType.actions.flatMap((option, actionIndex) => {
+    return getNpcMenuActions(npcType).flatMap((option, actionIndex) => {
         const opcode = NPC_MENU_OPCODES[actionIndex];
         if (!option || opcode === undefined) return [];
         return [{ option, actionIndex, opcode, isAttack: option.toLowerCase() === "attack" }];

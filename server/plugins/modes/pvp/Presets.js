@@ -36,6 +36,7 @@ const {
 const OPEN_ON_DEATH_ATTRIBUTE = "pvp:openPresetsOnDeath";
 const CUSTOM_PRESETS_ATTRIBUTE = "pvp:customPresets";
 const CUSTOM_PRESET_SLOT_ATTRIBUTE = "pvp:selectedCustomPresetSlot";
+let presetsEnabled = false;
 
 function shouldOpenOnDeath(player) {
   return player.getAttribute(OPEN_ON_DEATH_ATTRIBUTE) !== false;
@@ -704,9 +705,11 @@ module.exports = {
   applyRandomGlobalPreset,
   getGlobalPresetByName,
   getGlobalPresetPool,
+  isEnabled: () => presetsEnabled,
   openPresetInterface,
   shouldOpenOnDeath,
   register(api) {
+    presetsEnabled = true;
     api.persistAttribute(CUSTOM_PRESETS_ATTRIBUTE);
     api.registerCustomInterface(INTERFACE_DEFINITION);
 

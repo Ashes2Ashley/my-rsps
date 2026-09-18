@@ -20,6 +20,13 @@ export type WidgetActionEvent = {
     opSubIndex?: number;
 };
 
+export function isCombatSkillWidgetAction(payload: WidgetActionClientPayload): boolean {
+    return (
+        payload.groupId === 320 &&
+        [1, 2, 3, 4, 5, 6, 9].includes(payload.childId)
+    );
+}
+
 export function inferWidgetOpId(widget: any, option?: string): number | undefined {
     const normalized = sanitizeText(option)?.toLowerCase();
     if (!normalized) return undefined;
