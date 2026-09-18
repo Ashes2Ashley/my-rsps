@@ -38,6 +38,7 @@ const COMMANDS = {
     "::glow [preset] [intensity] [player] - Set glow",
     "::teleto [player] / ::teletome [player]",
     "::item [id] [amount] - Spawn an item",
+    "::clearinv - Clear your inventory",
     "::saveall - Save all players",
     "::botme [on|off|toggle|status] - Control yourself as a bot",
     "::bh [player] [behaviour] - Set bot behaviour",

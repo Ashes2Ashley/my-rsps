@@ -1376,6 +1376,12 @@ module.exports = {
       return true;
     }, PlayerRights.ADMINISTRATOR);
 
+    api.registerCommand("clearinv", ({ player }) => {
+      player.getInventory().resetItems().refreshItems();
+      player.sendMessage("Your inventory has been cleared.");
+      return true;
+    }, PlayerRights.ADMINISTRATOR);
+
     api.registerCommand("unlockprayers", ({ player, parts }) => {
       const type = parseIntArg(parts[1]);
       if (type === 0) {
