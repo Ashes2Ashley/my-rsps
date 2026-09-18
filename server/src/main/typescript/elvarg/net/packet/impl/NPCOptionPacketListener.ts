@@ -23,7 +23,6 @@ export class NPCOptionPacketListener {
 
     const definition = npc.getCurrentDefinition(player);
     const option = definition?.getActions()?.[clickType - 1]?.toLowerCase();
-    if (!option) return;
     if (option === "attack") {
       if (!definition?.isAttackable() || npc.getHitpoints?.() <= 0) {
         trace("DROPPED: not attackable / hp<=0", npc);
@@ -43,7 +42,7 @@ export class NPCOptionPacketListener {
 
       const definition = npc.getCurrentDefinition(player);
       const option = definition?.getActions()?.[clickType - 1]?.toLowerCase();
-      if (!option || option === "attack") return;
+      if (option === "attack") return;
 
       if (
         NpcInteractionManager.handle(

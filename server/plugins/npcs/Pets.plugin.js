@@ -9,9 +9,27 @@ const { Misc } = require("../../src/main/typescript/elvarg/util/Misc");
 const {NpcIdentifiers} = require("../../src/main/typescript/elvarg/util/NpcIdentifiers");
 
 const INTERACTION_ANIM = new Animation(827);
+const FOLLOWER_INDEX_VARP = 447;
 let pluginApi = null;
 
 const PETS = [
+  { enumName: "WISP", petId: NpcIdentifiers.WISP, morphId: 0, itemId: 28246, dialogue: -1 },
+  { enumName: "BUTCH", petId: NpcIdentifiers.BUTCH, morphId: 0, itemId: 28248, dialogue: -1 },
+  { enumName: "BARON", petId: NpcIdentifiers.BARON, morphId: 0, itemId: 28250, dialogue: -1 },
+  { enumName: "LILVIATHAN", petId: NpcIdentifiers.LILVIATHAN, morphId: 0, itemId: 28252, dialogue: -1 },
+  { enumName: "NID", petId: NpcIdentifiers.NID, morphId: 0, itemId: 29836, dialogue: -1 },
+  { enumName: "SCURRY", petId: 7219, morphId: 0, itemId: 28801, dialogue: -1 },
+  { enumName: "LIL_ZIK", petId: NpcIdentifiers.LIL_ZIK, morphId: 0, itemId: 22473, dialogue: -1 },
+  { enumName: "TUMEKENS_GUARDIAN", petId: NpcIdentifiers.TUMEKENS_GUARDIAN, morphId: 0, itemId: 27352, dialogue: -1 },
+  { enumName: "NEXLING", petId: NpcIdentifiers.NEXLING, morphId: 0, itemId: 26348, dialogue: -1 },
+  { enumName: "VORKI", petId: NpcIdentifiers.VORKI, morphId: 0, itemId: 21992, dialogue: -1 },
+  { enumName: "MUPHIN", petId: NpcIdentifiers.MUPHIN, morphId: 0, itemId: 27590, dialogue: -1 },
+  { enumName: "LIL_CREATOR", petId: NpcIdentifiers.LIL_CREATOR, morphId: 0, itemId: 25348, dialogue: -1 },
+  { enumName: "LIL_DESTRUCTOR", petId: NpcIdentifiers.LIL_DESTRUCTOR, morphId: 0, itemId: 25350, dialogue: -1 },
+  { enumName: "JAL_NIB_REK", petId: NpcIdentifiers.JAL_NIB_REK, morphId: 0, itemId: 21291, dialogue: -1 },
+  { enumName: "MIDNIGHT", petId: NpcIdentifiers.MIDNIGHT, morphId: 0, itemId: 21750, dialogue: -1 },
+  { enumName: "NOON", petId: NpcIdentifiers.NOON, morphId: 0, itemId: 21748, dialogue: -1 },
+  { enumName: "HERBI", petId: NpcIdentifiers.HERBI, morphId: 0, itemId: 21509, dialogue: -1 },
   { enumName: "DARK_CORE", petId: 318, morphId: 0, itemId: 12816, dialogue: 123 },
   { enumName: "VENENATIS_SPIDERLING", petId: 495, morphId: 0, itemId: 13177, dialogue: 126 },
   { enumName: "CALLISTO_CUB", petId: 497, morphId: 0, itemId: 13178, dialogue: 130 },
@@ -153,7 +171,7 @@ const PETS = [
     enumName: "TANGLEROOT",
     petId: 7335,
     morphId: 0,
-    itemId: 0,
+    itemId: 20661,
     dialogue: -1,
     skill: Skill.FARMING,
     chance: 5000,
@@ -162,7 +180,7 @@ const PETS = [
     enumName: "ROCKY",
     petId: 7336,
     morphId: 0,
-    itemId: 0,
+    itemId: 20663,
     dialogue: -1,
     skill: Skill.THIEVING,
     chance: 5000,
@@ -514,6 +532,11 @@ function despawnPetNpc(npc) {
   };
 }
 
+function syncFollowerIndex(player, pet) {
+  const index = pet?.isRegistered?.() ? pet.getIndex?.() ?? -1 : -1;
+  player?.getPacketSender?.().sendConfig(FOLLOWER_INDEX_VARP, index > 0 ? index : 65535);
+}
+
 function drop(player, itemId, reward) {
   const username = player?.getUsername?.() ?? null;
   const pet = getPetForItemId(itemId);
@@ -567,6 +590,7 @@ function drop(player, itemId, reward) {
     });
 
     player.setCurrentPet(npc);
+    syncFollowerIndex(player, npc);
     setTimeout(() => {
       const index = npc.getIndex?.() ?? -1;
       const inWorld = index > 0 ? World.getNpcs().get(index) === npc : false;
@@ -581,6 +605,9 @@ function drop(player, itemId, reward) {
         addNpcQueueSize: World.getAddNPCQueue().length,
         removeNpcQueueSize: World.getRemoveNPCQueue().length,
       });
+      if (player.getCurrentPet?.() === npc) {
+        syncFollowerIndex(player, npc);
+      }
     }, 1200);
 
     if (reward) {
@@ -614,22 +641,27 @@ function drop(player, itemId, reward) {
 }
 
 function pickup(player, npc) {
-  if (!npc || !player?.getCurrentPet?.()) {
+  if (!npc || !player) {
     return false;
   }
 
   const pet = getPetByNpcId(npc.getId());
-  if (!pet) {
+  if (
+    !pet ||
+    !npc.isPet?.() ||
+    npc.getOwner?.()?.getIndex?.() !== player.getIndex?.()
+  ) {
     return false;
   }
 
-  if (player.getCurrentPet() !== npc) {
-    return false;
+  if (player.getInventory().isFull()) {
+    player.sendMessage("You don't have enough inventory space.");
+    return true;
   }
 
   player.getMovementQueue().reset();
   player.performAnimation(INTERACTION_ANIM);
-  const despawnResult = despawnPetNpc(player.getCurrentPet());
+  const despawnResult = despawnPetNpc(npc);
   log("pickup_despawn", {
     username: player?.getUsername?.() ?? null,
     petNpcId: npc.getId?.() ?? null,
@@ -641,15 +673,12 @@ function pickup(player, npc) {
     removeNpcQueueSize: World.getRemoveNPCQueue().length,
   });
 
-  if (!player.getInventory().isFull()) {
-    player.getInventory().adds(pet.itemId, 1);
-  } else {
-    player.getBank(Bank.getTabForItem(player, pet.itemId)).adds(pet.itemId, 1);
-  }
+  player.getInventory().adds(pet.itemId, 1);
 
   player.sendMessage("You pick up your pet..");
   Sounds.sendSound(player, Sound.PICK_UP_ITEM);
   player.setCurrentPet(null);
+  syncFollowerIndex(player, null);
   return true;
 }
 
@@ -764,6 +793,10 @@ module.exports = {
         return false;
       }
       if (event.clickType === 3) {
+        if (pickup(event.player, event.npc)) {
+          event.handled = true;
+          return true;
+        }
         if (morph(event.player, event.npc)) {
           event.handled = true;
           return true;
@@ -771,6 +804,9 @@ module.exports = {
       }
       return false;
     }
+    api.onAnyNpcInteraction({
+      "Pick-up": (event) => pickup(event.player, event.npc),
+    });
     const petNpcIds = Array.from(PET_BY_ID.keys());
     api.onNpcFirstClick(petNpcIds, interactWithPet);
     api.onNpcSecondClick(petNpcIds, interactWithPet);
@@ -785,6 +821,7 @@ module.exports = {
     });
 
     api.onPlayerLogin(({ player }) => {
+      syncFollowerIndex(player, player.getCurrentPet?.());
       summonOwnedPetOnBotLogin(player);
     });
 
