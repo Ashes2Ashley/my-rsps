@@ -1,9 +1,7 @@
-import type {
-    EquipmentType,
-    ItemBonuses,
-    ItemRequirements,
-    WeaponInterface,
-} from "../../../server/src/data/items";
+export type EquipmentType = string;
+export type WeaponInterface = string;
+export type ItemBonuses = number[];
+export type ItemRequirements = number[];
 import { ObjStackability } from "../../rs/config/objtype/ObjStackability";
 
 /**
@@ -14,6 +12,15 @@ export interface CustomObjTypeProps {
     // Core identification
     name: string;
     examine?: string;
+    wearPos?: number;
+    wearPos2?: number;
+    wearPos3?: number;
+    note?: number;
+    noteTemplate?: number;
+    unnotedId?: number;
+    notedId?: number;
+    placeholder?: number;
+    placeholderTemplate?: number;
 
     // Inventory model & rendering
     model?: number;
@@ -129,7 +136,7 @@ export interface CustomItemDefinition {
     objType: CustomObjTypeProps;
 
     /** Server-level properties (affects combat/equipment/trading) */
-    itemDef: CustomItemDefProps;
+    itemDef?: CustomItemDefProps;
 }
 
 /**

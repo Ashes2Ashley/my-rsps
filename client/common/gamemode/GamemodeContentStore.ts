@@ -168,25 +168,9 @@ export function loadFromPayload(payload: {
             case "customItems":
                 try {
                     const { CustomItemRegistry } = require("../../custom/items/CustomItemRegistry");
-                    const { CustomItemBuilder } = require("../../custom/items/CustomItemBuilder");
                     CustomItemRegistry.clear();
                     for (const def of dataset.rows as any[]) {
-                        if (!def || !def.id) continue;
-                        if (def.baseItemId != null) {
-                            const builder = CustomItemBuilder.create(def.id).basedOn(
-                                def.baseItemId,
-                            );
-                            if (def.objType?.name) builder.name(def.objType.name);
-                            if (def.objType?.recolorFrom && def.objType?.recolorTo) {
-                                builder.recolor(def.objType.recolorFrom, def.objType.recolorTo);
-                            }
-                            if (def.objType?.inventoryActions) {
-                                builder.inventoryActions(...def.objType.inventoryActions);
-                            }
-                            CustomItemRegistry.register(builder.build(), def.objType?.name);
-                        } else {
-                            CustomItemRegistry.register(def, def.objType?.name);
-                        }
+                        CustomItemRegistry.register(def, def.objType?.name);
                     }
                     console.log(
                         `[GamemodeContentStore] registered ${dataset.rows.length} custom item(s)`,
@@ -195,6 +179,12 @@ export function loadFromPayload(payload: {
                     console.log("[GamemodeContentStore] failed to register custom items", err);
                 }
                 break;
+            case "customModels": {
+                const { CustomModelRegistry } = require("../../custom/items/CustomModelRegistry");
+                if (dataset.rows.length === 0) CustomModelRegistry.clear();
+                for (const row of dataset.rows) CustomModelRegistry.register(row);
+                break;
+            }
             case "worldLocChanges":
                 worldLocChanges = (dataset.rows as WorldLocChangeRow[]).filter(
                     (row) =>

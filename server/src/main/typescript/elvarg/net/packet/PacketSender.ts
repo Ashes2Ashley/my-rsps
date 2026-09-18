@@ -894,7 +894,7 @@ export class PacketSender {
     }
 
     this.player.setCreationMenu?.(menu);
-    const names = items.map((id: number) => CacheDefinitions.getItem(id)?.name || "null");
+    const names = items.map((id: number) => CacheDefinitions.hasItem(id) ? CacheDefinitions.getItem(id).name : "null");
     const paddedIds = [...items];
     while (paddedIds.length < 18) paddedIds.push(-1);
 

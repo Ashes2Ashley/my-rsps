@@ -10,6 +10,28 @@ export class ItemDefinition {
     public static definitions: Map<number, ItemDefinition> = new Map<number, ItemDefinition>();
     public static DEFAULT = new ItemDefinition();
 
+    public static registerCustom(id: number, baseId: number, raw: Record<string, unknown> = {}): ItemDefinition {
+        const base = baseId >= 0 ? this.forId(baseId) : this.DEFAULT;
+        const definition = new ItemDefinition();
+        Object.assign(definition, base);
+        definition.id = id;
+        definition.cacheHydrated = false;
+        definition.hydrateFromCache(id);
+        definition.bonuses = [...(base.bonuses ?? new Array(14).fill(0))];
+        definition.requirements = [...(base.requirements ?? new Array(23).fill(0))];
+        for (const key of ["equipmentType", "weaponInterface", "doubleHanded", "stackable",
+            "tradeable", "dropable", "sellable", "value", "highAlch", "lowAlch", "dropValue",
+            "bloodMoneyValue", "blockAnim", "standAnim", "walkAnim", "runAnim", "standTurnAnim",
+            "turn180Anim", "turn90CWAnim", "turn90CCWAnim", "bonuses", "requirements"]) {
+            const value = raw[key];
+            if (value !== undefined) {
+                (definition as any)[key] = Array.isArray(value) ? [...value] : value;
+            }
+        }
+        this.definitions.set(id, definition);
+        return definition;
+    }
+
     private id: number;
     private name: string = "";
     private examine: string = "";

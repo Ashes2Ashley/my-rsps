@@ -1,4 +1,6 @@
 import { DEBUG_MODEL_ID, dumpModelColors } from "../../../custom/items/ColorDebugUtil";
+import { CustomItemRegistry } from "../../../custom/items/CustomItemRegistry";
+import { CustomModelRegistry } from "../../../custom/items/CustomModelRegistry";
 import { Model } from "../../model/Model";
 import { ModelLoader } from "../../model/ModelLoader";
 import { TextureLoader } from "../../texture/TextureLoader";
@@ -6,6 +8,7 @@ import { ObjTypeLoader } from "./ObjTypeLoader";
 
 export class ObjModelLoader {
     modelCache: Map<number, Model>;
+    private customRevision = -1;
 
     constructor(
         readonly objTypeLoader: ObjTypeLoader,
@@ -19,6 +22,11 @@ export class ObjModelLoader {
     }
 
     getModel(id: number, count: number): Model | undefined {
+        const revision = CustomItemRegistry.revision + CustomModelRegistry.revision;
+        if (this.customRevision !== revision) {
+            this.clearCache();
+            this.customRevision = revision;
+        }
         if (id === -1) {
             return undefined;
         }

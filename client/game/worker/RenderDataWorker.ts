@@ -1,4 +1,5 @@
 import JSZip from "jszip";
+import { loadFromPayload } from "../../common/gamemode/GamemodeContentStore";
 import { TransferDescriptor } from "threads";
 import { registerSerializer } from "threads";
 import { Transfer, expose } from "threads/worker";
@@ -295,6 +296,10 @@ function clearCache(workerState: WorkerState): void {
 }
 
 const worker = {
+    setCustomContent(payload: Parameters<typeof loadFromPayload>[0]): void {
+        loadFromPayload(payload);
+        void workerStatePromise?.then((state) => state.objTypeLoader.clearCache());
+    },
     initCache(cache: LoadedCache, npcInstances: NpcInstance[]) {
         workerStatePromise = initWorker(cache, npcInstances);
     },

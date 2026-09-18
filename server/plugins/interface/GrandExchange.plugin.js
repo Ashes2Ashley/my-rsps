@@ -36,7 +36,7 @@ const viewing = new WeakMap();
 const searching = new WeakSet();
 
 function validItem(id) {
-  if (!Number.isInteger(id) || id <= 0 || id >= CacheDefinitions.getCounts().items) return false;
+  if (!CacheDefinitions.hasItem(id)) return false;
   const name = CacheDefinitions.getItem(id)?.name;
   return Boolean(name && name !== "null");
 }
