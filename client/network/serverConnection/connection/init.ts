@@ -9,6 +9,8 @@ import { initSocketCloseHandler } from "./closeHandler";
 import type { GameSocket } from "./GameSocket";
 import { send } from "./send";
 import { WebRtcGameSocket } from "./WebRtcGameSocket";
+import { CustomItemRegistry } from "../../../custom/items/CustomItemRegistry";
+import { CustomModelRegistry } from "../../../custom/items/CustomModelRegistry";
 
 export function initServerConnection(url: string = DEFAULT_URL): void {
     state.lastUrl = url;
@@ -36,6 +38,8 @@ export function initServerConnection(url: string = DEFAULT_URL): void {
         return;
 
     try {
+        CustomItemRegistry.clear();
+        CustomModelRegistry.clear();
         state.playerSyncContext = new PlayerSyncContext();
         state.playerUpdateDecoder = new PlayerUpdateDecoder();
         state.socket = state.webRtcConfig

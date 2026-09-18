@@ -199,6 +199,12 @@ export class ShopDefinitionLoader extends DefinitionLoader {
                     this.itemIdsByName.set(this.normalizeItemName(itemName), itemId);
                 }
             }
+            for (const item of CacheDefinitions.getCustomItems()) {
+                const itemName = item.objType?.name;
+                if (typeof itemName === "string" && itemName && !this.itemIdsByName.has(this.normalizeItemName(itemName))) {
+                    this.itemIdsByName.set(this.normalizeItemName(itemName), item.id);
+                }
+            }
         }
         return this.itemIdsByName.get(this.normalizeItemName(name)) ?? null;
     }

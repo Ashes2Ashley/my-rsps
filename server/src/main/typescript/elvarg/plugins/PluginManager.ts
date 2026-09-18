@@ -1286,7 +1286,7 @@ export class PluginManager {
    * Rights ids are sequential and ordered (none < moderator < administrator < owner <
    * developer), so a command's requirement is a floor everyone above also clears.
    */
-  private static playerHasCommandRights(player: any, base: string): boolean {
+  public static playerHasCommandRights(player: any, base: string): boolean {
     const required = PluginManager.commandRightsOverrides.has(base)
       ? PluginManager.commandRightsOverrides.get(base)
       : PluginManager.commandRights.get(base);

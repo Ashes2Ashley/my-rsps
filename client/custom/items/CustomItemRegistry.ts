@@ -6,6 +6,7 @@ import type { CustomItemDefinition, RegisteredCustomItem } from "./CustomItemTyp
  */
 class CustomItemRegistryImpl {
     private readonly items = new Map<number, RegisteredCustomItem>();
+    revision = 0;
 
     // ID range for custom items (outside cache range)
     private static readonly CUSTOM_ID_START = 50000;
@@ -17,6 +18,10 @@ class CustomItemRegistryImpl {
      * @param module Optional module name for debugging
      */
     register(definition: CustomItemDefinition, module?: string): void {
+        if (!Number.isInteger(definition.id) || definition.id < 50000 || definition.id > 65022 ||
+            !definition.objType || typeof definition.objType.name !== "string") {
+            throw new Error("Invalid custom item definition");
+        }
         if (this.items.has(definition.id)) {
             console.warn(
                 `[CustomItemRegistry] Overwriting existing custom item ${definition.id} (${definition.objType.name})`,
@@ -30,6 +35,7 @@ class CustomItemRegistryImpl {
         };
 
         this.items.set(definition.id, registered);
+        this.revision++;
     }
 
     /**
@@ -90,6 +96,7 @@ class CustomItemRegistryImpl {
      */
     clear(): void {
         this.items.clear();
+        this.revision++;
         this.nextCustomId = CustomItemRegistryImpl.CUSTOM_ID_START;
     }
 }

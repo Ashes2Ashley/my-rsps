@@ -247,6 +247,13 @@ export function handleInboundUi(msg: any): boolean {
             loadFromPayload(msg.payload);
             const g: any = (typeof window !== "undefined" ? window : globalThis) as any;
             const mv = g?.__osrsClient;
+            if (msg.payload?.datasets?.some((dataset: any) =>
+                dataset.key === "customItems" || dataset.key === "customModels")) {
+                mv?.objTypeLoader?.clearCache();
+                mv?.objModelLoader?.clearCache();
+                mv?.workerPool?.runAll((worker: any) => worker.setCustomContent(msg.payload))
+                    .catch((error: unknown) => console.error("Custom worker content failed", error));
+            }
             if (mv && typeof mv.refreshGamemodeWorldLocs === "function") {
                 mv.refreshGamemodeWorldLocs();
             }
