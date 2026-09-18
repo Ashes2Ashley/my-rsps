@@ -1,6 +1,6 @@
 import { Location } from "../../model/Location";
 import { Mobile } from "../../entity/impl/Mobile";
-import { hasGlobalWorldTag, WORLD_ZONE_BOUNDARIES } from "../../definition/WorldDefinition";
+import { WORLD_ZONE_BOUNDARIES } from "../../definition/WorldDefinition";
 
 import { RegionManager } from "../../collision/RegionManager";
 
@@ -44,11 +44,6 @@ export class Wilderness {
      * not inherit a level from its y.
      */
     public static levelAt(x: number, y: number): number {
-        // A world that is PvP everywhere has no deep end to reward. PvP itself still applies -
-        // this only switches off the levels, and with them the level-range attack rule.
-        if (hasGlobalWorldTag("pvp")) {
-            return 0;
-        }
         for (const [minX, maxX, minY, maxY] of Wilderness.LEVELLED_AREAS) {
             if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
                 return Math.floor((y - minY) / 8) + 1;

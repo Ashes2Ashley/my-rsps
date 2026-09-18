@@ -12,6 +12,7 @@ type WidgetManagerLike = {
 
 type VarManagerLike = {
     getVarbit(id: number): number | undefined;
+    getVarp(id: number): number;
 };
 
 /**
@@ -19,11 +20,8 @@ type VarManagerLike = {
  * this webclient does not provide. Keep the cache widgets in the equivalent OSRS desktop
  * layout whenever script 386 refreshes them.
  *
- * Both rows belong to the levelled Wilderness. The varbit only says the tile is PvP, so the
- * level row is the signal for the rest: the server hides it wherever no level applies - a
- * PvP zone outside the Wilderness, or a world that is PvP everywhere - and the cache paints
- * its text from the client's own coordinates regardless. Script 388 runs after 386, so
- * reconverging on both keeps the rows right whichever way the player crossed.
+ * The server hides the level row outside the original Wilderness. PvP worlds still
+ * show their combat range there; cache script 387 adds the 15-level bonus.
  */
 export function applyWildernessHudLayout(
     widgetManager: WidgetManagerLike,
@@ -43,9 +41,9 @@ export function applyWildernessHudLayout(
         return false;
     }
 
-    // No level row means no level, and a combat range with no level behind it applies to
-    // nobody, so it goes with it. Never unhide the level row: that flag is the server's.
-    if (level.hidden || !level.text) {
+    // Keep the server's level visibility; PvP worlds have a range even without a level.
+    const pvpWorld = (varManager.getVarp(3717) & (1 << 2)) !== 0;
+    if (!pvpWorld && (level.hidden || !level.text)) {
         range.hidden = true;
         widgetManager.invalidateWidget(range, "wilderness-hud");
         return false;

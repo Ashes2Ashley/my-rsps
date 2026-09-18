@@ -37,7 +37,8 @@ const PVP_ICONS_UID = (90 << 16) | 43;
 const PVPW_SAFE_UID = (90 << 16) | 47;
 const PVP_LEVEL_UID = (90 << 16) | 50;
 const VARP_MAP_FLAGS_CACHED = 3717;
-const MAP_FLAGS_REGULAR_WILDERNESS = 0;
+const MAP_FLAGS_PVP_WORLD = 1 << 2;
+const PVP_WORLD_ATTACK_RANGE = 15;
 const VARBIT_IN_WILDERNESS = 5963;
 const PVP_LAYOUT_SCRIPT = 386;
 const PVP_LEVEL_SCRIPT = 388;
@@ -119,9 +120,11 @@ function isWildernessLocation(location) {
  * Combat level range shared by two players, i.e. the largest level difference that still
  * allows an attack. 0 means the pair isn't subject to the rule - one of them is outside
  * the levelled Wilderness, and whether they may fight at all is decided elsewhere.
+ * PvP worlds add 15 to the shared Wilderness level, including outside the Wilderness.
  */
 function wildernessAttackRange(attacker, target) {
-  return Math.min(wildernessLevelOf(attacker), wildernessLevelOf(target));
+  const base = hasGlobalWorldTag("pvp") ? PVP_WORLD_ATTACK_RANGE : 0;
+  return base + Math.min(wildernessLevelOf(attacker), wildernessLevelOf(target));
 }
 
 /**
@@ -225,9 +228,8 @@ function mountPvpIcons(player) {
     return;
   }
   const sender = player.getPacketSender();
-  // Bit 2 marks a PvP world, where script 387 adds 15 to the attack range. Keep it clear
-  // so a normal world uses combat level +/- Wilderness level.
-  sender.sendConfig(VARP_MAP_FLAGS_CACHED, MAP_FLAGS_REGULAR_WILDERNESS);
+  // Cache script 387 adds 15 to the displayed range when bit 2 marks a PvP world.
+  sender.sendConfig(VARP_MAP_FLAGS_CACHED, hasGlobalWorldTag("pvp") ? MAP_FLAGS_PVP_WORLD : 0);
   sender.sendSubInterface(PVP_ICONS_TARGET_UID, PVP_ICONS_INTERFACE, 1);
   // The cache leaves this badge visible by default. It is only valid inside Ferox.
   sender.sendInterfaceDisplayState(PVPW_SAFE_UID, true);
@@ -312,15 +314,17 @@ function syncPvpLayout(player, tile, force = false) {
   const wildernessLevel = levelForTile(tile);
   const combatLevel = combatLevelOf(player);
   const multiIcon = Wilderness.isMulti(tile.x, tile.y) ? 1 : 0;
-  const state = `${wildernessLevel}:${combatLevel}:${multiIcon}`;
+  const pvpWorld = hasGlobalWorldTag("pvp");
+  const state = `${pvpWorld}:${wildernessLevel}:${combatLevel}:${multiIcon}`;
   if (!force && lastPvpLayoutState.get(player) === state) {
     return;
   }
   lastPvpLayoutState.set(player, state);
 
   // The webclient supplies the missing enhanced-client range row after script 386 runs.
-  // Script 388 then fills both rows using normal-world Wilderness range rules.
+  // Script 388 fills the level and range, including the PvP-world bonus.
   const sender = player.getPacketSender();
+  sender.sendConfig(VARP_MAP_FLAGS_CACHED, pvpWorld ? MAP_FLAGS_PVP_WORLD : 0);
   sender.sendClientScript(PVP_LAYOUT_SCRIPT);
   sender.sendClientScript(PVP_LEVEL_SCRIPT, PVP_LEVEL_UID);
 }
@@ -335,7 +339,7 @@ function refreshWildernessUi(player, tile, inWilderness) {
   if (inWilderness) {
     // The varbit is the client's "you may attack players here" switch, so it follows the
     // PvP ground rather than the level: only the original Wilderness is levelled, and
-    // elsewhere the level row stays empty and the level rules never bite.
+    // elsewhere the level row stays empty while PvP worlds still enforce +/-15.
     const level = levelForTile(tile);
     syncWildernessState(player, true);
     player.getPacketSender().sendInteractionOption("Attack", 2, true);
