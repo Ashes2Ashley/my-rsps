@@ -1,8 +1,9 @@
 /**
- * Exact-name Talk-to dialogues from data/definitions/npc-dialogues.json.
- * Copy fresh exports from osrsreboxed-db; each record's default selects the variant.
+ * Talk-to dialogues from data/definitions/npc-dialogues.json.
+ * Copy fresh exports from osrsreboxed-db. The cache NPC name selects the record -
+ * falling back to a "Name (disambiguation)" key - and pickVariant selects the variant.
  * Speech, choices, random alternatives and named shops run through existing systems.
- * Prose conditions/effects and unresolved references stop safely pending structured data.
+ * Prose conditions pick their first branch; prose effects still stop safely.
  */
 const fs = require("fs");
 const path = require("path");
@@ -18,6 +19,57 @@ const { ShopManager } = require("../../src/main/typescript/elvarg/game/model/con
 // These NPCs have executable plugin conversations, not an imported prose transcript.
 const SPECIAL_NPC_DIALOGUES = new Set(["Skully"]);
 
+/**
+ * Most records list several variants and name no default, which used to leave the
+ * NPC silent. Prefer the standard talk transcript over overhead shouts.
+ */
+function pickVariant(npc) {
+  if (Array.isArray(npc?.steps)) return npc.steps;
+  const variants = npc?.variants;
+  if (!variants) return undefined;
+  const keys = Object.keys(variants);
+  const key = (npc.default != null && keys.includes(npc.default) ? npc.default : undefined)
+    ?? keys.find((name) => name.startsWith("standard"))
+    ?? keys.find((name) => !name.startsWith("overhead"));
+  return Array.isArray(variants[key]) ? variants[key] : undefined;
+}
+
+/**
+ * Transcripts are keyed by wiki page title while NPC names come from the cache,
+ * so "Hops" has to reach "Hops (Biohazard)". First usable disambiguated key wins.
+ * ponytail: the cache name cannot tell two "Bartender"s apart. Needs id-keyed
+ * overrides in the data to pick the right pub.
+ */
+function aliasKeys(data) {
+  const aliases = new Map();
+  for (const key of Object.keys(data)) {
+    const base = key.replace(/ \(.+\)$/, "");
+    if (base !== key && !aliases.has(base) && pickVariant(data[key])) aliases.set(base, key);
+  }
+  return aliases;
+}
+
+/**
+ * Conditions carry prose, not a testable expression, and every jump id in the dump
+ * points at nothing. Take the first branch of a run of sibling conditions - they are
+ * written as alternatives - and let jumps fall through to whatever follows.
+ * ponytail: first branch, not the true one. Structured conditions would fix it.
+ */
+function flatten(steps) {
+  const out = [];
+  for (let position = 0; position < steps.length; position++) {
+    const step = steps[position];
+    if (step.type === "jump") continue;
+    if (step.type !== "condition") {
+      out.push(step);
+      continue;
+    }
+    while (steps[position + 1]?.type === "condition") position++;
+    out.push(...flatten(step.steps || []));
+  }
+  return out;
+}
+
 function startDialogue(api, event, steps, branches = {}) {
   const { player } = event;
   const manager = player.getDialogueManager();
@@ -32,7 +84,7 @@ function startDialogue(api, event, steps, branches = {}) {
     const more = options.length - offset > 5;
     const visible = options.slice(offset, offset + (more ? 4 : 5));
     const pairs = visible.flatMap((option) => [option.text, () => {
-      if (option.condition || option.hook) return unavailable();
+      if (option.hook) return unavailable();
       run([...(option.steps || []), ...rest]);
     }]);
     if (more) pairs.push("More...", () => choices(step, rest, offset + 4));
@@ -45,7 +97,8 @@ function startDialogue(api, event, steps, branches = {}) {
     }
   }
 
-  function run(queue) {
+  function run(steps) {
+    const queue = flatten(steps);
     const chain = new DialogueChainBuilder();
     let index = 0;
     for (let position = 0; position < queue.length; position++) {
@@ -78,7 +131,7 @@ function startDialogue(api, event, steps, branches = {}) {
         if (step.type === "choice") return choices(step, rest);
         if (step.type === "random" && step.options?.length) {
           const option = step.options[Math.floor(Math.random() * step.options.length)];
-          if (option.condition || option.hook) return unavailable();
+          if (option.hook) return unavailable();
           return run([...(option.steps || []), ...rest]);
         }
         if (step.type === "action" && step.action === "open_shop") {
@@ -104,6 +157,10 @@ function startDialogue(api, event, steps, branches = {}) {
 
 module.exports = {
   name: "NpcDialogues",
+  // Exported for tests/npc-dialogues.test.cjs; nothing else reads them.
+  pickVariant,
+  aliasKeys,
+  flatten,
   register(api) {
     const file = path.join(GameConstants.DEFINITIONS_DIRECTORY, "npc-dialogues.json");
     const data = JSON.parse(fs.readFileSync(file, "utf8"));
@@ -111,18 +168,21 @@ module.exports = {
       throw new Error(`${file}: expected dialogues keyed by transcript name`);
     }
     for (const [name, npc] of Object.entries(data)) {
-      if (npc.default === null) continue;
-      const variant = npc.steps ?? npc.variants?.[npc.default];
-      if (!Array.isArray(variant)) {
-        throw new Error(`${file}: invalid default dialogue for ${name}`);
+      if (npc.steps !== undefined && !Array.isArray(npc.steps)) {
+        throw new Error(`${file}: ${name} has non-array steps`);
+      }
+      if (npc.default != null && !Object.hasOwn(npc.variants ?? {}, npc.default)) {
+        throw new Error(`${file}: ${name} names a missing default variant`);
       }
     }
+    const aliases = aliasKeys(data);
     api.onAnyNpcInteraction({
       "Talk-to": (event) => {
         const name = event.definition.getName();
         if (SPECIAL_NPC_DIALOGUES.has(name)) return false;
-        const npc = Object.hasOwn(data, name) ? data[name] : undefined;
-        const variant = npc?.steps ?? npc?.variants?.[npc.default];
+        let npc = Object.hasOwn(data, name) ? data[name] : undefined;
+        if (!pickVariant(npc) && aliases.has(name)) npc = data[aliases.get(name)];
+        const variant = pickVariant(npc);
         startDialogue(api, event, variant?.length ? variant : [
           { npc: "Sorry, i've nothing interesting to talk about yet" },
         ], npc?.branches);
