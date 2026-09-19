@@ -10,3 +10,5 @@ tsps-primary/client/node_modules/
 tsps-primary/server/node_modules/
 vendor/**/build/
 vendor/**/.gradle/
+tsps-primary/client/build/
+tsps-primary/server/dist/
