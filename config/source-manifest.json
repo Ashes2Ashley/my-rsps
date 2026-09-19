@@ -1,0 +1,35 @@
+{
+  "name": "custom-rsps-fusion",
+  "primary": {
+    "profile": "ts",
+    "path": "tsps-primary",
+    "upstream": "https://github.com/Ashes2Ashley/my-rsps.git",
+    "runtime": "Node.js 22+ / TypeScript / React",
+    "protocol": "TypeScript web client to TypeScript server"
+  },
+  "fallbacks": [
+    {
+      "profile": "java-modern",
+      "path": "vendor/elvarg-gradle",
+      "upstream": "https://github.com/Ashes2Ashley/myrspss.git",
+      "runtime": "Java/Kotlin 17 / Gradle",
+      "protocol": "classic Elvarg native client"
+    },
+    {
+      "profile": "java-legacy",
+      "path": "vendor/elvarg-legacy",
+      "upstream": "https://github.com/Ashes2Ashley/myrsps.git",
+      "runtime": "legacy Java source",
+      "protocol": "classic #317 native client"
+    }
+  ],
+  "merge_policy": "Use the TS stack as the browser-compatible runtime; keep Java stacks isolated as explicit fallbacks because packet protocols are incompatible.",
+  "asset_sources": [
+    "vendor/elvarg-gradle/ElvargServer/itemlist.txt",
+    "vendor/elvarg-gradle/ElvargServer/npcnames.txt",
+    "vendor/elvarg-gradle/ElvargServer/objectlist.txt",
+    "vendor/elvarg-legacy/Misc/itemlist.txt",
+    "vendor/elvarg-legacy/Misc/npclist.txt",
+    "vendor/elvarg-legacy/Misc/objectlist.txt"
+  ]
+}

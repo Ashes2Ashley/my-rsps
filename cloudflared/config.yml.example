@@ -1,0 +1,11 @@
+# Copy to config.yml and replace every CHANGE_ME value.
+# Keep config.yml and credentials.json out of source control.
+tunnel: CHANGE_ME_TUNNEL_ID
+credentials-file: C:\\Users\\YOUR_USER\\.cloudflared\\CHANGE_ME_TUNNEL_ID.json
+
+ingress:
+  - hostname: game-web.CHANGE_ME_DOMAIN
+    service: http://127.0.0.1:3000
+  - hostname: game-ws.CHANGE_ME_DOMAIN
+    service: http://127.0.0.1:43594
+  - service: http_status:404

@@ -1,0 +1,12 @@
+# This fork replaces the upstream TypeScript server with elvarg-web-server
+# (imported at server/ via git subtree, full history preserved). Upstream
+# xrsps/xrsps-typescript still evolves its own server/ on nearly every merge;
+# without this, every `git merge origin/main` would conflict there.
+#
+# One-time setup per clone (custom merge drivers aren't enabled by
+# .gitattributes alone):
+#   git config merge.ours.driver true
+#
+# With that set, `git merge origin/main` auto-resolves any server/ conflict
+# by keeping our (elvarg) side, so only real client/ conflicts need review.
+/server/** merge=ours

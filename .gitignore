@@ -1,0 +1,12 @@
+.env.local
+cloudflared/config.yml
+cloudflared/*.json
+logs/*
+run/*
+tsps-primary/node_modules/
+tsps-primary/server/caches/
+tsps-primary/server/cache/collision/
+tsps-primary/client/node_modules/
+tsps-primary/server/node_modules/
+vendor/**/build/
+vendor/**/.gradle/
