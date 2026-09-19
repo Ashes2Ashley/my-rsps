@@ -16,8 +16,11 @@ The canonical game base is `Ashes2Ashley/my-rsps` on branch `custom-fusion`. It 
 | Java Gradle task graph | Passed; `fatJar`, `shadowJar`, `runShadow`, and `startShadowScripts` are available |
 | Plugin hub syntax and sync smoke | Passed for `Welcome.plugin.js` |
 | Source manifest JSON and shell launcher syntax | Passed |
+| Ubuntu `npm run start` smoke after Yarn bootstrap | Passed: cache valid, server plugin loading reached definitions, client dev server started |
 
 The client build still prints upstream lint warnings, but they do not block output. Build artifacts are intentionally ignored; users regenerate them with the provided setup/launch commands.
+
+The first Ubuntu deployment exposed one final issue: the upstream root `start` scripts assumed a globally installed `yarn` binary. The canonical branch now routes those commands through `npm exec --package @yarnpkg/cli-dist@4.12.0`, so a global Yarn or Python `pip3 install yarn` is not required.
 
 ## Checkpoints
 

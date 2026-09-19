@@ -34,6 +34,8 @@ For a complete deployment from a clean Windows machine, double-click `Deploy-All
 
 The all-in-one deployment checks Node.js, creates `.env.local`, installs dependencies, reconciles the upstream lockfile if necessary, syncs plugins, downloads and validates the cache, builds the server and browser client, writes a timestamped deployment log, and optionally starts the game. Useful options are `-SkipInstall`, `-SkipCache`, `-SkipBuild`, `-BuildFatJar`, and `-Tunnel`. For both primary and Java fallback artifacts, use `-Profile both -BuildFatJar`. Linux/macOS users can run `./scripts/deploy.sh ts` with `START=1` or `TUNNEL=1`.
 
+The primary root scripts bootstrap Yarn through `npm exec`, so Ubuntu does **not** need a globally installed `yarn` command. Do not install Yarn with `pip3`; Yarn is a Node package manager, not a Python package. If an older clone still reports `yarn: not found`, pull the latest `custom-fusion` branch and rerun the deployment.
+
 If PowerShell is unavailable, run `scripts\\start.bat` from Command Prompt. It calls the same PowerShell launcher.
 
 ## Profiles and recovery
