@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MODE="${BELLA_MODE:-primary}"
+BUILD_ONLY="${BELLA_BUILD_ONLY:-0}"
+TUNNEL="${BELLA_TUNNEL:-0}"
+START="${BELLA_START:-1}"
+if [[ "$BUILD_ONLY" == 1 ]]; then START=0; fi
+case "$MODE" in
+  primary) SKIP_INSTALL="${BELLA_SKIP_INSTALL:-0}" SKIP_CACHE="${BELLA_SKIP_CACHE:-0}" SKIP_BUILD="${BELLA_SKIP_BUILD:-0}" START="$START" TUNNEL="$TUNNEL" exec "$ROOT/scripts/deploy.sh" ts ;;
+  jar)
+    PROJECT="$ROOT/vendor/elvarg-gradle/ElvargServer"
+    (cd "$PROJECT" && ./gradlew :game:fatJar --no-daemon)
+    JAR="$(find "$PROJECT/game/build/libs" -maxdepth 1 -name '*-all.jar' -type f -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)"
+    [[ -n "$JAR" ]] || { echo 'Shadow fat JAR was not produced.' >&2; exit 1; }
+    echo "Bellascape JAR: $JAR"
+    if [[ "$START" == 1 ]]; then
+      cd "$PROJECT/game"
+      exec java -jar "$JAR"
+    fi
+    ;;
+  both) BELLA_START="$START" BELLA_TUNNEL="$TUNNEL" exec "$ROOT/scripts/deploy.sh" both ;;
+  *) echo "Usage: BELLA_MODE=primary|jar|both ./bellascape" >&2; exit 2 ;;
+esac

@@ -2,6 +2,8 @@
 
 This workspace combines three upstream codebases without pretending that their wire protocols are interchangeable:
 
+The branded deployment is **Bellascape**. Use `Bellascape.bat` on Windows or `./bellascape` on Ubuntu/macOS. The verified Java fallback artifact is committed as `dist/Bellascape-Server-all.jar`; it requires JDK 17.
+
 | Profile | Source | Role |
 |---|---|---|
 | `ts` | `tsps-primary/` from `my-rsps` | **Primary browser client + TypeScript server**; current successor stack |

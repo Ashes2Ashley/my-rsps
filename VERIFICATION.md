@@ -17,10 +17,13 @@ The canonical game base is `Ashes2Ashley/my-rsps` on branch `custom-fusion`. It 
 | Plugin hub syntax and sync smoke | Passed for `Welcome.plugin.js` |
 | Source manifest JSON and shell launcher syntax | Passed |
 | Ubuntu `npm run start` smoke after Yarn bootstrap | Passed: cache valid, server plugin loading reached definitions, client dev server started |
+| Bellascape Java Shadow fat JAR | Passed: 33 MB `-all.jar`, executable manifest, Java 17, reached `RspsApp is now online!` |
 
 The client build still prints upstream lint warnings, but they do not block output. Build artifacts are intentionally ignored; users regenerate them with the provided setup/launch commands.
 
 The first Ubuntu deployment exposed one final issue: the upstream root `start` scripts assumed a globally installed `yarn` binary. The canonical branch now routes those commands through `npm exec --package @yarnpkg/cli-dist@4.12.0`, so a global Yarn or Python `pip3 install yarn` is not required.
+
+The Java fallback requires JDK 17 exactly because Gradle requests a Java 17 toolchain. The committed Bellascape artifact is `dist/Bellascape-Server-all.jar` with SHA-256 `895207c78541d75029c317eae1d033737d3949beb1305d39a7ae98be587b0387`.
 
 ## Checkpoints
 
