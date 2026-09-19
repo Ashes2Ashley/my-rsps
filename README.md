@@ -26,6 +26,14 @@ Open `http://localhost:3000`. The first setup downloads/builds the game cache an
 
 For a one-click Windows launch, double-click `Open-Game.bat`. It syncs the local plugin hub, installs dependencies if needed, and starts the browser client and game server together. A native `.exe` is not required: Windows launches the signed-by-you batch/PowerShell entry point without an extra installer. For the Java fallback, run `scripts\\build-fat-jar.ps1`; it produces `vendor\\elvarg-gradle\\ElvargServer\\game\\build\\libs\\*-all.jar` when the upstream Gradle build is compatible.
 
+For a complete deployment from a clean Windows machine, double-click `Deploy-All.bat`, or run:
+
+```powershell
+.\\scripts\\deploy.ps1 -Profile ts -Start
+```
+
+The all-in-one deployment checks Node.js, creates `.env.local`, installs dependencies, reconciles the upstream lockfile if necessary, syncs plugins, downloads and validates the cache, builds the server and browser client, writes a timestamped deployment log, and optionally starts the game. Useful options are `-SkipInstall`, `-SkipCache`, `-SkipBuild`, `-BuildFatJar`, and `-Tunnel`. For both primary and Java fallback artifacts, use `-Profile both -BuildFatJar`. Linux/macOS users can run `./scripts/deploy.sh ts` with `START=1` or `TUNNEL=1`.
+
 If PowerShell is unavailable, run `scripts\\start.bat` from Command Prompt. It calls the same PowerShell launcher.
 
 ## Profiles and recovery
