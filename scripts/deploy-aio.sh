@@ -170,13 +170,16 @@ case "$MODE" in
     safe_pull
     prepare_game
     start_game
-    if ! setup_named_config || ! start_named_tunnel; then
+    if ! start_named_tunnel; then
+      setup_named_config || true
+      if ! start_named_tunnel; then
       if [[ "$ALLOW_QUICK_TEST" == 1 ]]; then quick_test_fallback || die 'both named and quick tunnels failed';
       else
         warn 'game/client are running locally, but no named tunnel credentials/config were found'
         warn "Run: cloudflared tunnel login, then rerun $0"
         warn "Or use --quick-test for a temporary browser-only diagnostic tunnel"
         exit 4
+      fi
       fi
     fi
     public_check
