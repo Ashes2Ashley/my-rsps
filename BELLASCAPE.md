@@ -23,6 +23,35 @@ chmod +x bellascape scripts/*.sh
 BELLA_MODE=primary ./bellascape
 ```
 
+For the recommended one-click Ubuntu/WSL deployment, use the supervised AIO launcher. It installs missing dependencies, safely pulls the `custom-fusion` branch when there are no local edits, installs packages, prepares the cache, builds the client/server, starts both services, checks ports `3000` and `43594`, starts the named Cloudflare tunnel, and prints public reachability results:
+
+```bash
+chmod +x deploy-aio scripts/deploy-aio.sh
+./deploy-aio
+```
+
+The AIO launcher supports restart-safe commands:
+
+```bash
+./scripts/deploy-aio.sh status
+./scripts/deploy-aio.sh stop
+./scripts/deploy-aio.sh --install
+```
+
+It tries tunnel-token authentication first (`CLOUDFLARED_TUNNEL_TOKEN`, then `~/.config/bellascape/cloudflared.token`, then `cloudflared tunnel token aio-tunnel`), then a local `cloudflared/config.yml` credential setup. If `ALLOW_QUICK_TEST=1` is set, it falls back to a temporary browser-only quick tunnel for diagnostics; it does not pretend that a quick tunnel is suitable for stable multiplayer WebSocket access.
+
+If your WSL session has not authenticated Cloudflare, run `cloudflared tunnel login` once, or provide a tunnel token without placing it in Git:
+
+```bash
+mkdir -p ~/.config/bellascape
+read -rsp 'Cloudflare tunnel token: ' TOKEN; echo
+printf '%s' "$TOKEN" > ~/.config/bellascape/cloudflared.token
+chmod 600 ~/.config/bellascape/cloudflared.token
+./deploy-aio
+```
+
+Logs are written to `logs/game.log` and `logs/tunnel.log`; runtime PID and lock files are under `run/bellascape-aio/`.
+
 Build only without starting:
 
 ```bash

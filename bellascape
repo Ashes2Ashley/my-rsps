@@ -7,6 +7,7 @@ TUNNEL="${BELLA_TUNNEL:-0}"
 START="${BELLA_START:-1}"
 if [[ "$BUILD_ONLY" == 1 ]]; then START=0; fi
 case "$MODE" in
+  aio) exec "$ROOT/scripts/deploy-aio.sh" start ;;
   primary) SKIP_INSTALL="${BELLA_SKIP_INSTALL:-0}" SKIP_CACHE="${BELLA_SKIP_CACHE:-0}" SKIP_BUILD="${BELLA_SKIP_BUILD:-0}" START="$START" TUNNEL="$TUNNEL" exec "$ROOT/scripts/deploy.sh" ts ;;
   jar)
     PROJECT="$ROOT/vendor/elvarg-gradle/ElvargServer"
@@ -20,5 +21,5 @@ case "$MODE" in
     fi
     ;;
   both) BELLA_START="$START" BELLA_TUNNEL="$TUNNEL" exec "$ROOT/scripts/deploy.sh" both ;;
-  *) echo "Usage: BELLA_MODE=primary|jar|both ./bellascape" >&2; exit 2 ;;
+  *) echo "Usage: BELLA_MODE=aio|primary|jar|both ./bellascape" >&2; exit 2 ;;
 esac
