@@ -6,12 +6,12 @@ on:
       game_address:
         description: 'Public game WebSocket host:port baked into the client'
         required: true
-        default: '127.0.0.1:43594'
+        default: 'game.kodakgp.com:443'
       secure_game:
         description: 'Use wss:// for the game connection'
         required: true
         type: boolean
-        default: false
+        default: true
   push:
     tags:
       - 'bellascape-v*'
@@ -61,8 +61,8 @@ jobs:
       - name: Package Bellascape player EXE
         shell: pwsh
         env:
-          GAME_ADDRESS: ${{ github.event.inputs.game_address || '127.0.0.1:43594' }}
-          SECURE_GAME: ${{ github.event.inputs.secure_game || 'false' }}
+          GAME_ADDRESS: ${{ github.event.inputs.game_address || 'game.kodakgp.com:443' }}
+          SECURE_GAME: ${{ github.event.inputs.secure_game || 'true' }}
         run: |
           $args = @('-IncludeJavaServer', '-GameAddress', $env:GAME_ADDRESS)
           if ($env:SECURE_GAME -eq 'true') { $args += '-SecureGame' }
