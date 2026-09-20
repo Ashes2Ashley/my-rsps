@@ -87,7 +87,7 @@ wait_for_port(){ local name="$1" host="$2" port="$3"; for _ in {1..90}; do port_
 start_game(){
   stop_one game
   say 'starting Bellascape client and TypeScript server'
-  setsid bash -c "cd '$TS' && exec npm run start" >>"$(log_file game)" 2>&1 &
+  nohup setsid bash -c "cd '$TS' && exec npm run start" >>"$(log_file game)" 2>&1 < /dev/null &
   echo $! >"$(pid_file game)"
   wait_for_port game 127.0.0.1 "$GAME_PORT" || { tail -80 "$(log_file game)"; die 'game WebSocket did not start'; }
   wait_for_port client 127.0.0.1 "$WEB_PORT" || { tail -80 "$(log_file game)"; die 'browser client did not start'; }
