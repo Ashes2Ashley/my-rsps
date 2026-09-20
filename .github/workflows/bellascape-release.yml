@@ -1,0 +1,79 @@
+name: Bellascape Windows package
+
+on:
+  workflow_dispatch:
+    inputs:
+      game_address:
+        description: 'Public game WebSocket host:port baked into the client'
+        required: true
+        default: '127.0.0.1:43594'
+      secure_game:
+        description: 'Use wss:// for the game connection'
+        required: true
+        type: boolean
+        default: false
+  push:
+    tags:
+      - 'bellascape-v*'
+
+jobs:
+  package-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.23.2
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install dependencies
+        working-directory: tsps-primary
+        run: npm run setup
+
+      - name: Prepare cache and build server
+        working-directory: tsps-primary/server
+        run: |
+          npm run ensure-cache
+          npm run build
+
+      - name: Build browser client
+        working-directory: tsps-primary/client
+        run: npm run build
+
+      - name: Build Java Shadow JAR
+        working-directory: vendor/elvarg-gradle/ElvargServer
+        run: .\gradlew.bat :game:fatJar --no-daemon
+
+      - name: Copy verified Java artifact
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Copy-Item vendor/elvarg-gradle/ElvargServer/game/build/libs/*-all.jar dist/Bellascape-Server-all.jar
+
+      - name: Package Bellascape player EXE
+        shell: pwsh
+        env:
+          GAME_ADDRESS: ${{ github.event.inputs.game_address || '127.0.0.1:43594' }}
+          SECURE_GAME: ${{ github.event.inputs.secure_game || 'false' }}
+        run: |
+          $args = @('-IncludeJavaServer', '-GameAddress', $env:GAME_ADDRESS)
+          if ($env:SECURE_GAME -eq 'true') { $args += '-SecureGame' }
+          .\scripts\package-windows.ps1 @args
+
+      - name: Upload downloadable artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Bellascape-Windows
+          path: |
+            dist/windows/Bellascape-Player.exe
+            dist/windows/Bellascape-Player.7z
+            dist/Bellascape-Server-all.jar
+          if-no-files-found: error

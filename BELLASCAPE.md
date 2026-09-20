@@ -82,6 +82,8 @@ BELLA_MODE=primary BELLA_TUNNEL=1 ./bellascape
 
 The web hostname should point to local port `3000`; the WebSocket hostname should point to local port `43594`. Cloudflare Tunnel provides ingress; it does not replace the game server or client process.
 
+Before pointing a domain at the tunnel, start Bellascape locally and run `./scripts/test-cloudflared.sh`. It creates temporary `trycloudflare.com` URLs for the HTTP and WebSocket listeners and changes no DNS records. After that succeeds, generate the named-tunnel config with `scripts/setup-cloudflared.sh`; DNS routing remains opt-in with `APPLY_DNS=1`.
+
 ## Windows
 
 ```powershell
@@ -100,6 +102,18 @@ Start the primary client/server with Cloudflare Tunnel:
 ```powershell
 .\Bellascape.bat -Mode primary -Tunnel
 ```
+
+Build a downloadable Windows player package with portable Node.js and Java 17:
+
+```powershell
+.\scripts\package-windows.ps1 -IncludeJavaServer -GameAddress game-web.example.com:443 -SecureGame
+```
+
+This creates a staging folder, `Bellascape-Player.7z`, and—when 7-Zip with `7z.sfx` is installed—`Bellascape-Player.exe`. The SFX file extracts to a temporary directory and starts the bundled browser client. The live server remains on Ubuntu; the downloadable file is the player client package.
+
+## Player setup and zones
+
+Players can select persistent combat setups with commands such as `::setup main-tribrid`, `::setup nh-pure`, `::setup void-ranger`, or `::setup list`. `::safe` returns to the Edgeville safe zone, `::danger` enters the configured PvP boundary, and `::train` moves to the Rock Crab training area. The selected loadout is stored through SQLite persistence. Existing Wilderness, PvP, prayer, spellbook, food, potion, NPC, and skill plugins remain authoritative; `server/data/definitions/BellascapeGameplay.json` is the editable Bellascape configuration layer.
 
 ## Important limitation
 

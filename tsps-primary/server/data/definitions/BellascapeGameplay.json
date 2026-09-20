@@ -1,0 +1,35 @@
+{
+  "defaultLoadout": "main-tribrid",
+  "loadouts": {
+    "gmauler": { "label": "G Mauler (R)", "preset": "G Mauler (R)" },
+    "obby": { "label": "Obby Mauler", "preset": "Obby Mauler" },
+    "dds-melee": { "label": "DDS Pure Melee", "preset": "DDS Pure (M)" },
+    "dds-ranged": { "label": "DDS Pure Ranged", "preset": "DDS Pure (R)" },
+    "nh-pure": { "label": "NH Pure", "preset": "NH Pure" },
+    "zerker-60": { "label": "60 Attack Zerker", "preset": "60Att. Zerker" },
+    "zerker-70": { "label": "70 Attack Zerker", "preset": "70Att. Zerker" },
+    "main-melee": { "label": "Main Melee", "preset": "Main Melee" },
+    "main-barrage": { "label": "Main Barrage", "preset": "Main Barrage" },
+    "main-hybrid": { "label": "Main Hybrid", "preset": "Main Hybrid" },
+    "main-tribrid": { "label": "Main Tribrid", "preset": "Main Tribrid" },
+    "void-ranger": { "label": "Void Ranger", "preset": "Void Ranger" },
+    "void-melee": { "label": "Void Melee", "preset": "Void Melee" },
+    "karils-tank": { "label": "Karils Tank", "preset": "Karils Tank" },
+    "dharok": { "label": "Dharok", "preset": "Dharok" }
+  },
+  "spellbooks": ["normal", "ancient", "lunar", "arceuus"],
+  "zones": {
+    "safe": { "label": "Edgeville Safe Zone", "x": 3089, "y": 3524, "z": 0 },
+    "danger": { "label": "Edgeville Danger Zone", "x": 3090, "y": 3526, "z": 0 },
+    "training": { "label": "Rock Crab Training", "x": 2676, "y": 3715, "z": 0 }
+  },
+  "persistence": {
+    "selectedLoadoutAttribute": "bellascape:selectedLoadout",
+    "selectedZoneAttribute": "bellascape:lastZone",
+    "database": "sqlite"
+  },
+  "training": {
+    "enabled": true,
+    "description": "Rock Crabs and existing training NPC plugins remain enabled. Add more NPC spawns through npc_spawns.json or a plugin."
+  }
+}
